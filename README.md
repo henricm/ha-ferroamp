@@ -1,4 +1,4 @@
-# Ferroamp - Home assistant sensors for Ferroamp EnergyHub
+# Home assistant sensors for Ferroamp EnergyHub
 This is still very much still work in progress, so please use this component with caution.
 
 Ferroamp MQTT support sends updates to these topics:
