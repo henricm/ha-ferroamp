@@ -138,7 +138,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                        FloatValFerroampSensor(f"SSO {sso_id} PV String Current", "ipv", ELECTRICAL_CURRENT_AMPERE, "mdi:current-dc"),
                        PowerFerroampSensor(f"SSO {sso_id} PV String Power", "upv", "ipv", "mdi:solar-power"),
                        EnergyFerroampSensor(f"SSO {sso_id} Total Energy", "wpv", "mdi:solar-power"),
-                       IntValFerroampSensor(f"SSO {sso_id} Faultcode", "faultcode", "", "mdi:traffic-light"),
+                       StringValFerroampSensor(f"SSO {sso_id} Faultcode", "faultcode", "", "mdi:traffic-light"),
                        RelayStatusFerroampSensor(f"SSO {sso_id} Relay Status", "relaystatus"),
                        FloatValFerroampSensor(f"SSO {sso_id} PCB Temperature", "temp", TEMP_CELSIUS, "mdi:thermometer")]
 
@@ -157,7 +157,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                        EnergyFerroampSensor(f"ESO {eso_id} Total Energy Produced", "wbatprod", "mdi:battery"),
                        EnergyFerroampSensor(f"ESO {eso_id} Total Energy Consumed", "wbatcons", "mdi:battery"),
                        BatteryFerroampSensor(f"ESO {eso_id} State of Charge", "soc"),
-                       IntValFerroampSensor(f"ESO {eso_id} Faultcode", "faultcode", "", "mdi:traffic-light"),
+                       StringValFerroampSensor(f"ESO {eso_id} Faultcode", "faultcode", "", "mdi:traffic-light"),
                        RelayStatusFerroampSensor(f"ESO {eso_id} Relay Status", "relaystatus"),
                        FloatValFerroampSensor(f"ESO {eso_id} PCB Temperature", "temp", TEMP_CELSIUS, "mdi:thermometer")]
 
@@ -241,6 +241,23 @@ class IntValFerroampSensor(FerroampSensor):
         
         if v != None:
             v = int(float(v["val"]))
+
+        return v
+
+class StringValFerroampSensor(FerroampSensor):
+    """Representation of a Ferroamp string value Sensor."""
+
+    def __init__(self, name, key, unit, icon):
+        """Initialize the sensor."""
+        super().__init__(name, key, unit, icon)
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        v = self.event.get(self._state_key, None)
+        
+        if v != None:
+            v = v["val"]
 
         return v
 
