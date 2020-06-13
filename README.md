@@ -4,7 +4,7 @@ This is still very much still work in progress, so please use this component wit
 ## Prerequisites
 
 - Enable Ferroamp MQTT by contacting Ferroamp Support and to get the username and password for your Energy MQTT broker.
-- Enable MQTT in Home assistant and set the broker to your Ferroamp Energy IP.
+- Enable MQTT in Home assistant and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp.
 
 ### Git installation
 
