@@ -1,0 +1,8 @@
+{
+  "domain": "ferroamp",
+  "name": "Ferroamp MQTT Sensors",
+  "documentation": "https://github.com/henricm/ha-ferroamp/",
+  "dependencies": ["mqtt"],
+  "codeowners": ["@henricm"],
+  "requirements": []
+}
