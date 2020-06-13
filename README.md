@@ -38,3 +38,56 @@ sensor:
 There are currently no configuration options and this integration will a bunch or sensors with the prefix `ferroamp_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`. 
 
 I'm also still figuring out what some of the sensors actually is, since the Ferroamp API documentaiton still seems to be incomplete in some areas.
+
+## Utility meter
+
+Inspired from this [blog post](https://www.planet4.se/home-assistant-and-solar-panel-dashboards/), I discovered the [utility meter sensor](https://www.home-assistant.io/integrations/utility_meter/) available in home assistant. I use it to track grid, solar and battery energy, hourly, daily, monthly by the configuration below in `configuration.yml`:
+
+```
+utility_meter:
+  solar_energy_hourly:
+    source: sensor.ferroamp_total_solar_energy
+    cycle: hourly
+  solar_energy_daily:
+    source: sensor.ferroamp_total_solar_energy
+    cycle: daily
+  solar_energy_monthly:
+    source: sensor.ferroamp_total_solar_energy
+    cycle: monthly
+  battery_energy_produced_hourly:
+    source: sensor.ferroamp_eso_20030049_total_energy_produced
+    cycle: hourly
+  battery_energy_produced_daily:
+    source: sensor.ferroamp_eso_20030049_total_energy_produced
+    cycle: daily
+  battery_energy_produced_monthly:
+    source: sensor.ferroamp_eso_20030049_total_energy_produced
+    cycle: monthly
+  battery_energy_consumed_hourly:
+    source: sensor.ferroamp_eso_20030049_total_energy_consumed
+    cycle: hourly
+  battery_energy_consumed_daily:
+    source: sensor.ferroamp_eso_20030049_total_energy_consumed
+    cycle: daily
+  battery_energy_consumed_monthly:
+    source: sensor.ferroamp_eso_20030049_total_energy_consumed
+    cycle: monthly
+  external_energy_consumed_hourly:
+    source: sensor.ferroamp_external_energy_consumed
+    cycle: hourly
+  external_energy_consumed_daily:
+    source: sensor.ferroamp_external_energy_consumed
+    cycle: daily
+  external_energy_consumed_monthly:
+    source: sensor.ferroamp_external_energy_consumed
+    cycle: monthly
+  external_energy_produced_hourly:
+    source: sensor.ferroamp_external_energy_produced
+    cycle: hourly
+  external_energy_produced_daily:
+    source: sensor.ferroamp_external_energy_produced
+    cycle: daily
+  external_energy_produced_monthly:
+    source: sensor.ferroamp_external_energy_produced
+    cycle: monthly   
+ ```
