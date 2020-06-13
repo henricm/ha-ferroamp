@@ -15,7 +15,7 @@ Currently we listen for `ehub`, `eso` and `sso` messages.
 To avoid too much data into home assistant, we check the timestamp sent by Ferroamp to make sure we only update sensors with new values every 30 second. This interval I expect to be configurable later on.
 
 ## Prerequisites
-
+- Home assistant `0.111.1`
 - Enable Ferroamp MQTT by contacting Ferroamp Support and to get the username and password for your Energy MQTT broker.
 - Enable MQTT in Home assistant and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp.
 
@@ -38,6 +38,13 @@ sensor:
 There are currently no configuration options and this integration will a bunch or sensors with the prefix `ferroamp_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`. 
 
 I'm also still figuring out what some of the sensors actually is, since the Ferroamp API documentaiton still seems to be incomplete in some areas.
+
+## Known issues
+
+I haven't figured out how to check if an entity already exists in home assistant so after first startup you'll see error logging when sensors are added when they already exits:
+```
+Entity id already exists - ignoring: sensor.ferroamp_sso_pv_string_power
+```
 
 ## Utility meter
 
