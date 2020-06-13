@@ -1,6 +1,19 @@
 # Ferroamp - Home assistant sensors for Ferroamp EnergyHub
 This is still very much still work in progress, so please use this component with caution.
 
+Ferroamp MQTT support sends updates to these topics:
+
+ * extapi/data/ehub (interval 1s)
+ * extapi/data/eso (interval 5s)
+ * extapi/data/sso (interval 5s)
+ * extapi/data/esm (interval 60s)
+
+Currently we listen for `ehub`, `eso` and `sso` messages. 
+
+## Update interval
+
+To avoid too much data into home assistant, we check the timestamp sent by Ferroamp to make sure we only update sensors with new values every 30 second. This interval I expect to be configurable later on.
+
 ## Prerequisites
 
 - Enable Ferroamp MQTT by contacting Ferroamp Support and to get the username and password for your Energy MQTT broker.
