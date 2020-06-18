@@ -385,7 +385,7 @@ class PowerFerroampSensor(FerroampSensor):
         if current is None or voltage is None:
             return None
         
-        return round(float(voltage["val"]) * float(current["val"]) / 10000, 2)
+        return round(float(voltage["val"]) * float(current["val"]) / 1000, 2)
 
 
 class ThreePhaseFerroampSensor(FerroampSensor):
