@@ -52,45 +52,30 @@ Inspired from this [blog post](https://www.planet4.se/home-assistant-and-solar-p
 
 ```
 utility_meter:
-  solar_energy_hourly:
-    source: sensor.ferroamp_total_solar_energy
-    cycle: hourly
   solar_energy_daily:
     source: sensor.ferroamp_total_solar_energy
     cycle: daily
   solar_energy_monthly:
     source: sensor.ferroamp_total_solar_energy
     cycle: monthly
-  battery_energy_produced_hourly:
-    source: sensor.ferroamp_eso_20030049_total_energy_produced
-    cycle: hourly
   battery_energy_produced_daily:
     source: sensor.ferroamp_eso_20030049_total_energy_produced
     cycle: daily
   battery_energy_produced_monthly:
     source: sensor.ferroamp_eso_20030049_total_energy_produced
     cycle: monthly
-  battery_energy_consumed_hourly:
-    source: sensor.ferroamp_eso_20030049_total_energy_consumed
-    cycle: hourly
   battery_energy_consumed_daily:
     source: sensor.ferroamp_eso_20030049_total_energy_consumed
     cycle: daily
   battery_energy_consumed_monthly:
     source: sensor.ferroamp_eso_20030049_total_energy_consumed
     cycle: monthly
-  external_energy_consumed_hourly:
-    source: sensor.ferroamp_external_energy_consumed
-    cycle: hourly
   external_energy_consumed_daily:
     source: sensor.ferroamp_external_energy_consumed
     cycle: daily
   external_energy_consumed_monthly:
     source: sensor.ferroamp_external_energy_consumed
     cycle: monthly
-  external_energy_produced_hourly:
-    source: sensor.ferroamp_external_energy_produced
-    cycle: hourly
   external_energy_produced_daily:
     source: sensor.ferroamp_external_energy_produced
     cycle: daily
