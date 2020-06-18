@@ -87,7 +87,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                     IntValFerroampSensor("Total rated capacity of all batteries", "ratedcap", ENERGY_WATT_HOUR, "mdi:battery"),
                     ]
     eso_sensors = {}
-    esm_sensors = []
+    esm_sensors = {}
     sso_sensors = {}
 
     ehub_store = hass.data.get(DATA_FERROAMP_EHUB)
@@ -147,11 +147,11 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     def eso_event_received(msg):
         event = json.loads(msg.payload)
         eso_id = event["id"]["val"]
-        store = sso_store.get(eso_id)
-        sensors = sso_sensors.get(eso_id)
+        store = eso_store.get(eso_id)
+        sensors = eso_sensors.get(eso_id)
         if store is None:
-            store = sso_store[eso_id] = {}
-            sensors = sso_sensors[eso_id] = [IntValFerroampSensor(f"ESO {eso_id} Battery Voltage", "ubat", VOLT, "mdi:battery"),
+            store = eso_store[eso_id] = {}
+            sensors = eso_sensors[eso_id] = [IntValFerroampSensor(f"ESO {eso_id} Battery Voltage", "ubat", VOLT, "mdi:battery"),
                        FloatValFerroampSensor(f"ESO {eso_id} Battery Current", "ibat", ELECTRICAL_CURRENT_AMPERE, "mdi:battery"),
                        PowerFerroampSensor(f"ESO {eso_id} Battery Power", "ubat", "ibat", "mdi:battery"),
                        EnergyFerroampSensor(f"ESO {eso_id} Total Energy Produced", "wbatprod", "mdi:battery"),
@@ -164,14 +164,23 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         update_sensor_from_event(event, sensors, store)
     
 
-    #def emo_event_received(msg):
-    #    update_sensor(msg, emo_sensors, emo_store)
-            
+    def esm_event_received(msg):
+        event = json.loads(msg.payload)
+        esm_id = event["id"]["val"]
+        store = esm_store.get(esm_id)
+        sensors = esm_sensors.get(esm_id)
+        if store is None:
+            store = esm_store[esm_id] = {}
+            sensors = esm_sensors[esm_id] = [IntValFerroampSensor(f"ESM {esm_id} SOH", "soh", UNIT_PERCENTAGE, "mdi:battery"),
+                                             IntValFerroampSensor(f"ESM {esm_id} State of Charge", "soc", UNIT_PERCENTAGE, "mdi:battery"),
+                                             IntValFerroampSensor(f"ESM {esm_id} Rated Capacity", "ratedCapacity", ENERGY_WATT_HOUR, "mdi:battery")]
+
+        update_sensor_from_event(event, sensors, store)
 
     await mqtt.async_subscribe(hass, EHUB_TOPIC, ehub_event_received, 0)
     await mqtt.async_subscribe(hass, SSO_TOPIC, sso_event_received, 0)
     await mqtt.async_subscribe(hass, ESO_TOPIC, eso_event_received, 0)
-#    await mqtt.async_subscribe(hass, EMO_TOPIC, async_ehub_event_received, 0)
+    await mqtt.async_subscribe(hass, ESM_TOPIC, esm_event_received, 0)
     
     return True
 
