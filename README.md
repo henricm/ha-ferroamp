@@ -8,8 +8,6 @@ Ferroamp MQTT support sends updates to these topics:
  * extapi/data/sso (interval 5s)
  * extapi/data/esm (interval 60s)
 
-Currently we listen for `ehub`, `eso` and `sso` messages. 
-
 ## Update interval
 
 To avoid too much data into home assistant, we check the timestamp sent by Ferroamp to make sure we only update sensors with new values every 30 second. This interval I expect to be configurable later on.
