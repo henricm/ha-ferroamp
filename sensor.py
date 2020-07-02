@@ -168,7 +168,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         sensors = esm_sensors.get(esm_id)
         if store is None:
             store = esm_store[esm_id] = {}
-            sensors = esm_sensors[esm_id] = [IntValFerroampSensor(f"ESM {esm_id} SOH", "soh", UNIT_PERCENTAGE, "mdi:battery"),
+            sensors = esm_sensors[esm_id] = [IntValFerroampSensor(f"ESM {esm_id} State of Health", "soh", UNIT_PERCENTAGE, "mdi:battery"),
                                              IntValFerroampSensor(f"ESM {esm_id} State of Charge", "soc", UNIT_PERCENTAGE, "mdi:battery"),
                                              IntValFerroampSensor(f"ESM {esm_id} Rated Capacity", "ratedCapacity", ENERGY_WATT_HOUR, "mdi:battery")]
 
@@ -324,14 +324,14 @@ class DcLinkFerroampSensor(FerroampSensor):
 class BatteryFerroampSensor(IntValFerroampSensor):
 
     def __init__(self, name, key):
-        super().__init__(name, key, UNIT_PERCENTAGE, "mdi:battery")
+        super().__init__(name, key, UNIT_PERCENTAGE, "mdi:battery-low")
 
     @property
     def icon(self):
         if (self.state < 20):
             self._icon = "mdi:battery-low"
         elif (self.state < 70):
-            self._icon = "mid:battery-medium"
+            self._icon = "mdi:battery-medium"
         else:
             self._icon = "mdi:battery-high"
         
