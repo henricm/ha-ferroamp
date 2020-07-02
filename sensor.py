@@ -113,17 +113,14 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     def update_sensor_from_event(event, sensors, store):
         for sensor in sensors:
             if sensor.name not in store:
-                sensor.hass = hass
-                sensor.set_event(event)
                 store[sensor.name] = sensor
                 _LOGGER.debug(
                     "Registering new sensor %(name)s => %(event)s",
                     dict(name=sensor.name, event=event),
                 )
                 async_add_entities((sensor,), True)
-            else:
-                store[sensor.name].set_event(event)
-
+            sensor.hass = hass
+            sensor.set_event(event)
     @callback
     def ehub_event_received(msg):
         update_sensor_from_msg(msg, ehub_sensors, ehub_store)
