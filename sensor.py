@@ -1,6 +1,7 @@
 """Platform for Ferroamp sensors integration."""
 import logging
 import json
+import uuid
 
 from datetime import datetime
 from datetime import timedelta
@@ -23,7 +24,7 @@ from homeassistant.const import (
     TEMP_FAHRENHEIT,
     POWER_WATT,
     VOLT,
-    UNIT_PERCENTAGE
+    PERCENTAGE
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,8 +79,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
                     DcLinkFerroampSensor("DC Link Voltage", "udc", "mdi:current-ac"),
 
-                    IntValFerroampSensor("System State of Charge", "soc", UNIT_PERCENTAGE, "mdi:battery"),
-                    IntValFerroampSensor("System State of Health", "soh", UNIT_PERCENTAGE, "mdi:battery"),
+                    IntValFerroampSensor("System State of Charge", "soc", PERCENTAGE, "mdi:battery"),
+                    IntValFerroampSensor("System State of Health", "soh", PERCENTAGE, "mdi:battery"),
                     IntValFerroampSensor("Apparent power", "sext", "VA", "mdi:mdi-transmission-tower"),
                     
                     IntValFerroampSensor("Solar Power", "ppv", POWER_WATT, "mdi:solar-power"),
@@ -168,8 +169,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         sensors = esm_sensors.get(esm_id)
         if store is None:
             store = esm_store[esm_id] = {}
-            sensors = esm_sensors[esm_id] = [IntValFerroampSensor(f"ESM {esm_id} State of Health", "soh", UNIT_PERCENTAGE, "mdi:battery"),
-                                             IntValFerroampSensor(f"ESM {esm_id} State of Charge", "soc", UNIT_PERCENTAGE, "mdi:battery"),
+            sensors = esm_sensors[esm_id] = [IntValFerroampSensor(f"ESM {esm_id} State of Health", "soh", PERCENTAGE, "mdi:battery"),
+                                             IntValFerroampSensor(f"ESM {esm_id} State of Charge", "soc", PERCENTAGE, "mdi:battery"),
                                              IntValFerroampSensor(f"ESM {esm_id} Rated Capacity", "ratedCapacity", ENERGY_WATT_HOUR, "mdi:battery")]
 
         update_sensor_from_event(event, sensors, store)
@@ -179,6 +180,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     await mqtt.async_subscribe(hass, ESO_TOPIC, eso_event_received, 0)
     await mqtt.async_subscribe(hass, ESM_TOPIC, esm_event_received, 0)
     
+    
+
     return True
 
 
@@ -219,7 +222,8 @@ class FerroampSensor(Entity):
 
     def update_event(self, event):
         _LOGGER.debug(dict(event=event))
-        self.event = {}
+        if self.event is None:
+            self.event = {}
         self.event.update(event)
         self.async_write_ha_state()
 
@@ -324,7 +328,7 @@ class DcLinkFerroampSensor(FerroampSensor):
 class BatteryFerroampSensor(IntValFerroampSensor):
 
     def __init__(self, name, key):
-        super().__init__(name, key, UNIT_PERCENTAGE, "mdi:battery-low")
+        super().__init__(name, key, PERCENTAGE, "mdi:battery-low")
 
     @property
     def icon(self):
