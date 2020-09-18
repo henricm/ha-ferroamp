@@ -13,7 +13,7 @@ Ferroamp MQTT support sends updates to these topics:
 To avoid too much data into home assistant, we check the timestamp sent by Ferroamp to make sure we only update sensors with new values every 30 second. This interval I expect to be configurable later on.
 
 ## Prerequisites
-- Home assistant `0.111.1`
+- Home assistant `0.115.0`
 - Enable Ferroamp MQTT by contacting Ferroamp Support and to get the username and password for your Energy MQTT broker.
 - Enable MQTT in Home assistant and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp.
 
