@@ -33,9 +33,9 @@ sensor:
   - platform: ferroamp
 ```
 
-There are currently no configuration options and this integration will a bunch or sensors with the prefix `ferroamp_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`. 
+There are currently no configuration options. This integration will add some sensors with the prefix `ferroamp_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`. 
 
-I'm also still figuring out what some of the sensors actually is, since the Ferroamp API documentaiton still seems to be incomplete in some areas.
+I'm also still figuring out what some of the sensors actually are, since the Ferroamp API documentaiton still seems to be incomplete in some areas.
 
 ## Known issues
 
