@@ -7,11 +7,7 @@ Ferroamp MQTT support sends updates to these topics:
  * extapi/data/eso (interval 5s)
  * extapi/data/sso (interval 5s)
  * extapi/data/esm (interval 60s)
-
-## Update interval
-
-To avoid too much data into home assistant, we check the timestamp sent by Ferroamp to make sure we only update sensors with new values every 30 second. This interval I expect to be configurable later on.
-
+ 
 ## Prerequisites
 - Home assistant `0.115.0`
 - Enable Ferroamp MQTT by contacting Ferroamp Support and to get the username and password for your Energy MQTT broker.
@@ -37,12 +33,28 @@ There are currently no configuration options. This integration will add some sen
 
 I'm also still figuring out what some of the sensors actually are, since the Ferroamp API documentaiton still seems to be incomplete in some areas.
 
-## Known issues
+## Update interval
 
-I haven't figured out how to check if an entity already exists in home assistant so after first startup you'll see error logging when sensors are added when they already exits:
+To avoid too much data into home assistant, we check the timestamp sent by Ferroamp to make sure we only update sensors with new values every 30 second. This interval I expect to be configurable later on.
+
+## Battery control
+
+This integration adds services for charging, discharging and autocharge. Please see Ferroamp API documentation for more info about this functionality:
+
+### ferroamp.charge
+Parameter `power` needs to be specified in W.
 ```
-Entity id already exists - ignoring: sensor.ferroamp_sso_pv_string_power
+power: 1000
 ```
+### ferroamp.discharge
+
+Parameter `power` needs to be specified in W.
+```
+power: 1000
+```
+
+### ferroamp.autocharge
+No parameters - sets the battery back into autocharge.
 
 ## Utility meter
 
@@ -81,3 +93,11 @@ utility_meter:
     source: sensor.ferroamp_external_energy_produced
     cycle: monthly   
  ```
+ 
+ ## Known issues
+
+I haven't figured out how to check if an entity already exists in home assistant so after first startup you'll see error logging when sensors are added when they already exits:
+```
+Entity id already exists - ignoring: sensor.ferroamp_sso_pv_string_power
+```
+
