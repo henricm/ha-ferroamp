@@ -7,39 +7,60 @@ Ferroamp MQTT support sends updates to these topics:
  * extapi/data/eso (interval 5s)
  * extapi/data/sso (interval 5s)
  * extapi/data/esm (interval 60s)
- 
+
 ## Prerequisites
 - Home assistant `0.115.0`
-- Enable Ferroamp MQTT by contacting Ferroamp Support and to get the username and password for your Energy MQTT broker.
-- Enable MQTT in Home assistant and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp.
+- Enable Ferroamp MQTT by contacting [Ferroamp Support](https://ferroamp.com/sv/kontakt/) to get the username and password for your Energy MQTT broker.
+- Enable MQTT in Home assistant and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp (or setup a bridge-connection if you already have an MQTT-server, example for [Mosquitto here](https://selfhostedhome.com/using-two-mqtt-brokers-with-mqtt-broker-bridging/)).
 
 ### Git installation
 
 1. Make sure you have git installed on your machine.
 2. Navigate to you home assistant configuration folder.
-3. Create a `custom_components` folder of it does not exist, and cd into it.
-4. Execute the following command: `git clone https://github.com/henricm/ha-ferroamp.git ferroamp`
+3. Execute the following command: `git clone https://github.com/henricm/ha-ferroamp.git`
+4. Create a `custom_components` folder if it does not exist, and cd into it.
+5. Create a symbolic link by executing `ln -s ../ha-ferroamp/custom_components/ferroamp`
 
 ## Setup
 
-1. Add a sensor for the ferroamp platform to your `<config dir>/configuration.yaml`
+1. Add the `Ferroamp MQTT Sensors`-integration
+2. Set a name for the integration as well as the MQTT-prefix where updates are sent (default values are probably fine for a standard-setup but if a bridge-connection is used the MQTT-topics can be re-mapped)
+3. Wait for all the devices to become present (EnergyHub, SSO's, ESOs and ESMs depending on your setup. Be patient since ESMs are only updated every 60 seconds.)
 
-```yaml
-sensor:
-  - platform: ferroamp
-```
-
-There are currently no configuration options. This integration will add some sensors with the prefix `ferroamp_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`. 
+This integration will add some sensors with the prefix `<integration name>_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`.
 
 I'm also still figuring out what some of the sensors actually are, since the Ferroamp API documentaiton still seems to be incomplete in some areas.
 
+## Upgrading from a version before config flow was implemented
+
+1. Remove the integration configuration. i.e this
+   ```yaml
+   sensor:
+     - platform: ferroamp
+   ```
+2. Restart Home Assistant
+3. Remove all Ferroamp entities (they will be re-created once the new setup is completed)
+4. Follow the regular [Setup](#Setup)
+
+_NB: Three sensors have changed name due to typos being fixed. Those three will lose their history and any usage in lovelace/automations need to be manually updated._
+
+_Renamed sensors:_
+
+| Old name | New name |
+|----------|----------|
+| sensor.ferroamp_consumtion_power | sensor.ferroamp_consumption_power |
+| sensor.ferroamp_consumtion_power_reactive | sensor.ferroamp_consumption_power_reactive |
+| sensor.ferroamp_interter_power_reactive | sensor.ferroamp_inverter_power_reactive |
+
 ## Update interval
 
-To avoid too much data into home assistant, we check the timestamp sent by Ferroamp to make sure we only update sensors with new values every 30 second. This interval I expect to be configurable later on.
+To avoid too much data into home assistant, we only update sensors with new values every 30 second (average values are calculated where appropriate). This interval can be configured in the options of the integration.
 
 ## Battery control
 
 This integration adds services for charging, discharging and autocharge. Please see Ferroamp API documentation for more info about this functionality:
+
+If more than one EnergyHub is configured, the target parameter needs to be set to the name of the EnergyHub to control.
 
 ### ferroamp.charge
 Parameter `power` needs to be specified in W.
@@ -91,13 +112,5 @@ utility_meter:
     cycle: daily
   external_energy_produced_monthly:
     source: sensor.ferroamp_external_energy_produced
-    cycle: monthly   
+    cycle: monthly
  ```
- 
- ## Known issues
-
-I haven't figured out how to check if an entity already exists in home assistant so after first startup you'll see error logging when sensors are added when they already exits:
-```
-Entity id already exists - ignoring: sensor.ferroamp_sso_pv_string_power
-```
-
