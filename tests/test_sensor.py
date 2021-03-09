@@ -1,15 +1,838 @@
-import json
-from unittest import TestCase
+import pytest
+from homeassistant.const import (
+    CONF_NAME,
+    CONF_PREFIX
+)
+from homeassistant.core import CoreState, State
+from homeassistant.helpers import entity_registry
+from pytest_homeassistant_custom_component.common import async_fire_mqtt_message, MockConfigEntry, mock_restore_cache
 
-from custom_components.ferroamp.sensor import IntValFerroampSensor
+from custom_components.ferroamp.const import DOMAIN, CONF_INTERVAL, DATA_DEVICES
+from custom_components.ferroamp.sensor import FerroampSensor
 
 
-class TestIntValFerroampSensor(TestCase):
-    def setUp(self):
-        self.sensor = IntValFerroampSensor("Test", "soc", "PERCENTAGE", "mdi:battery", "id", "name", 30, 'config')
+async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
 
-    def test_update_state_from_event(self):
-        event = json.loads("{ \"soc\": { \"val\": \"90.00\"}}")
-        self.sensor.update_state_from_events([event])
+    topic = "extapi/data/ehub"
+    msg = """{
+                "wloadconsq": {"L2": "5509231063416", "L3": "10852247351438", "L1": "7902091810549"},
+                "iloadd": {"L2": "-0.67", "L3": "0.56", "L1": "1.55"},
+                "wextconsq": {"L2": "5364952651263", "L3": "10118502962305", "L1": "7277915408026"},
+                "ppv": {"val": "10107.51"},
+                "iext": {"L2": "8.90", "L3": "7.49", "L1": "7.59"},
+                "iloadq": {"L2": "1.16", "L3": "3.61", "L1": "3.89"},
+                "iace": {"L2": "0.00", "L3": "0.00", "L1": "0.00"},
+                "ul": {"L2": "233.81", "L3": "231.18", "L1": "228.81"},
+                "pinvreactive": {"L2": "438.12", "L3": "444.64", "L1": "430.37"},
+                "ts": {"val": "2021-03-08T08:43:12UTC"},
+                "ploadreactive": {"L2": "-110.77", "L3": "91.54", "L1": "250.78"},
+                "state": {"val": "4097"},
+                "wloadprodq": {"L2": "18020837409", "L3": "8433745", "L1": "4976003"},
+                "pinv": {"L2": "-2263.35", "L3": "-2234.62", "L1": "-2224.66"},
+                "iextq": {"L2": "-12.53", "L3": "-10.06", "L1": "-9.86"},
+                "pext": {"L2": "-2071.57", "L3": "-1644.50", "L1": "-1595.28"},
+                "wbatcons": {"val": "4472794198593"},
+                "wextprodq": {"L2": "1118056851556", "L3": "604554554552", "L1": "662115344893"},
+                "wpv": {"val": "4422089590383"},
+                "winvconsq": {"L2": "1475109889749", "L3": "1451934095829", "L1": "1436427014025"},
+                "pextreactive": {"L2": "327.35", "L3": "536.18", "L1": "681.15"},
+                "udc": {"neg": "-383.96", "pos": "384.31"},
+                "sext": {"val": "5549.12"},
+                "pbat": {"val": "-3218.99"},
+                "iextd": {"L2": "1.98", "L3": "3.28", "L1": "4.21"},
+                "wbatprod": {"val": "4918944968551"},
+                "ild": {"L2": "2.65", "L3": "2.72", "L1": "2.66"},
+                "gridfreq": {"val": "50.07"},
+                "pload": {"L2": "191.78", "L3": "590.12", "L1": "629.38"},
+                "ilq": {"L2": "-13.69", "L3": "-13.67", "L1": "-13.75"},
+                "winvprodq": {"L2": "2610825033980", "L3": "2570987302422", "L1": "2567078340545"},
+                "il": {"L2": "9.85", "L3": "9.85", "L1": "9.89"}}"""
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
 
-        self.assertEqual(90, self.sensor.state)
+    state = hass.states.get("sensor.ferroamp_external_voltage")
+    assert state.state == "693"
+    assert state.attributes == {
+        'L1': 228.81,
+        'L2': 233.81,
+        'L3': 231.18,
+        'friendly_name': 'Ferroamp External Voltage',
+        'icon': 'mdi:current-ac',
+        'unit_of_measurement': 'V'
+    }
+
+    state = hass.states.get("sensor.ferroamp_inverter_rms_current")
+    assert state.state == "29"
+    assert state.attributes == {
+        'L1': 9.89,
+        'L2': 9.85,
+        'L3': 9.85,
+        'friendly_name': 'Ferroamp Inverter RMS current',
+        'icon': 'mdi:current-dc',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_inverter_reactive_current")
+    assert state.state == "8"
+    assert state.attributes == {
+        'L1': 2.66,
+        'L2': 2.65,
+        'L3': 2.72,
+        'friendly_name': 'Ferroamp Inverter reactive current',
+        'icon': 'mdi:current-dc',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_grid_current")
+    assert state.state == "23"
+    assert state.attributes == {
+        'L1': 7.59,
+        'L2': 8.9,
+        'L3': 7.49,
+        'friendly_name': 'Ferroamp Grid Current',
+        'icon': 'mdi:current-ac',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_grid_reactive_current")
+    assert state.state == "9"
+    assert state.attributes == {
+        'L1': 4.21,
+        'L2': 1.98,
+        'L3': 3.28,
+        'friendly_name': 'Ferroamp Grid Reactive Current',
+        'icon': 'mdi:current-ac',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_external_active_current")
+    assert state.state == "-32"
+    assert state.attributes == {
+        'L1': -9.86,
+        'L2': -12.53,
+        'L3': -10.06,
+        'friendly_name': 'Ferroamp External Active Current',
+        'icon': 'mdi:current-ac',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_grid_power")
+    assert state.state == "-5311"
+    assert state.attributes == {
+        'L1': -1595.28,
+        'L2': -2071.57,
+        'L3': -1644.5,
+        'friendly_name': 'Ferroamp Grid Power',
+        'icon': 'mdi:transmission-tower',
+        'unit_of_measurement': 'W'
+    }
+
+    state = hass.states.get("sensor.ferroamp_grid_power_reactive")
+    assert state.state == "1544"
+    assert state.attributes == {
+        'L1': 681.15,
+        'L2': 327.35,
+        'L3': 536.18,
+        'friendly_name': 'Ferroamp Grid Power Reactive',
+        'icon': 'mdi:transmission-tower',
+        'unit_of_measurement': 'W'
+    }
+
+    state = hass.states.get("sensor.ferroamp_inverter_power_active")
+    assert state.state == "-6722"
+    assert state.attributes == {
+        'L1': -2224.66,
+        'L2': -2263.35,
+        'L3': -2234.62,
+        'friendly_name': 'Ferroamp Inverter Power, active',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'W'
+    }
+
+    state = hass.states.get("sensor.ferroamp_inverter_power_reactive")
+    assert state.state == "1313"
+    assert state.attributes == {
+        'L1': 430.37,
+        'L2': 438.12,
+        'L3': 444.64,
+        'friendly_name': 'Ferroamp Inverter Power, reactive',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'W'
+    }
+
+    state = hass.states.get("sensor.ferroamp_consumption_power")
+    assert state.state == "1411"
+    assert state.attributes == {
+        'L1': 629.38,
+        'L2': 191.78,
+        'L3': 590.12,
+        'friendly_name': 'Ferroamp Consumption Power',
+        'icon': 'mdi:power-plug',
+        'unit_of_measurement': 'W'
+    }
+
+    state = hass.states.get("sensor.ferroamp_consumption_power_reactive")
+    assert state.state == "231"
+    assert state.attributes == {
+        'L1': 250.78,
+        'L2': -110.77,
+        'L3': 91.54,
+        'friendly_name': 'Ferroamp Consumption Power Reactive',
+        'icon': 'mdi:power-plug',
+        'unit_of_measurement': 'W'
+    }
+
+    state = hass.states.get("sensor.ferroamp_external_energy_produced")
+    assert state.state == "660"
+    assert state.attributes == {
+        'L1': 183.0,
+        'L2': 310.0,
+        'L3': 167.0,
+        'friendly_name': 'Ferroamp External Energy Produced',
+        'icon': 'mdi:power-plug',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_external_energy_consumed")
+    assert state.state == "6321"
+    assert state.attributes == {
+        'L1': 2021.0,
+        'L2': 1490.0,
+        'L3': 2810.0,
+        'friendly_name': 'Ferroamp External Energy Consumed',
+        'icon': 'mdi:power-plug',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_inverter_energy_produced")
+    assert state.state == "2152"
+    assert state.attributes == {
+        'L1': 713.0,
+        'L2': 725.0,
+        'L3': 714.0,
+        'friendly_name': 'Ferroamp Inverter Energy Produced',
+        'icon': 'mdi:power-plug',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_inverter_energy_consumed")
+    assert state.state == "1211"
+    assert state.attributes == {
+        'L1': 399.0,
+        'L2': 409.0,
+        'L3': 403.0,
+        'friendly_name': 'Ferroamp Inverter Energy Consumed',
+        'icon': 'mdi:power-plug',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_load_energy_produced")
+    assert state.state == "5"
+    assert state.attributes == {
+        'L1': 0.0,
+        'L2': 5.0,
+        'L3': 0.0,
+        'friendly_name': 'Ferroamp Load Energy Produced',
+        'icon': 'mdi:power-plug',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_load_energy_consumed")
+    assert state.state == "6739"
+    assert state.attributes == {
+        'L1': 2195.0,
+        'L2': 1530.0,
+        'L3': 3014.0,
+        'friendly_name': 'Ferroamp Load Energy Consumed',
+        'icon': 'mdi:power-plug',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_total_solar_energy")
+    assert state.state == "1228"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Total Solar Energy',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_battery_energy_produced")
+    assert state.state == "1366"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Battery Energy Produced',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_battery_energy_consumed")
+    assert state.state == "1242"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Battery Energy Consumed',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_system_state")
+    assert state.state == "4097"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp System State',
+        'icon': 'mdi:traffic-light',
+        'unit_of_measurement': ''
+    }
+
+    state = hass.states.get("sensor.ferroamp_dc_link_voltage")
+    assert state.state == "0"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp DC Link Voltage',
+        'icon': 'mdi:current-ac',
+        'neg': -383.96,
+        'pos': 384.31,
+        'unit_of_measurement': 'V'
+    }
+
+    state = hass.states.get("sensor.ferroamp_system_state_of_charge")
+    assert state.state == "0"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp System State of Charge',
+        'icon': 'mdi:battery-0',
+        'unit_of_measurement': '%'
+    }
+
+    state = hass.states.get("sensor.ferroamp_system_state_of_health")
+    assert state.state == "0"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp System State of Health',
+        'icon': 'mdi:battery-0',
+        'unit_of_measurement': '%'
+    }
+
+    state = hass.states.get("sensor.ferroamp_apparent_power")
+    assert state.state == "5549"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Apparent power',
+        'icon': 'mdi:transmission-tower',
+        'unit_of_measurement': 'VA'
+    }
+
+    state = hass.states.get("sensor.ferroamp_solar_power")
+    assert state.state == "10107"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Solar Power',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'W'
+    }
+
+    state = hass.states.get("sensor.ferroamp_battery_power")
+    assert state.state == "-3218"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Battery Power',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'W'
+    }
+
+    state = hass.states.get("sensor.ferroamp_total_rated_capacity_of_all_batteries")
+    assert state.state == "0"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Total rated capacity of all batteries',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'Wh'
+    }
+
+
+async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/esm"
+    msg = '{"id":{"val":"1"},"soh":{"val":"89.2"},"soc":{"val":"45.5"},"ratedCapacity":{"val":"15300"}}'
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_esm_1_state_of_health")
+    assert state.state == "89"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESM 1 State of Health',
+        'icon': 'mdi:battery-80',
+        'unit_of_measurement': '%'
+    }
+
+    state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
+    assert state.state == "45"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESM 1 State of Charge',
+        'icon': 'mdi:battery-40',
+        'unit_of_measurement': '%'
+    }
+
+    state = hass.states.get("sensor.ferroamp_esm_1_rated_capacity")
+    assert state.state == "15300"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESM 1 Rated Capacity',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'Wh'
+    }
+
+
+async def test_battery_full(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/esm"
+    msg = '{"id":{"val":"1"},"soh":{"val":"89.2"},"soc":{"val":"100.0"},"ratedCapacity":{"val":"15300"}}'
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
+    assert state.state == "100"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESM 1 State of Charge',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': '%'
+    }
+
+    state = hass.states.get("sensor.ferroamp_esm_1_rated_capacity")
+    assert state.state == "15300"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESM 1 Rated Capacity',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'Wh'
+    }
+
+
+async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/eso"
+    msg = """{
+            "soc": {"val": 48.100003999999998},
+            "temp": {"val": 20.379000000000001},
+            "wbatcons": {"val": 2213535479518},
+            "ubat": {"val": 622.601},
+            "ibat": {"val": 1.5700000000000001},
+            "relaystatus": {"val": "0"},
+            "faultcode": {"val": "80"},
+            "ts": {"val": "2021-03-07T19:21:04UTC"},
+            "id": {"val": "1"},
+            "wbatprod": {"val": 2465106122063}
+            }"""
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_eso_1_battery_voltage")
+    assert state.state == "622"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESO 1 Battery Voltage',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'V'
+    }
+
+    state = hass.states.get("sensor.ferroamp_eso_1_battery_current")
+    assert state.state == "1.57"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESO 1 Battery Current',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_eso_1_total_energy_produced")
+    assert state.state == "684"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESO 1 Total Energy Produced',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_eso_1_total_energy_consumed")
+    assert state.state == "614"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESO 1 Total Energy Consumed',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_eso_1_state_of_charge")
+    assert state.state == "48"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESO 1 State of Charge',
+        'icon': 'mdi:battery-40',
+        'unit_of_measurement': '%'
+    }
+
+    state = hass.states.get("sensor.ferroamp_eso_1_faultcode")
+    assert state.state == "80"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESO 1 Faultcode',
+        'icon': 'mdi:traffic-light',
+        'unit_of_measurement': ''
+    }
+
+    state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
+    assert state.state == "closed"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESO 1 Relay Status',
+        'icon': '',
+        'unit_of_measurement': ''
+    }
+
+    state = hass.states.get("sensor.ferroamp_eso_1_pcb_temperature")
+    assert state.state == "20.38"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESO 1 PCB Temperature',
+        'icon': 'mdi:thermometer',
+        'unit_of_measurement': '°C'
+    }
+
+
+async def test_relay_status_open(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/eso"
+    msg = """{
+            "soc": {"val": 48.100003999999998},
+            "temp": {"val": 20.379000000000001},
+            "wbatcons": {"val": 2213535479518},
+            "ubat": {"val": 622.601},
+            "ibat": {"val": 1.5700000000000001},
+            "relaystatus": {"val": "1"},
+            "faultcode": {"val": "80"},
+            "ts": {"val": "2021-03-07T19:21:04UTC"},
+            "id": {"val": "1"},
+            "wbatprod": {"val": 2465106122063}
+            }"""
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
+    assert state.state == "open/disconnected"
+
+
+async def test_relay_status_precharge(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/eso"
+    msg = """{
+            "soc": {"val": 48.100003999999998},
+            "temp": {"val": 20.379000000000001},
+            "wbatcons": {"val": 2213535479518},
+            "ubat": {"val": 622.601},
+            "ibat": {"val": 1.5700000000000001},
+            "relaystatus": {"val": "2"},
+            "faultcode": {"val": "80"},
+            "ts": {"val": "2021-03-07T19:21:04UTC"},
+            "id": {"val": "1"},
+            "wbatprod": {"val": 2465106122063}
+            }"""
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
+    assert state.state == "precharge"
+
+
+async def test_ignore_eso_message_without_id(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/eso"
+    msg = """{
+                "soc": {"val": 0.0},
+                "temp": {"val": 0.0},
+                "wbatcons": {"val": 0},
+                "ubat": {"val": 0.0},
+                "ibat": {"val": 0.0},
+                "relaystatus": {"val": "0"},
+                "faultcode": {"val": "0"},
+                "ts": {"val": "2021-03-03T01:03:55UTC"},
+                "id": {"val": ""},
+                "wbatprod": {"val": 0}
+            }"""
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    er = await entity_registry.async_get_registry(hass)
+    assert er.async_is_registered("sensor.ferroamp_eso__battery_voltage") is False
+
+
+async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/sso"
+    msg = """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "0"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "1"}
+            }"""
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_1_pv_string_voltage")
+    assert state.state == "653"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 1 PV String Voltage',
+        'icon': 'mdi:current-dc',
+        'unit_of_measurement': 'V'
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_1_pv_string_current")
+    assert state.state == "4.83"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 1 PV String Current',
+        'icon': 'mdi:current-dc',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_1_pv_string_power")
+    assert state.state == "3.15"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 1 PV String Power',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'kW'
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_1_total_energy")
+    assert state.state == "234"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 1 Total Energy',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_1_faultcode")
+    assert state.state == "0"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 1 Faultcode',
+        'icon': 'mdi:traffic-light',
+        'unit_of_measurement': ''
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_1_relay_status")
+    assert state.state == "closed"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 1 Relay Status',
+        'icon': '',
+        'unit_of_measurement': ''
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_1_pcb_temperature")
+    assert state.state == "6.48"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 1 PCB Temperature',
+        'icon': 'mdi:thermometer',
+        'unit_of_measurement': '°C'
+    }
+
+
+async def test_restore_state(hass, mqtt_mock):
+    mock_restore_cache(
+        hass,
+        (
+            State("sensor.ferroamp_esm_1_state_of_charge", "11"),
+        ),
+    )
+
+    hass.state = CoreState.starting
+
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    topic = "extapi/data/esm"
+    msg = '{"id":{"val":"1"}}'
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
+    assert state.state == "0"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESM 1 State of Charge',
+        'icon': 'mdi:battery-0',
+        'unit_of_measurement': '%'
+    }
+
+
+async def test_update_options(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/esm"
+    msg = '{"id":{"val":"1"}}'
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    result = await hass.config_entries.options.async_init(config_entry.entry_id)
+    await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_INTERVAL: 20
+        }
+    )
+    await hass.async_block_till_done()
+
+    er = await entity_registry.async_get_registry(hass)
+    entity = er.async_get("sensor.ferroamp_esm_1_state_of_charge")
+    assert entity is not None
+    sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_esm_1"][entity.unique_id]
+    assert isinstance(sensor, FerroampSensor)
+    assert sensor.interval == 20
+
+
+async def test_base_class_update_state_from_events():
+    sensor = FerroampSensor("test", "key", "", "", "", "", 20, "a")
+    with pytest.raises(Exception):
+        sensor.update_state_from_events([{}])
