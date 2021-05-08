@@ -18,6 +18,7 @@ async def test_flow_user_init(hass, mqtt_mock):
         "handler": "ferroamp",
         "step_id": "user",
         "type": "form",
+        "last_step": None,
     }
     assert expected == result
 

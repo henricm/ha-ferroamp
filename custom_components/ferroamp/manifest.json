@@ -5,6 +5,7 @@
   "config_flow": true,
   "documentation": "https://github.com/henricm/ha-ferroamp/",
   "dependencies": ["mqtt"],
-  "codeowners": ["@henricm"],
-  "requirements": []
+  "codeowners": ["@henricm", "@argoyle"],
+  "requirements": [],
+  "iot_class": "cloud_push"
 }
