@@ -1,0 +1,31 @@
+{
+  "config": {
+    "error": {
+      "name": "The name provided is not valid",
+      "prefix": "The prefix provided is not valid."
+    },
+    "step": {
+      "user": {
+        "data": {
+          "name": "Name of the EnergyHub",
+          "prefix": "Prefix"
+        },
+        "title": "MQTT prefix and name",
+        "description": "Enter the prefix for EnergyHub ExtApi and a name for the EnergyHub"
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "interval": "Interval must be a positive integer"
+    },
+    "step": {
+      "init": {
+        "title": "Update interval",
+        "data": {
+          "interval": "Update interval in seconds (defaults to 30 if left blank)"
+        }
+      }
+    }
+  }
+}

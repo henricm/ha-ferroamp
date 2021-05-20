@@ -1,0 +1,24 @@
+charge:
+  description: Make a charge request
+  fields:
+    target:
+      description: Sets the target integration configuration if more than one (name of configuration)
+      example: "Ferroamp"
+    power:
+      description: The amount of power to charge in watts
+      example: "1000"
+discharge:
+  description: Make a discharge request
+  fields:
+    target:
+      description: Sets the target integration configuration if more than one (name of configuration)
+      example: "Ferroamp"
+    power:
+      description: The amount of power to discharge in watts
+      example: "1000"
+autocharge:
+  description: Sets the ESOs to autocharge-mode
+  fields:
+    target:
+      description: Sets the target integration configuration if more than one (name of configuration)
+      example: "Ferroamp"
