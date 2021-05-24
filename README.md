@@ -1,3 +1,5 @@
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
+
 # Home assistant sensors for Ferroamp EnergyHub
 This is still very much still work in progress, so please use this component with caution.
 
