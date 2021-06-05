@@ -7,6 +7,7 @@ import uuid
 from homeassistant import config_entries, core
 from homeassistant.const import CONF_NAME, CONF_PREFIX
 from homeassistant.components import mqtt
+from homeassistant.helpers import device_registry as dr
 from homeassistant.util import slugify
 
 from .const import DATA_DEVICES, DATA_LISTENERS, DATA_PREFIXES, DOMAIN
@@ -39,31 +40,35 @@ async def async_setup_entry(
 
 async def async_unload_entry(hass, entry):
     """Unload a config entry."""
-    if await hass.config_entries.async_forward_entry_unload(entry, "sensor"):
+    unload_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
+    if unload_ok:
         for unsubscribe_listener in hass.data[DOMAIN][DATA_LISTENERS][entry.unique_id]:
             unsubscribe_listener()
-        config = hass.data[DOMAIN][DATA_DEVICES][entry.unique_id]
-        for device in config.values():
-            for sensor in device.values():
-                sensor.async_remove()
         hass.data[DOMAIN][DATA_DEVICES].pop(entry.unique_id)
         hass.data[DOMAIN][DATA_PREFIXES].pop(slugify(entry.data[CONF_NAME]))
         hass.data[DOMAIN][DATA_LISTENERS].pop(entry.unique_id)
-        return True
-    return False
+        hass.data[DOMAIN].pop(entry.unique_id)
+    return unload_ok
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     _LOGGER.debug("Setting up ferroamp battery service calls")
     hass.data.setdefault(DOMAIN, {})
+    device_registry = await dr.async_get_registry(hass)
 
     def control_request(cmd_name, target, power=None):
         prefix = list(hass.data[DOMAIN][DATA_PREFIXES].values())[0]
         if len(hass.data[DOMAIN][DATA_PREFIXES]) > 1:
             if len(target) == 0:
                 raise Exception(f"Target needs to be specified since more than one instance of Ferroamp is available")
-            _LOGGER.info(f"Looking up prefix for {target}")
-            prefix = hass.data[DOMAIN][DATA_PREFIXES].get(slugify(target))
+            _LOGGER.info(f"Looking up prefix for device with id {target}")
+            device = device_registry.async_get(target)
+            if device is None:
+                raise Exception(f"Device with id {target} not found")
+
+            prefix = None
+            for c in device.config_entries:
+                prefix = hass.config_entries.async_get_entry(c).data[CONF_PREFIX]
             _LOGGER.info(f"Prefix for {target} is {prefix}")
             if prefix is None:
                 raise Exception(f"No prefix found for {target}")

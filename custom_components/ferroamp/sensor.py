@@ -45,9 +45,6 @@ async def async_setup_entry(
     hass.data[DOMAIN][DATA_DEVICES].setdefault(config_entry.unique_id, {})
     hass.data[DOMAIN][DATA_LISTENERS].setdefault(config_entry.unique_id, [])
     listeners = hass.data[DOMAIN][DATA_LISTENERS].get(config_entry.unique_id)
-    if listeners is None:
-        listeners = hass.data[DOMAIN][DATA_LISTENERS][config_entry.unique_id] = []
-
     config = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]
     _LOGGER.debug(
         "Setting up ferroamp sensors for %(prefix)s",
@@ -388,19 +385,18 @@ class FerroampSensor(RestoreEntity):
         self.event.update(event)
         now = datetime.now()
         delta = (now - self.updated).total_seconds()
-        if delta > self.interval:
-            temp = self.events
-            self.events = []
-            self.updated = now
-            if self.entity_id is not None:
-                self.update_state_from_events(temp)
-                self.async_write_ha_state()
+        if delta > self.interval and self.entity_id is not None:
+            self.process_events(now)
+
+    def process_events(self, now):
+        temp = self.events
+        self.events = []
+        self.updated = now
+        self.update_state_from_events(temp)
+        self.async_write_ha_state()
 
     def update_state_from_events(self, events):
-        event = self.event
-        for e in events:
-            event.update(e)
-        self._state = event.get(self._state_key, None)
+        raise Exception("No implementation in base class")
 
     @property
     def state(self):
@@ -428,6 +424,7 @@ class FerroampSensor(RestoreEntity):
             return
         self._state = state.state
         self.hass.data[DOMAIN][DATA_DEVICES][self.config_id][self.device_id][self.unique_id] = self
+        self.process_events(datetime.now())
 
     def set_interval(self, interval):
         self.interval = interval
@@ -524,10 +521,7 @@ class BatteryFerroampSensor(IntValFerroampSensor):
     def icon(self):
         if self.state is None:
             return self._icon
-        pct = self.state
-        if isinstance(pct, str):
-            pct = int(pct)
-        pct = int(pct / 10) * 10
+        pct = int(int(self.state) / 10) * 10
         if pct <= 90:
             self._icon = f"mdi:battery-{pct}"
         else:
