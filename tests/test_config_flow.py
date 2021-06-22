@@ -2,7 +2,14 @@ from unittest import mock
 from homeassistant import data_entry_flow
 from custom_components.ferroamp import config_flow, CONF_NAME, CONF_PREFIX
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-from custom_components.ferroamp.const import CONF_INTERVAL
+from custom_components.ferroamp.const import (
+    CONF_INTERVAL,
+    CONF_PRECISION_BATTERY,
+    CONF_PRECISION_CURRENT,
+    CONF_PRECISION_ENERGY,
+    CONF_PRECISION_TEMPERATURE,
+    CONF_PRECISION_VOLTAGE
+)
 
 
 async def test_flow_user_init(hass, mqtt_mock):
@@ -82,17 +89,32 @@ async def test_options_flow(hass, mqtt_mock):
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
         user_input={
-            CONF_INTERVAL: 20
+            CONF_INTERVAL: 20,
+            CONF_PRECISION_BATTERY: 1,
+            CONF_PRECISION_CURRENT: 2,
+            CONF_PRECISION_ENERGY: 3,
+            CONF_PRECISION_TEMPERATURE: 4,
+            CONF_PRECISION_VOLTAGE: 5
         }
     )
     assert result["type"] == data_entry_flow.RESULT_TYPE_CREATE_ENTRY
     assert result["data"] == {
-        CONF_INTERVAL: 20
+        CONF_INTERVAL: 20,
+        CONF_PRECISION_BATTERY: 1,
+        CONF_PRECISION_CURRENT: 2,
+        CONF_PRECISION_ENERGY: 3,
+        CONF_PRECISION_TEMPERATURE: 4,
+        CONF_PRECISION_VOLTAGE: 5
     }
     assert config_entry.data == {
         CONF_NAME: "Ferroamp",
         CONF_PREFIX: "extapi"
     }
     assert config_entry.options == {
-        CONF_INTERVAL: 20
+        CONF_INTERVAL: 20,
+        CONF_PRECISION_BATTERY: 1,
+        CONF_PRECISION_CURRENT: 2,
+        CONF_PRECISION_ENERGY: 3,
+        CONF_PRECISION_TEMPERATURE: 4,
+        CONF_PRECISION_VOLTAGE: 5
     }
