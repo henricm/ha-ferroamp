@@ -531,6 +531,14 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'unit_of_measurement': 'A'
     }
 
+    state = hass.states.get("sensor.ferroamp_eso_1_battery_power")
+    assert state.state == "977"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESO 1 Battery Power',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'W'
+    }
+
     state = hass.states.get("sensor.ferroamp_eso_1_total_energy_produced")
     assert state.state == "684.8"
     assert state.attributes == {
@@ -748,11 +756,11 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     }
 
     state = hass.states.get("sensor.ferroamp_sso_1_pv_string_power")
-    assert state.state == "3"
+    assert state.state == "3151"
     assert state.attributes == {
         'friendly_name': 'Ferroamp SSO 1 PV String Power',
         'icon': 'mdi:solar-power',
-        'unit_of_measurement': 'kW'
+        'unit_of_measurement': 'W'
     }
 
     state = hass.states.get("sensor.ferroamp_sso_1_total_energy")

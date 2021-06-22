@@ -13,7 +13,6 @@ from homeassistant.const import (
     ENERGY_WATT_HOUR,
     FREQUENCY_HERTZ,
     PERCENTAGE,
-    POWER_KILO_WATT,
     POWER_WATT,
     TEMP_CELSIUS,
     VOLT
@@ -676,7 +675,7 @@ class CalculatedPowerFerroampSensor(FerroampSensor):
         super().__init__(
             name,
             voltage_key,
-            POWER_KILO_WATT,
+            POWER_WATT,
             icon,
             device_id,
             device_name,
@@ -702,7 +701,7 @@ class CalculatedPowerFerroampSensor(FerroampSensor):
                 temp_voltage += float(voltage["val"])
                 temp_current += float(current["val"])
 
-        self._state = int(round(temp_voltage / len(events) * temp_current / len(events) / 1000, 0))
+        self._state = int(round(temp_voltage / len(events) * temp_current / len(events), 0))
 
 
 class ThreePhaseFerroampSensor(FerroampSensor):
