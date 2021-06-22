@@ -133,6 +133,17 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'unit_of_measurement': 'A'
     }
 
+    state = hass.states.get("sensor.ferroamp_adaptive_current_equalization")
+    assert state.state == "0"
+    assert state.attributes == {
+        'L1': 0,
+        'L2': 0,
+        'L3': 0,
+        'friendly_name': 'Ferroamp Adaptive Current Equalization',
+        'icon': 'mdi:current-ac',
+        'unit_of_measurement': 'A'
+    }
+
     state = hass.states.get("sensor.ferroamp_grid_power")
     assert state.state == "-5311"
     assert state.attributes == {

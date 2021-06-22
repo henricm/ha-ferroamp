@@ -715,6 +715,16 @@ def ehub_sensors(slug, name, interval, config_id):
             config_id,
         ),
         ThreePhaseFerroampSensor(
+            f"{name} Adaptive Current Equalization",
+            "iace",
+            ELECTRICAL_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            f"{name} {EHUB_NAME}",
+            interval,
+            config_id,
+        ),
+        ThreePhaseFerroampSensor(
             f"{name} Grid Power",
             "pext",
             POWER_WATT,
