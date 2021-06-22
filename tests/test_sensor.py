@@ -111,6 +111,14 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'unit_of_measurement': 'A'
     }
 
+    state = hass.states.get("sensor.ferroamp_estimated_grid_frequency")
+    assert state.state == "50.07"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Estimated Grid Frequency',
+        'icon': 'mdi:sine-wave',
+        'unit_of_measurement': 'Hz'
+    }
+
     state = hass.states.get("sensor.ferroamp_grid_reactive_current")
     assert state.state == "9"
     assert state.attributes == {

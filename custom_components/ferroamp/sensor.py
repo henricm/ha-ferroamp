@@ -9,13 +9,14 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_PREFIX,
     ELECTRICAL_CURRENT_AMPERE,
-    ENERGY_WATT_HOUR,
     ENERGY_KILO_WATT_HOUR,
-    POWER_KILO_WATT,
-    TEMP_CELSIUS,
-    POWER_WATT,
-    VOLT,
+    ENERGY_WATT_HOUR,
+    FREQUENCY_HERTZ,
     PERCENTAGE,
+    POWER_KILO_WATT,
+    POWER_WATT,
+    TEMP_CELSIUS,
+    VOLT
 )
 from homeassistant.core import callback
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -654,6 +655,16 @@ class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
 
 def ehub_sensors(slug, name, interval, config_id):
     return [
+        FloatValFerroampSensor(
+            f"{name} Estimated Grid Frequency",
+            "gridfreq",
+            FREQUENCY_HERTZ,
+            "mdi:sine-wave",
+            f"{slug}_{EHUB}",
+            f"{name} {EHUB_NAME}",
+            interval,
+            config_id,
+        ),
         ThreePhaseFerroampSensor(
             f"{name} External Voltage",
             "ul",
