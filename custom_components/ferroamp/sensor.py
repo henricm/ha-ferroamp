@@ -40,6 +40,9 @@ EHUB_TOPIC = "data/ehub"
 SSO_TOPIC = "data/sso"
 ESO_TOPIC = "data/eso"
 ESM_TOPIC = "data/esm"
+CONTROL_REQUEST_TOPIC = "control/request"
+CONTROL_RESPONSE_TOPIC = "control/response"
+CONTROL_RESULT_TOPIC = "control/result"
 
 EHUB = "ehub"
 EHUB_NAME = "EnergyHub"
@@ -95,6 +98,15 @@ async def async_setup_entry(
     eso_sensors = {}
     esm_sensors = {}
     sso_sensors = {}
+    cmd_sensor = {}
+
+    def get_store(store_name):
+        store = config.get(store_name)
+        new = False
+        if store is None:
+            store = config[store_name] = {}
+            new = True
+        return store, new
 
     def update_sensor_from_event(event, sensors, store):
         for sensor in sensors:
@@ -111,9 +123,7 @@ async def async_setup_entry(
     @callback
     def ehub_event_received(msg):
         event = json.loads(msg.payload)
-        store = config.get(f"{slug}_{EHUB}")
-        if store is None:
-            store = config[f"{slug}_{EHUB}"] = {}
+        store, new = get_store(f"{slug}_{EHUB}")
         update_sensor_from_event(event, ehub, store)
 
     @callback
@@ -122,10 +132,9 @@ async def async_setup_entry(
         sso_id = event["id"]["val"]
         device_id = f"{slug}_sso_{sso_id}"
         device_name = f"{name} SSO {sso_id}"
-        store = config.get(device_id)
+        store, new = get_store(device_id)
         sensors = sso_sensors.get(sso_id)
-        if store is None:
-            store = config[device_id] = {}
+        if new:
             sensors = sso_sensors[sso_id] = [
                 VoltageFerroampSensor(
                     f"{device_name} PV String Voltage",
@@ -206,10 +215,9 @@ async def async_setup_entry(
             return
         device_id = f"{slug}_eso_{eso_id}"
         device_name = f"{name} ESO {eso_id}"
-        store = config.get(device_id)
+        store, new = get_store(device_id)
         sensors = eso_sensors.get(eso_id)
-        if store is None:
-            store = config[device_id] = {}
+        if new:
             sensors = eso_sensors[eso_id] = [
                 VoltageFerroampSensor(
                     f"{device_name} Battery Voltage",
@@ -307,10 +315,9 @@ async def async_setup_entry(
         esm_id = event["id"]["val"]
         device_id = f"{slug}_esm_{esm_id}"
         device_name = f"{name} ESM {esm_id}"
-        store = config.get(device_id)
+        store, new = get_store(device_id)
         sensors = esm_sensors.get(esm_id)
-        if store is None:
-            store = config[device_id] = {}
+        if new:
             sensors = esm_sensors[esm_id] = [
                 BatteryFerroampSensor(
                     f"{device_name} State of Health",
@@ -344,6 +351,47 @@ async def async_setup_entry(
 
         update_sensor_from_event(event, sensors, store)
 
+    def get_cmd_sensor(store):
+        sensor = cmd_sensor.get('sensor')
+        if sensor is None:
+            sensor = CommandFerroampSensor(
+                f"{name} Control Status",
+                f"{slug}_{EHUB}",
+                f"{name} {EHUB_NAME}",
+                config_id
+            )
+            cmd_sensor['sensor'] = sensor
+            if sensor.unique_id not in store:
+                store[sensor.unique_id] = sensor
+                _LOGGER.debug(
+                    "Registering new sensor %(unique_id)s",
+                    dict(unique_id=sensor.unique_id),
+                )
+                async_add_entities((sensor,), True)
+            sensor.hass = hass
+        return sensor
+
+    @callback
+    def ehub_request_received(msg):
+        command = json.loads(msg.payload)
+        store, new = get_store(f"{slug}_{EHUB}")
+        sensor = get_cmd_sensor(store)
+        trans_id = command["transId"]
+        cmd = command["cmd"]
+        cmd_name = cmd["name"]
+        arg = cmd.get("arg")
+        sensor.add_request(trans_id, cmd_name, arg)
+
+    @callback
+    def ehub_response_received(msg):
+        response = json.loads(msg.payload)
+        store, new = get_store(f"{slug}_{EHUB}")
+        sensor = get_cmd_sensor(store)
+        trans_id = response["transId"]
+        status = response["status"]
+        message = response["msg"]
+        sensor.add_response(trans_id, status, message)
+
     listeners.append(await mqtt.async_subscribe(
         hass, f"{config_entry.data[CONF_PREFIX]}/{EHUB_TOPIC}", ehub_event_received, 0
     ))
@@ -355,6 +403,15 @@ async def async_setup_entry(
     ))
     listeners.append(await mqtt.async_subscribe(
         hass, f"{config_entry.data[CONF_PREFIX]}/{ESM_TOPIC}", esm_event_received, 0
+    ))
+    listeners.append(await mqtt.async_subscribe(
+        hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_REQUEST_TOPIC}", ehub_request_received, 0
+    ))
+    listeners.append(await mqtt.async_subscribe(
+        hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_RESPONSE_TOPIC}", ehub_response_received, 0
+    ))
+    listeners.append(await mqtt.async_subscribe(
+        hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_RESULT_TOPIC}", ehub_response_received, 0
     ))
 
     return True
@@ -766,6 +823,93 @@ class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
     def __init__(self, name, key, icon, device_id, device_name, interval, config_id):
         """Initialize the sensor."""
         super().__init__(name, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id)
+
+
+class CommandFerroampSensor(RestoreEntity):
+    def __init__(self, name, device_id, device_name, config_id):
+        self._state = None
+        self._name = name
+        self._icon = "mdi:cog-transfer-outline"
+        self._device_id = device_id
+        self._device_name = device_name
+        self.config_id = config_id
+        self.updated = datetime.min
+        self.attrs = {}
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return self._name
+
+    @property
+    def unique_id(self):
+        """Return unique ID of entity."""
+        return f"{self.device_id}_last_cmd"
+
+    @property
+    def icon(self):
+        return self._icon
+
+    @property
+    def device_id(self):
+        return self._device_id
+
+    @property
+    def device_info(self):
+        """Return the device_info of the device."""
+        device_info = {
+            "identifiers": {(DOMAIN, self._device_id)},
+            "name": self._device_name,
+            "manufacturer": MANUFACTURER,
+        }
+        return device_info
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return self._state
+
+    @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement."""
+        return None
+
+    @property
+    def should_poll(self) -> bool:
+        return False
+
+    @property
+    def state_attributes(self):
+        return self.attrs
+
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        state = await self.async_get_last_state()
+        if not state:
+            return
+        self._state = state.state
+        self.hass.data[DOMAIN][DATA_DEVICES][self.config_id][self.device_id][self.unique_id] = self
+
+    def add_request(self, trans_id, cmd, arg):
+        if arg is not None:
+            self._state = f"{cmd} ({arg})"
+        else:
+            self._state = cmd
+        self.attrs["transId"] = trans_id
+        self.attrs["status"] = None
+        self.attrs["message"] = None
+        self.updated = datetime.now()
+        if self.entity_id is not None:
+            self.async_write_ha_state()
+
+    def add_response(self, trans_id, status, message):
+        if self.attrs["transId"] == trans_id:
+            self.attrs["status"] = status
+            self.attrs["message"] = message
+            self.updated = datetime.now()
+            if self.entity_id is not None:
+                self.async_write_ha_state()
 
 
 def ehub_sensors(slug, name, interval, precision_battery, precision_energy, config_id):

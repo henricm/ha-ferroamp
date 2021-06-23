@@ -918,3 +918,139 @@ async def test_base_class_update_state_from_events():
     sensor = FerroampSensor("test", "key", "", "", "", "", 20, "a")
     with pytest.raises(Exception):
         sensor.update_state_from_events([{}])
+
+
+async def test_control_command(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    msg = """{
+                "transId": "abc-123",
+                "cmd": {"name": "charge", "arg": "5000"}
+            }"""
+    async_fire_mqtt_message(hass, "extapi/control/request", msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_control_status")
+    assert state.state == "charge (5000)"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Control Status',
+        'icon': 'mdi:cog-transfer-outline',
+        'transId': 'abc-123',
+        'status': None,
+        'message': None
+    }
+
+    async_fire_mqtt_message(hass, "extapi/control/request", msg)
+    await hass.async_block_till_done()
+
+    msg = """{
+                "transId": "xxx-123",
+                "status": "ack",
+                "msg": "some message"
+            }"""
+    async_fire_mqtt_message(hass, "extapi/control/response", msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_control_status")
+    assert state.state == "charge (5000)"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Control Status',
+        'icon': 'mdi:cog-transfer-outline',
+        'transId': 'abc-123',
+        'status': None,
+        'message': None
+    }
+
+    msg = """{
+                "transId": "abc-123",
+                "status": "ack",
+                "msg": "some message"
+            }"""
+    async_fire_mqtt_message(hass, "extapi/control/response", msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_control_status")
+    assert state.state == "charge (5000)"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Control Status',
+        'icon': 'mdi:cog-transfer-outline',
+        'transId': 'abc-123',
+        'status': "ack",
+        'message': "some message"
+    }
+
+    msg = """{
+                "transId": "abc-123",
+                "status": "nack",
+                "msg": "other message"
+            }"""
+    async_fire_mqtt_message(hass, "extapi/control/result", msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_control_status")
+    assert state.state == "charge (5000)"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Control Status',
+        'icon': 'mdi:cog-transfer-outline',
+        'transId': 'abc-123',
+        'status': "nack",
+        'message': "other message"
+    }
+
+
+async def test_control_command_restore_state(hass, mqtt_mock):
+    mock_restore_cache(
+        hass,
+        (
+            State("sensor.ferroamp_control_status", "auto"),
+        ),
+    )
+
+    hass.state = CoreState.starting
+
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    msg = """{
+                "transId": "abc-123",
+                "cmd": {"name": "charge", "arg": "5000"}
+            }"""
+    async_fire_mqtt_message(hass, "extapi/control/request", msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_control_status")
+    assert state.state == "auto"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp Control Status',
+        'icon': 'mdi:cog-transfer-outline',
+        'transId': 'abc-123',
+        'status': None,
+        'message': None
+    }
