@@ -13,7 +13,6 @@ from homeassistant.const import (
     ENERGY_WATT_HOUR,
     FREQUENCY_HERTZ,
     PERCENTAGE,
-    POWER_KILO_WATT,
     POWER_WATT,
     TEMP_CELSIUS,
     VOLT
@@ -22,7 +21,18 @@ from homeassistant.core import callback
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
-from .const import CONF_INTERVAL, DATA_DEVICES, DATA_LISTENERS, DOMAIN, MANUFACTURER
+from .const import (
+    CONF_INTERVAL,
+    CONF_PRECISION_BATTERY,
+    CONF_PRECISION_CURRENT,
+    CONF_PRECISION_ENERGY,
+    CONF_PRECISION_TEMPERATURE,
+    CONF_PRECISION_VOLTAGE,
+    DATA_DEVICES,
+    DATA_LISTENERS,
+    DOMAIN,
+    MANUFACTURER
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,9 +69,29 @@ async def async_setup_entry(
     if interval is None or interval == 0:
         interval = 30
 
+    precision_battery = config_entry.options.get(CONF_PRECISION_BATTERY)
+    if precision_battery is None:
+        precision_battery = 1
+
+    precision_current = config_entry.options.get(CONF_PRECISION_CURRENT)
+    if precision_current is None:
+        precision_current = 0
+
+    precision_energy = config_entry.options.get(CONF_PRECISION_ENERGY)
+    if precision_energy is None:
+        precision_energy = 1
+
+    precision_temperature = config_entry.options.get(CONF_PRECISION_TEMPERATURE)
+    if precision_temperature is None:
+        precision_temperature = 0
+
+    precision_voltage = config_entry.options.get(CONF_PRECISION_VOLTAGE)
+    if precision_voltage is None:
+        precision_voltage = 0
+
     listeners.append(config_entry.add_update_listener(options_update_listener))
 
-    ehub = ehub_sensors(slug, name, interval, config_id)
+    ehub = ehub_sensors(slug, name, interval, precision_battery, precision_energy, config_id)
     eso_sensors = {}
     esm_sensors = {}
     sso_sensors = {}
@@ -97,27 +127,27 @@ async def async_setup_entry(
         if store is None:
             store = config[device_id] = {}
             sensors = sso_sensors[sso_id] = [
-                IntValFerroampSensor(
+                VoltageFerroampSensor(
                     f"{device_name} PV String Voltage",
                     "upv",
-                    VOLT,
                     "mdi:current-dc",
                     device_id,
                     device_name,
                     interval,
+                    precision_voltage,
                     config_id,
                 ),
-                FloatValFerroampSensor(
+                CurrentFerroampSensor(
                     f"{device_name} PV String Current",
                     "ipv",
-                    ELECTRICAL_CURRENT_AMPERE,
                     "mdi:current-dc",
                     device_id,
                     device_name,
                     interval,
-                    config_id,
+                    precision_current,
+                    config_id
                 ),
-                PowerFerroampSensor(
+                CalculatedPowerFerroampSensor(
                     f"{device_name} PV String Power",
                     "upv",
                     "ipv",
@@ -134,6 +164,7 @@ async def async_setup_entry(
                     device_id,
                     device_name,
                     interval,
+                    precision_energy,
                     config_id,
                 ),
                 StringValFerroampSensor(
@@ -154,15 +185,14 @@ async def async_setup_entry(
                     interval,
                     config_id,
                 ),
-                FloatValFerroampSensor(
+                TemperatureFerroampSensor(
                     f"{device_name} PCB Temperature",
                     "temp",
-                    TEMP_CELSIUS,
-                    "mdi:thermometer",
                     device_id,
                     device_name,
                     interval,
-                    config_id,
+                    precision_temperature,
+                    config_id
                 ),
             ]
 
@@ -181,27 +211,27 @@ async def async_setup_entry(
         if store is None:
             store = config[device_id] = {}
             sensors = eso_sensors[eso_id] = [
-                IntValFerroampSensor(
+                VoltageFerroampSensor(
                     f"{device_name} Battery Voltage",
                     "ubat",
-                    VOLT,
                     "mdi:battery",
                     device_id,
                     device_name,
                     interval,
+                    precision_voltage,
                     config_id,
                 ),
-                FloatValFerroampSensor(
+                CurrentFerroampSensor(
                     f"{device_name} Battery Current",
                     "ibat",
-                    ELECTRICAL_CURRENT_AMPERE,
                     "mdi:battery",
                     device_id,
                     device_name,
                     interval,
-                    config_id,
+                    precision_current,
+                    config_id
                 ),
-                PowerFerroampSensor(
+                CalculatedPowerFerroampSensor(
                     f"{device_name} Battery Power",
                     "ubat",
                     "ibat",
@@ -218,6 +248,7 @@ async def async_setup_entry(
                     device_id,
                     device_name,
                     interval,
+                    precision_energy,
                     config_id,
                 ),
                 EnergyFerroampSensor(
@@ -227,6 +258,7 @@ async def async_setup_entry(
                     device_id,
                     device_name,
                     interval,
+                    precision_energy,
                     config_id,
                 ),
                 BatteryFerroampSensor(
@@ -235,6 +267,7 @@ async def async_setup_entry(
                     device_id,
                     device_name,
                     interval,
+                    precision_battery,
                     config_id,
                 ),
                 StringValFerroampSensor(
@@ -255,15 +288,14 @@ async def async_setup_entry(
                     interval,
                     config_id,
                 ),
-                FloatValFerroampSensor(
+                TemperatureFerroampSensor(
                     f"{device_name} PCB Temperature",
                     "temp",
-                    TEMP_CELSIUS,
-                    "mdi:thermometer",
                     device_id,
                     device_name,
                     interval,
-                    config_id,
+                    precision_temperature,
+                    config_id
                 ),
             ]
 
@@ -286,6 +318,7 @@ async def async_setup_entry(
                     device_id,
                     device_name,
                     interval,
+                    precision_battery,
                     config_id,
                 ),
                 BatteryFerroampSensor(
@@ -294,6 +327,7 @@ async def async_setup_entry(
                     device_id,
                     device_name,
                     interval,
+                    precision_battery,
                     config_id,
                 ),
                 IntValFerroampSensor(
@@ -331,7 +365,7 @@ async def options_update_listener(hass, entry):
     config = hass.data[DOMAIN][DATA_DEVICES][entry.unique_id]
     for device in config.values():
         for sensor in device.values():
-            sensor.set_interval(entry.options.get(CONF_INTERVAL))
+            sensor.handle_options_update(entry.options)
 
 
 class FerroampSensor(RestoreEntity):
@@ -346,7 +380,7 @@ class FerroampSensor(RestoreEntity):
         self._icon = icon
         self._device_id = device_id
         self._device_name = device_name
-        self.interval = interval
+        self._interval = interval
         self.config_id = config_id
         self.updated = datetime.min
         self.event = {}
@@ -386,7 +420,7 @@ class FerroampSensor(RestoreEntity):
         self.event.update(event)
         now = datetime.now()
         delta = (now - self.updated).total_seconds()
-        if delta > self.interval and self.entity_id is not None:
+        if delta > self._interval and self.entity_id is not None:
             self.process_events(now)
 
     def process_events(self, now):
@@ -427,8 +461,8 @@ class FerroampSensor(RestoreEntity):
         self.hass.data[DOMAIN][DATA_DEVICES][self.config_id][self.device_id][self.unique_id] = self
         self.process_events(datetime.now())
 
-    def set_interval(self, interval):
-        self.interval = interval
+    def handle_options_update(self, options):
+        self._interval = options.get(CONF_INTERVAL)
 
 
 class IntValFerroampSensor(FerroampSensor):
@@ -471,9 +505,10 @@ class StringValFerroampSensor(FerroampSensor):
 class FloatValFerroampSensor(FerroampSensor):
     """Representation of a Ferroamp float value Sensor."""
 
-    def __init__(self, name, key, unit, icon, device_id, device_name, interval, config_id):
+    def __init__(self, name, key, unit, icon, device_id, device_name, interval, precision, config_id):
         """Initialize the sensor."""
         super().__init__(name, key, unit, icon, device_id, device_name, interval, config_id)
+        self._precision = precision
 
     def update_state_from_events(self, events):
         temp = 0
@@ -483,7 +518,9 @@ class FloatValFerroampSensor(FerroampSensor):
             v = event.get(self._state_key, None)
             if v is not None:
                 temp += float(v["val"])
-        self._state = round(temp / len(events), 2)
+        self._state = round(temp / len(events), self._precision)
+        if self._precision == 0:
+            self._state = int(self._state)
 
 
 class DcLinkFerroampSensor(FerroampSensor):
@@ -512,10 +549,10 @@ class DcLinkFerroampSensor(FerroampSensor):
         self.attrs = dict(neg=round(float(neg / len(events)), 2), pos=round(float(pos / len(events)), 2))
 
 
-class BatteryFerroampSensor(IntValFerroampSensor):
-    def __init__(self, name, key, device_id, device_name, interval, config_id):
+class BatteryFerroampSensor(FloatValFerroampSensor):
+    def __init__(self, name, key, device_id, device_name, interval, precision, config_id):
         super().__init__(
-            name, key, PERCENTAGE, "mdi:battery-low", device_id, device_name, interval, config_id
+            name, key, PERCENTAGE, "mdi:battery-low", device_id, device_name, interval, precision, config_id
         )
 
     @property
@@ -530,13 +567,58 @@ class BatteryFerroampSensor(IntValFerroampSensor):
 
         return self._icon
 
+    def handle_options_update(self, options):
+        super().handle_options_update(options)
+        self._precision = options.get(CONF_PRECISION_BATTERY)
 
-class EnergyFerroampSensor(IntValFerroampSensor):
+
+class TemperatureFerroampSensor(FloatValFerroampSensor):
+    def __init__(self, name, key, device_id, device_name, interval, precision, config_id):
+        super().__init__(
+            name, key, TEMP_CELSIUS, "mdi:thermometer", device_id, device_name, interval, precision, config_id
+        )
+
+    def handle_options_update(self, options):
+        super().handle_options_update(options)
+        self._precision = options.get(CONF_PRECISION_TEMPERATURE)
+
+
+class CurrentFerroampSensor(FloatValFerroampSensor):
+    def __init__(self, name, key, icon, device_id, device_name, interval, precision, config_id):
+        super().__init__(
+            name,
+            key,
+            ELECTRICAL_CURRENT_AMPERE,
+            icon,
+            device_id,
+            device_name,
+            interval,
+            precision,
+            config_id
+        )
+
+    def handle_options_update(self, options):
+        super().handle_options_update(options)
+        self._precision = options.get(CONF_PRECISION_CURRENT)
+
+
+class VoltageFerroampSensor(FloatValFerroampSensor):
+    def __init__(self, name, key, icon, device_id, device_name, interval, precision, config_id):
+        super().__init__(
+            name, key, VOLT, icon, device_id, device_name, interval, precision, config_id
+        )
+
+    def handle_options_update(self, options):
+        super().handle_options_update(options)
+        self._precision = options.get(CONF_PRECISION_VOLTAGE)
+
+
+class EnergyFerroampSensor(FloatValFerroampSensor):
     """Representation of a Ferroamp energy in kWh value Sensor."""
 
-    def __init__(self, name, key, icon, device_id, device_name, interval, config_id):
+    def __init__(self, name, key, icon, device_id, device_name, interval, precision, config_id):
         """Initialize the sensor"""
-        super().__init__(name, key, ENERGY_KILO_WATT_HOUR, icon, device_id, device_name, interval, config_id)
+        super().__init__(name, key, ENERGY_KILO_WATT_HOUR, icon, device_id, device_name, interval, precision, config_id)
 
     def update_state_from_events(self, events):
         temp = 0
@@ -546,7 +628,13 @@ class EnergyFerroampSensor(IntValFerroampSensor):
             v = event.get(self._state_key, None)
             if v is not None:
                 temp += float(v["val"])
-        self._state = int(temp / len(events) / 3600000000)
+        self._state = round(temp / len(events) / 3600000000, self._precision)
+        if self._precision == 0:
+            self._state = int(self._state)
+
+    def handle_options_update(self, options):
+        super().handle_options_update(options)
+        self._precision = options.get(CONF_PRECISION_ENERGY)
 
 
 class RelayStatusFerroampSensor(FerroampSensor):
@@ -572,13 +660,27 @@ class RelayStatusFerroampSensor(FerroampSensor):
             self._state = temp
 
 
-class PowerFerroampSensor(FerroampSensor):
+class PowerFerroampSensor(FloatValFerroampSensor):
+    """Representation of a Ferroamp Power Sensor."""
+
+    def __init__(self, name, key, icon, device_id, device_name, interval, config_id):
+        super().__init__(name, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id)
+
+
+class CalculatedPowerFerroampSensor(FerroampSensor):
     """Representation of a Ferroamp Power Sensor based on V and A."""
 
     def __init__(self, name, voltage_key, current_key, icon, device_id, device_name, interval, config_id):
         """Initialize the sensor."""
         super().__init__(
-            name, voltage_key, POWER_KILO_WATT, icon, device_id, device_name, interval, config_id
+            name,
+            voltage_key,
+            POWER_WATT,
+            icon,
+            device_id,
+            device_name,
+            interval,
+            config_id
         )
         self._voltage_key = voltage_key
         self._current_key = current_key
@@ -599,15 +701,16 @@ class PowerFerroampSensor(FerroampSensor):
                 temp_voltage += float(voltage["val"])
                 temp_current += float(current["val"])
 
-        self._state = round(temp_voltage / len(events) * temp_current / len(events) / 1000, 2)
+        self._state = int(round(temp_voltage / len(events) * temp_current / len(events), 0))
 
 
 class ThreePhaseFerroampSensor(FerroampSensor):
     """Representation of a Ferroamp ThreePhase Sensor."""
 
-    def __init__(self, name, key, unit, icon, device_id, device_name, interval, config_id):
+    def __init__(self, name, key, unit, icon, device_id, device_name, interval, precision, config_id):
         """Initialize the sensor."""
         super().__init__(name, key, unit, icon, device_id, device_name, interval, config_id)
+        self._precision = precision
 
     def get_phases(self, event):
         phases = event.get(self._state_key, None)
@@ -628,7 +731,9 @@ class ThreePhaseFerroampSensor(FerroampSensor):
                 l1 += phases["L1"]
                 l2 += phases["L2"]
                 l3 += phases["L3"]
-        self._state = int(l1 / len(events) + l2 / len(events) + l3 / len(events))
+        self._state = round(l1 / len(events) + l2 / len(events) + l3 / len(events), self._precision)
+        if self._precision == 0:
+            self._state = int(self._state)
         self.attrs = dict(
             L1=round(float(l1 / len(events)), 2),
             L2=round(float(l2 / len(events)), 2),
@@ -637,23 +742,33 @@ class ThreePhaseFerroampSensor(FerroampSensor):
 
 
 class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
-    def __init__(self, name, key, icon, device_id, device_name, interval, config_id):
+    def __init__(self, name, key, icon, device_id, device_name, interval, precision, config_id):
         """Initialize the sensor."""
-        super().__init__(name, key, ENERGY_KILO_WATT_HOUR, icon, device_id, device_name, interval, config_id)
+        super().__init__(name, key, ENERGY_KILO_WATT_HOUR, icon, device_id, device_name, interval, precision, config_id)
 
     def get_phases(self, event):
         phases = super().get_phases(event)
         if phases is not None:
             phases = dict(
-                L1=int(phases["L1"] / 3600000000),
-                L2=int(phases["L2"] / 3600000000),
-                L3=int(phases["L3"] / 3600000000),
+                L1=round(phases["L1"] / 3600000000, 2),
+                L2=round(phases["L2"] / 3600000000, 2),
+                L3=round(phases["L3"] / 3600000000, 2),
             )
 
         return phases
 
+    def handle_options_update(self, options):
+        super().handle_options_update(options)
+        self._precision = options.get(CONF_PRECISION_ENERGY)
 
-def ehub_sensors(slug, name, interval, config_id):
+
+class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
+    def __init__(self, name, key, icon, device_id, device_name, interval, config_id):
+        """Initialize the sensor."""
+        super().__init__(name, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id)
+
+
+def ehub_sensors(slug, name, interval, precision_battery, precision_energy, config_id):
     return [
         FloatValFerroampSensor(
             f"{name} Estimated Grid Frequency",
@@ -663,6 +778,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            2,
             config_id,
         ),
         ThreePhaseFerroampSensor(
@@ -673,6 +789,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            0,
             config_id,
         ),
         ThreePhaseFerroampSensor(
@@ -683,6 +800,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            0,
             config_id,
         ),
         ThreePhaseFerroampSensor(
@@ -693,6 +811,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            0,
             config_id,
         ),
         ThreePhaseFerroampSensor(
@@ -703,6 +822,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            0,
             config_id,
         ),
         ThreePhaseFerroampSensor(
@@ -713,6 +833,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            0,
             config_id,
         ),
         ThreePhaseFerroampSensor(
@@ -723,6 +844,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            0,
             config_id,
         ),
         ThreePhaseFerroampSensor(
@@ -733,62 +855,57 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            0,
             config_id,
         ),
-        ThreePhaseFerroampSensor(
+        ThreePhasePowerFerroampSensor(
             f"{name} Grid Power",
             "pext",
-            POWER_WATT,
             "mdi:transmission-tower",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
             config_id,
         ),
-        ThreePhaseFerroampSensor(
+        ThreePhasePowerFerroampSensor(
             f"{name} Grid Power Reactive",
             "pextreactive",
-            POWER_WATT,
             "mdi:transmission-tower",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
             config_id,
         ),
-        ThreePhaseFerroampSensor(
+        ThreePhasePowerFerroampSensor(
             f"{name} Inverter Power, active",
             "pinv",
-            POWER_WATT,
             "mdi:solar-power",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
             config_id,
         ),
-        ThreePhaseFerroampSensor(
+        ThreePhasePowerFerroampSensor(
             f"{name} Inverter Power, reactive",
             "pinvreactive",
-            POWER_WATT,
             "mdi:solar-power",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
             config_id,
         ),
-        ThreePhaseFerroampSensor(
+        ThreePhasePowerFerroampSensor(
             f"{name} Consumption Power",
             "pload",
-            POWER_WATT,
             "mdi:power-plug",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
             config_id,
         ),
-        ThreePhaseFerroampSensor(
+        ThreePhasePowerFerroampSensor(
             f"{name} Consumption Power Reactive",
             "ploadreactive",
-            POWER_WATT,
             "mdi:power-plug",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
@@ -802,6 +919,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_energy,
             config_id,
         ),
         ThreePhaseEnergyFerroampSensor(
@@ -811,6 +929,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_energy,
             config_id,
         ),
         ThreePhaseEnergyFerroampSensor(
@@ -820,6 +939,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_energy,
             config_id,
         ),
         ThreePhaseEnergyFerroampSensor(
@@ -829,6 +949,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_energy,
             config_id,
         ),
         ThreePhaseEnergyFerroampSensor(
@@ -838,6 +959,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_energy,
             config_id,
         ),
         ThreePhaseEnergyFerroampSensor(
@@ -847,6 +969,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_energy,
             config_id,
         ),
         EnergyFerroampSensor(
@@ -856,6 +979,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_energy,
             config_id,
         ),
         EnergyFerroampSensor(
@@ -865,6 +989,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_energy,
             config_id,
         ),
         EnergyFerroampSensor(
@@ -874,6 +999,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_energy,
             config_id,
         ),
         IntValFerroampSensor(
@@ -901,6 +1027,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_battery,
             config_id,
         ),
         BatteryFerroampSensor(
@@ -909,6 +1036,7 @@ def ehub_sensors(slug, name, interval, config_id):
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            precision_battery,
             config_id,
         ),
         IntValFerroampSensor(
@@ -921,20 +1049,18 @@ def ehub_sensors(slug, name, interval, config_id):
             interval,
             config_id,
         ),
-        IntValFerroampSensor(
+        PowerFerroampSensor(
             f"{name} Solar Power",
             "ppv",
-            POWER_WATT,
             "mdi:solar-power",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
             config_id,
         ),
-        IntValFerroampSensor(
+        PowerFerroampSensor(
             f"{name} Battery Power",
             "pbat",
-            POWER_WATT,
             "mdi:battery",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
