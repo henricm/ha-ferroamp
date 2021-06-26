@@ -28,6 +28,7 @@ from .const import (
     CONF_PRECISION_ENERGY,
     CONF_PRECISION_TEMPERATURE,
     CONF_PRECISION_VOLTAGE,
+    CONF_PRECISION_FREQUENCY,
     DATA_DEVICES,
     DATA_LISTENERS,
     DOMAIN,
@@ -91,6 +92,11 @@ async def async_setup_entry(
     precision_voltage = config_entry.options.get(CONF_PRECISION_VOLTAGE)
     if precision_voltage is None:
         precision_voltage = 0
+    
+    precision_frequency = config_entry.options.get(CONF_PRECISION_FREQUENCY)
+    if precision_frequency is None:
+        precision_frequency = 0
+    
 
     listeners.append(config_entry.add_update_listener(options_update_listener))
 
@@ -319,6 +325,16 @@ async def async_setup_entry(
         sensors = esm_sensors.get(esm_id)
         if new:
             sensors = esm_sensors[esm_id] = [
+                StringValFerroampSensor(
+                    f"{device_name} Status",
+                    "status",
+                    "",
+                    "mdi:traffic-light",
+                    device_id,
+                    device_name,
+                    interval,
+                    config_id,
+                ),
                 BatteryFerroampSensor(
                     f"{device_name} State of Health",
                     "soh",

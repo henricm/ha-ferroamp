@@ -14,6 +14,7 @@ from .const import (
     CONF_PRECISION_ENERGY,
     CONF_PRECISION_TEMPERATURE,
     CONF_PRECISION_VOLTAGE,
+    CONF_PRECISION_FREQUENCY,
     DOMAIN,
     MANUFACTURER
 )
@@ -25,7 +26,7 @@ TOPIC_SCHEMA = vol.Schema({
 
 
 class FerroampConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Ferroammp config flow."""
+    """Ferroamp config flow."""
 
     async def async_step_user(self, user_input: Optional[Dict[str, Any]] = None):
         errors: Dict[str, str] = {}
@@ -85,6 +86,10 @@ class FerroampOptionsFlowHandler(config_entries.OptionsFlow):
         if precision_voltage is None:
             precision_voltage = 0
 
+        precision_frequency = self.config_entry.options.get(CONF_PRECISION_FREQUENCY)
+        if precision_frequency is None:
+            precision_frequency = 0
+
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
@@ -112,6 +117,10 @@ class FerroampOptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(
                         CONF_PRECISION_VOLTAGE,
                         default=precision_voltage,
+                    ): cv.positive_int,
+                    vol.Required(
+                        CONF_PRECISION_FREQUENCY,
+                        default=precision_frequency,
                     ): cv.positive_int
                 }
             ),

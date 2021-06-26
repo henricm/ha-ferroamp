@@ -28,7 +28,8 @@
           "precision_current": "Precision of current sensors (number of decimals)",
           "precision_energy": "Precision of energy sensors (number of decimals)",
           "precision_temperature": "Precision of temperature sensors (number of decimals)",
-          "precision_voltage": "Precision of voltage sensors (number of decimals)"
+          "precision_voltage": "Precision of voltage sensors (number of decimals)",
+          "precision_frequency": "Precision of frequency sensors (number of decimals)"
         }
       }
     }
