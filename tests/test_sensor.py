@@ -788,68 +788,167 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
                 "faultcode": {"val": "0"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
-                "id": {"val": "1"}
+                "id": {"val": "12345678"}
             }"""
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
-    state = hass.states.get("sensor.ferroamp_sso_1_pv_string_voltage")
+    state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_voltage")
     assert state.state == "653"
     assert state.attributes == {
-        'friendly_name': 'Ferroamp SSO 1 PV String Voltage',
+        'friendly_name': 'Ferroamp SSO 12345678 PV String Voltage',
         'icon': 'mdi:current-dc',
         'unit_of_measurement': 'V'
     }
 
-    state = hass.states.get("sensor.ferroamp_sso_1_pv_string_current")
+    state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_current")
     assert state.state == "5"
     assert state.attributes == {
-        'friendly_name': 'Ferroamp SSO 1 PV String Current',
+        'friendly_name': 'Ferroamp SSO 12345678 PV String Current',
         'icon': 'mdi:current-dc',
         'unit_of_measurement': 'A'
     }
 
-    state = hass.states.get("sensor.ferroamp_sso_1_pv_string_power")
+    state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_power")
     assert state.state == "3151"
     assert state.attributes == {
-        'friendly_name': 'Ferroamp SSO 1 PV String Power',
+        'friendly_name': 'Ferroamp SSO 12345678 PV String Power',
         'icon': 'mdi:solar-power',
         'unit_of_measurement': 'W'
     }
 
-    state = hass.states.get("sensor.ferroamp_sso_1_total_energy")
+    state = hass.states.get("sensor.ferroamp_sso_12345678_total_energy")
     assert state.state == "234.3"
     assert state.attributes == {
-        'friendly_name': 'Ferroamp SSO 1 Total Energy',
+        'friendly_name': 'Ferroamp SSO 12345678 Total Energy',
         'icon': 'mdi:solar-power',
         'unit_of_measurement': 'kWh'
     }
 
-    state = hass.states.get("sensor.ferroamp_sso_1_faultcode")
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "0"
     assert state.attributes == {
-        'friendly_name': 'Ferroamp SSO 1 Faultcode',
+        'friendly_name': 'Ferroamp SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
         'unit_of_measurement': ''
     }
 
-    state = hass.states.get("sensor.ferroamp_sso_1_relay_status")
+    state = hass.states.get("sensor.ferroamp_sso_12345678_relay_status")
     assert state.state == "closed"
     assert state.attributes == {
-        'friendly_name': 'Ferroamp SSO 1 Relay Status',
+        'friendly_name': 'Ferroamp SSO 12345678 Relay Status',
         'icon': '',
         'unit_of_measurement': ''
     }
 
-    state = hass.states.get("sensor.ferroamp_sso_1_pcb_temperature")
+    state = hass.states.get("sensor.ferroamp_sso_12345678_pcb_temperature")
     assert state.state == "6"
     assert state.attributes == {
-        'friendly_name': 'Ferroamp SSO 1 PCB Temperature',
+        'friendly_name': 'Ferroamp SSO 12345678 PCB Temperature',
         'icon': 'mdi:thermometer',
         'unit_of_measurement': '°C'
     }
+
+
+async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/sso"
+    msg = """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "0"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "PS00990-A02-S12345678"}
+            }"""
+
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_voltage")
+    assert state.state == "653"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 PV String Voltage',
+        'icon': 'mdi:current-dc',
+        'unit_of_measurement': 'V'
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_current")
+    assert state.state == "5"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 PV String Current',
+        'icon': 'mdi:current-dc',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_power")
+    assert state.state == "3151"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 PV String Power',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'W'
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_total_energy")
+    assert state.state == "234.3"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 Total Energy',
+        'icon': 'mdi:solar-power',
+        'unit_of_measurement': 'kWh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "0"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        'unit_of_measurement': ''
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_relay_status")
+    assert state.state == "closed"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 Relay Status',
+        'icon': '',
+        'unit_of_measurement': ''
+    }
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_pcb_temperature")
+    assert state.state == "6"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 PCB Temperature',
+        'icon': 'mdi:thermometer',
+        'unit_of_measurement': '°C'
+    }
+
+    er = await entity_registry.async_get_registry(hass)
+    entity = er.async_get("sensor.ferroamp_sso_12345678_pv_string_voltage")
+    assert entity is not None
+    sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_sso_12345678"][entity.unique_id]
+    assert isinstance(sensor, VoltageFerroampSensor)
+    assert sensor._device_model == "PS00990-A02"
 
 
 async def test_restore_state(hass, mqtt_mock):
