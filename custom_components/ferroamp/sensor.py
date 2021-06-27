@@ -312,6 +312,16 @@ async def async_setup_entry(
         if store is None:
             store = config[device_id] = {}
             sensors = esm_sensors[esm_id] = [
+                StringValFerroampSensor(
+                    f"{device_name} Status",
+                    "status",
+                    "",
+                    "mdi:traffic-light",
+                    device_id,
+                    device_name,
+                    interval,
+                    config_id,
+                ),
                 BatteryFerroampSensor(
                     f"{device_name} State of Health",
                     "soh",
