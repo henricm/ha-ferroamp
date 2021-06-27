@@ -25,7 +25,7 @@ TOPIC_SCHEMA = vol.Schema({
 
 
 class FerroampConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Ferroammp config flow."""
+    """Ferroamp config flow."""
 
     async def async_step_user(self, user_input: Optional[Dict[str, Any]] = None):
         errors: Dict[str, str] = {}
