@@ -7,6 +7,7 @@ from custom_components.ferroamp.const import (
     CONF_PRECISION_BATTERY,
     CONF_PRECISION_CURRENT,
     CONF_PRECISION_ENERGY,
+    CONF_PRECISION_FREQUENCY,
     CONF_PRECISION_TEMPERATURE,
     CONF_PRECISION_VOLTAGE
 )
@@ -93,6 +94,7 @@ async def test_options_flow(hass, mqtt_mock):
             CONF_PRECISION_BATTERY: 1,
             CONF_PRECISION_CURRENT: 2,
             CONF_PRECISION_ENERGY: 3,
+            CONF_PRECISION_FREQUENCY: 6,
             CONF_PRECISION_TEMPERATURE: 4,
             CONF_PRECISION_VOLTAGE: 5
         }
@@ -103,6 +105,7 @@ async def test_options_flow(hass, mqtt_mock):
         CONF_PRECISION_BATTERY: 1,
         CONF_PRECISION_CURRENT: 2,
         CONF_PRECISION_ENERGY: 3,
+        CONF_PRECISION_FREQUENCY: 6,
         CONF_PRECISION_TEMPERATURE: 4,
         CONF_PRECISION_VOLTAGE: 5
     }
@@ -115,6 +118,7 @@ async def test_options_flow(hass, mqtt_mock):
         CONF_PRECISION_BATTERY: 1,
         CONF_PRECISION_CURRENT: 2,
         CONF_PRECISION_ENERGY: 3,
+        CONF_PRECISION_FREQUENCY: 6,
         CONF_PRECISION_TEMPERATURE: 4,
         CONF_PRECISION_VOLTAGE: 5
     }

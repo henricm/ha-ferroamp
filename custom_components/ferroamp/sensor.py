@@ -26,6 +26,7 @@ from .const import (
     CONF_PRECISION_BATTERY,
     CONF_PRECISION_CURRENT,
     CONF_PRECISION_ENERGY,
+    CONF_PRECISION_FREQUENCY,
     CONF_PRECISION_TEMPERATURE,
     CONF_PRECISION_VOLTAGE,
     DATA_DEVICES,
@@ -81,6 +82,10 @@ async def async_setup_entry(
     if precision_energy is None:
         precision_energy = 1
 
+    precision_frequency = config_entry.options.get(CONF_PRECISION_FREQUENCY)
+    if precision_frequency is None:
+        precision_frequency = 2
+
     precision_temperature = config_entry.options.get(CONF_PRECISION_TEMPERATURE)
     if precision_temperature is None:
         precision_temperature = 0
@@ -91,7 +96,7 @@ async def async_setup_entry(
 
     listeners.append(config_entry.add_update_listener(options_update_listener))
 
-    ehub = ehub_sensors(slug, name, interval, precision_battery, precision_energy, config_id)
+    ehub = ehub_sensors(slug, name, interval, precision_battery, precision_energy, precision_frequency, config_id)
     eso_sensors = {}
     esm_sensors = {}
     sso_sensors = {}
@@ -768,7 +773,7 @@ class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
         super().__init__(name, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id)
 
 
-def ehub_sensors(slug, name, interval, precision_battery, precision_energy, config_id):
+def ehub_sensors(slug, name, interval, precision_battery, precision_energy, precision_frequency, config_id):
     return [
         FloatValFerroampSensor(
             f"{name} Estimated Grid Frequency",
@@ -778,7 +783,7 @@ def ehub_sensors(slug, name, interval, precision_battery, precision_energy, conf
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
-            2,
+            precision_frequency,
             config_id,
         ),
         ThreePhaseFerroampSensor(

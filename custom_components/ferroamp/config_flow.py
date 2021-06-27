@@ -11,6 +11,7 @@ from .const import (
     CONF_INTERVAL,
     CONF_PRECISION_BATTERY,
     CONF_PRECISION_CURRENT,
+    CONF_PRECISION_FREQUENCY,
     CONF_PRECISION_ENERGY,
     CONF_PRECISION_TEMPERATURE,
     CONF_PRECISION_VOLTAGE,
@@ -77,6 +78,10 @@ class FerroampOptionsFlowHandler(config_entries.OptionsFlow):
         if precision_energy is None:
             precision_energy = 1
 
+        precision_frequency = self.config_entry.options.get(CONF_PRECISION_FREQUENCY)
+        if precision_frequency is None:
+            precision_frequency = 2
+
         precision_temperature = self.config_entry.options.get(CONF_PRECISION_TEMPERATURE)
         if precision_temperature is None:
             precision_temperature = 0
@@ -104,6 +109,10 @@ class FerroampOptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(
                         CONF_PRECISION_ENERGY,
                         default=precision_energy,
+                    ): cv.positive_int,
+                    vol.Required(
+                        CONF_PRECISION_FREQUENCY,
+                        default=precision_frequency,
                     ): cv.positive_int,
                     vol.Required(
                         CONF_PRECISION_TEMPERATURE,
