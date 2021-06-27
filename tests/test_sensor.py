@@ -413,6 +413,7 @@ async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
         "soh":{"val":"89.2"},
         "soc":{"val":"45.5"},
         "ratedCapacity":{"val":"15300"},
+        "ratedPower":{"val":"7000"},
         "status":{"val":"0"}
     }"""
     async_fire_mqtt_message(hass, topic, msg)
@@ -442,6 +443,14 @@ async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'friendly_name': 'Ferroamp ESM 1 Rated Capacity',
         'icon': 'mdi:battery',
         'unit_of_measurement': 'Wh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_esm_1_rated_power")
+    assert state.state == "7000"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESM 1 Rated Power',
+        'icon': 'mdi:battery',
+        'unit_of_measurement': 'W'
     }
 
     state = hass.states.get("sensor.ferroamp_esm_1_status")

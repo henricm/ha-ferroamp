@@ -362,6 +362,15 @@ async def async_setup_entry(
                     interval,
                     config_id,
                 ),
+                PowerFerroampSensor(
+                    f"{device_name} Rated Power",
+                    "ratedPower",
+                    "mdi:battery",
+                    device_id,
+                    device_name,
+                    interval,
+                    config_id,
+                )
             ]
 
         update_sensor_from_event(event, sensors, store)
