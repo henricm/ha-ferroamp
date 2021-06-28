@@ -20,6 +20,7 @@ from homeassistant.const import (
     VOLT
 )
 from homeassistant.core import callback
+from homeassistant.helpers.entity_registry import async_get as async_get_entity_reg
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
@@ -103,6 +104,8 @@ async def async_setup_entry(
 
     listeners.append(config_entry.add_update_listener(options_update_listener))
 
+    entity_registry = async_get_entity_reg(hass)
+
     ehub = ehub_sensors(slug, name, interval, precision_battery, precision_energy, precision_frequency, config_id)
     eso_sensors = {}
     esm_sensors = {}
@@ -141,10 +144,17 @@ async def async_setup_entry(
         sso_id = event["id"]["val"]
         model = None
         match = SSO_ID_REGEX.match(sso_id)
-        if match is not None:
+        if match is not None and match.group(2) is not None:
+            migrate_sso_entities(
+                sso_id,
+                match.group(3),
+                ["upv", "ipv", "upv-ipv", "wpv", "faultcode", "relaystatus", "temp"],
+                slug,
+                entity_registry
+            )
             sso_id = match.group(3)
             model = match.group(2)
-        device_id = f"{slug}_sso_{sso_id}"
+        device_id = build_sso_device_id(slug, sso_id)
         device_name = f"{name} SSO {sso_id}"
         store, new = get_store(device_id)
         sensors = sso_sensors.get(sso_id)
@@ -473,6 +483,21 @@ async def async_setup_entry(
     mqtt.async_publish(hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_REQUEST_TOPIC}", json.dumps(payload))
 
     return True
+
+
+def build_sso_device_id(slug, sso_id):
+    return f"{slug}_sso_{sso_id}"
+
+
+def migrate_sso_entities(old_id, new_id, keys, slug, entity_registry):
+    for key in keys:
+        old_entity_id = entity_registry.async_get_entity_id(
+            "sensor", DOMAIN, f"{build_sso_device_id(slug, old_id)}-{key}"
+        )
+        if old_entity_id is not None:
+            entity_registry.async_update_entity(
+                old_entity_id, new_unique_id=f"{build_sso_device_id(slug, new_id)}-{key}"
+            )
 
 
 async def options_update_listener(hass, entry):

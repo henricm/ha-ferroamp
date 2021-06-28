@@ -951,6 +951,54 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
     assert sensor._device_model == "PS00990-A02"
 
 
+async def test_migrate_old_sso_entities(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 0
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    er = await entity_registry.async_get_registry(hass)
+    entity = er.async_get_or_create(
+        'sensor', DOMAIN, 'ferroamp_sso_PS00990-A02-S12345678-upv', config_entry=config_entry)
+
+    topic = "extapi/data/sso"
+    msg = """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "0"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "PS00990-A02-S12345678"}
+            }"""
+
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get(entity.entity_id)
+    assert state.state == "653"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 PV String Voltage',
+        'icon': 'mdi:current-dc',
+        'unit_of_measurement': 'V'
+    }
+
+
 async def test_restore_state(hass, mqtt_mock):
     mock_restore_cache(
         hass,
