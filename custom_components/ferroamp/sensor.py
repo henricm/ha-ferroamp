@@ -1,6 +1,7 @@
 """Platform for Ferroamp sensors integration."""
 import json
 import logging
+import uuid
 from datetime import datetime
 
 from homeassistant import config_entries, core
@@ -103,7 +104,7 @@ async def async_setup_entry(
     eso_sensors = {}
     esm_sensors = {}
     sso_sensors = {}
-    cmd_sensor = {}
+    generic_sensors = {}
 
     def get_store(store_name):
         store = config.get(store_name)
@@ -375,16 +376,11 @@ async def async_setup_entry(
 
         update_sensor_from_event(event, sensors, store)
 
-    def get_cmd_sensor(store):
-        sensor = cmd_sensor.get('sensor')
+    def get_generic_sensor(store, sensor_type, sensor_creator):
+        sensor = generic_sensors.get(sensor_type)
         if sensor is None:
-            sensor = CommandFerroampSensor(
-                f"{name} Control Status",
-                f"{slug}_{EHUB}",
-                f"{name} {EHUB_NAME}",
-                config_id
-            )
-            cmd_sensor['sensor'] = sensor
+            sensor = sensor_creator()
+            generic_sensors[sensor_type] = sensor
             if sensor.unique_id not in store:
                 store[sensor.unique_id] = sensor
                 _LOGGER.debug(
@@ -394,6 +390,22 @@ async def async_setup_entry(
                 async_add_entities((sensor,), True)
             sensor.hass = hass
         return sensor
+
+    def get_cmd_sensor(store):
+        return get_generic_sensor(store, "cmd", lambda: CommandFerroampSensor(
+            f"{name} Control Status",
+            f"{slug}_{EHUB}",
+            f"{name} {EHUB_NAME}",
+            config_id
+        ))
+
+    def get_version_sensor(store):
+        return get_generic_sensor(store, "version", lambda: VersionFerroampSensor(
+            f"{name} Extapi Version",
+            f"{slug}_{EHUB}",
+            f"{name} {EHUB_NAME}",
+            config_id
+        ))
 
     @callback
     def ehub_request_received(msg):
@@ -409,12 +421,16 @@ async def async_setup_entry(
     @callback
     def ehub_response_received(msg):
         response = json.loads(msg.payload)
-        store, new = get_store(f"{slug}_{EHUB}")
-        sensor = get_cmd_sensor(store)
         trans_id = response["transId"]
         status = response["status"]
         message = response["msg"]
-        sensor.add_response(trans_id, status, message)
+        store, new = get_store(f"{slug}_{EHUB}")
+        if message.startswith("version: "):
+            sensor = get_version_sensor(store)
+            sensor.set_version(message.removeprefix("version: "))
+        else:
+            sensor = get_cmd_sensor(store)
+            sensor.add_response(trans_id, status, message)
 
     listeners.append(await mqtt.async_subscribe(
         hass, f"{config_entry.data[CONF_PREFIX]}/{EHUB_TOPIC}", ehub_event_received, 0
@@ -438,6 +454,9 @@ async def async_setup_entry(
         hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_RESULT_TOPIC}", ehub_response_received, 0
     ))
 
+    payload = {"transId": str(uuid.uuid1()), "cmd": {"name": "extapiversion"}}
+    mqtt.async_publish(hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_REQUEST_TOPIC}", json.dumps(payload))
+
     return True
 
 
@@ -452,31 +471,22 @@ async def options_update_listener(hass, entry):
 class FerroampSensor(RestoreEntity):
     """Representation of a Ferroamp Sensor."""
 
-    def __init__(self, name, key, unit, icon, device_id, device_name, interval, config_id):
+    def __init__(self, name, unit, icon, device_id, device_name, interval, config_id):
         """Initialize the sensor."""
         self._state = None
         self._name = name
-        self._state_key = key
         self._unit_of_measurement = unit
         self._icon = icon
         self._device_id = device_id
         self._device_name = device_name
         self._interval = interval
         self.config_id = config_id
-        self.updated = datetime.min
-        self.event = {}
-        self.events = []
         self.attrs = None
 
     @property
     def name(self):
         """Return the name of the sensor."""
         return self._name
-
-    @property
-    def unique_id(self):
-        """Return unique ID of entity."""
-        return f"{self.device_id}-{self._state_key}"
 
     @property
     def icon(self):
@@ -495,24 +505,6 @@ class FerroampSensor(RestoreEntity):
             "manufacturer": MANUFACTURER,
         }
         return device_info
-
-    def add_event(self, event):
-        self.events.append(event)
-        self.event.update(event)
-        now = datetime.now()
-        delta = (now - self.updated).total_seconds()
-        if delta > self._interval and self.entity_id is not None:
-            self.process_events(now)
-
-    def process_events(self, now):
-        temp = self.events
-        self.events = []
-        self.updated = now
-        self.update_state_from_events(temp)
-        self.async_write_ha_state()
-
-    def update_state_from_events(self, events):
-        raise Exception("No implementation in base class")
 
     @property
     def state(self):
@@ -540,13 +532,51 @@ class FerroampSensor(RestoreEntity):
             return
         self._state = state.state
         self.hass.data[DOMAIN][DATA_DEVICES][self.config_id][self.device_id][self.unique_id] = self
-        self.process_events(datetime.now())
 
     def handle_options_update(self, options):
         self._interval = options.get(CONF_INTERVAL)
 
 
-class IntValFerroampSensor(FerroampSensor):
+class KeyedFerroampSensor(FerroampSensor):
+    """Representation of a Ferroamp Sensor using a single key to extract state from MQTT-messages."""
+
+    def __init__(self, name, key, unit, icon, device_id, device_name, interval, config_id):
+        """Initialize the sensor."""
+        super().__init__(name, unit, icon, device_id, device_name, interval, config_id)
+        self._state_key = key
+        self.updated = datetime.min
+        self.event = {}
+        self.events = []
+
+    @property
+    def unique_id(self):
+        """Return unique ID of entity."""
+        return f"{self.device_id}-{self._state_key}"
+
+    def add_event(self, event):
+        self.events.append(event)
+        now = datetime.now()
+        delta = (now - self.updated).total_seconds()
+        if delta > self._interval and self.entity_id is not None:
+            self.process_events(now)
+
+    def process_events(self, now):
+        temp = self.events
+        self.events = []
+        self.updated = now
+        self.update_state_from_events(temp)
+        self.async_write_ha_state()
+
+    def update_state_from_events(self, events):
+        raise Exception("No implementation in base class")
+
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        self.process_events(datetime.now())
+
+
+class IntValFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp integer value Sensor."""
 
     def __init__(self, name, key, unit, icon, device_id, device_name, interval, config_id):
@@ -564,7 +594,7 @@ class IntValFerroampSensor(FerroampSensor):
         self._state = int(temp / len(events))
 
 
-class StringValFerroampSensor(FerroampSensor):
+class StringValFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp string value Sensor."""
 
     def __init__(self, name, key, unit, icon, device_id, device_name, interval, config_id):
@@ -583,7 +613,7 @@ class StringValFerroampSensor(FerroampSensor):
             self._state = temp
 
 
-class FloatValFerroampSensor(FerroampSensor):
+class FloatValFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp float value Sensor."""
 
     def __init__(self, name, key, unit, icon, device_id, device_name, interval, precision, config_id):
@@ -604,7 +634,7 @@ class FloatValFerroampSensor(FerroampSensor):
             self._state = int(self._state)
 
 
-class DcLinkFerroampSensor(FerroampSensor):
+class DcLinkFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp DC Voltage value Sensor."""
 
     def __init__(self, name, key, icon, device_id, device_name, interval, config_id):
@@ -718,7 +748,7 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
         self._precision = options.get(CONF_PRECISION_ENERGY)
 
 
-class RelayStatusFerroampSensor(FerroampSensor):
+class RelayStatusFerroampSensor(KeyedFerroampSensor):
     def __init__(self, name, key, device_id, device_name, interval, config_id):
         """Initialize the sensor"""
         super().__init__(name, key, "", "", device_id, device_name, interval, config_id)
@@ -748,7 +778,7 @@ class PowerFerroampSensor(FloatValFerroampSensor):
         super().__init__(name, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id)
 
 
-class CalculatedPowerFerroampSensor(FerroampSensor):
+class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp Power Sensor based on V and A."""
 
     def __init__(self, name, voltage_key, current_key, icon, device_id, device_name, interval, config_id):
@@ -785,7 +815,7 @@ class CalculatedPowerFerroampSensor(FerroampSensor):
         self._state = int(round(temp_voltage / len(events) * temp_current / len(events), 0))
 
 
-class ThreePhaseFerroampSensor(FerroampSensor):
+class ThreePhaseFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp ThreePhase Sensor."""
 
     def __init__(self, name, key, unit, icon, device_id, device_name, interval, precision, config_id):
@@ -849,71 +879,16 @@ class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
         super().__init__(name, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id)
 
 
-class CommandFerroampSensor(RestoreEntity):
+class CommandFerroampSensor(FerroampSensor):
     def __init__(self, name, device_id, device_name, config_id):
+        super().__init__(name, None, "mdi:cog-transfer-outline", device_id, device_name, 0, config_id)
         self._state = None
-        self._name = name
-        self._icon = "mdi:cog-transfer-outline"
-        self._device_id = device_id
-        self._device_name = device_name
-        self.config_id = config_id
-        self.updated = datetime.min
         self.attrs = {}
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
 
     @property
     def unique_id(self):
         """Return unique ID of entity."""
         return f"{self.device_id}_last_cmd"
-
-    @property
-    def icon(self):
-        return self._icon
-
-    @property
-    def device_id(self):
-        return self._device_id
-
-    @property
-    def device_info(self):
-        """Return the device_info of the device."""
-        device_info = {
-            "identifiers": {(DOMAIN, self._device_id)},
-            "name": self._device_name,
-            "manufacturer": MANUFACTURER,
-        }
-        return device_info
-
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        return self._state
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement."""
-        return None
-
-    @property
-    def should_poll(self) -> bool:
-        return False
-
-    @property
-    def state_attributes(self):
-        return self.attrs
-
-    async def async_added_to_hass(self) -> None:
-        """Handle entity which will be added."""
-        await super().async_added_to_hass()
-        state = await self.async_get_last_state()
-        if not state:
-            return
-        self._state = state.state
-        self.hass.data[DOMAIN][DATA_DEVICES][self.config_id][self.device_id][self.unique_id] = self
 
     def add_request(self, trans_id, cmd, arg):
         if arg is not None:
@@ -923,7 +898,6 @@ class CommandFerroampSensor(RestoreEntity):
         self.attrs["transId"] = trans_id
         self.attrs["status"] = None
         self.attrs["message"] = None
-        self.updated = datetime.now()
         if self.entity_id is not None:
             self.async_write_ha_state()
 
@@ -931,9 +905,22 @@ class CommandFerroampSensor(RestoreEntity):
         if self.attrs["transId"] == trans_id:
             self.attrs["status"] = status
             self.attrs["message"] = message
-            self.updated = datetime.now()
             if self.entity_id is not None:
                 self.async_write_ha_state()
+
+
+class VersionFerroampSensor(FerroampSensor):
+    def __init__(self, name, device_id, device_name, config_id):
+        super().__init__(name, None, "mdi:counter", device_id, device_name, 0, config_id)
+        self.attrs = {}
+
+    @property
+    def unique_id(self):
+        """Return unique ID of entity."""
+        return f"{self.device_id}_extapi-version"
+
+    def set_version(self, version):
+        self._state = version
 
 
 def ehub_sensors(slug, name, interval, precision_battery, precision_energy, precision_frequency, config_id):
