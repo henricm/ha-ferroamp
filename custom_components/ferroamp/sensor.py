@@ -427,7 +427,7 @@ async def async_setup_entry(
         store, new = get_store(f"{slug}_{EHUB}")
         if message.startswith("version: "):
             sensor = get_version_sensor(store)
-            sensor.set_version(message.removeprefix("version: "))
+            sensor.set_version(message[9:])
         else:
             sensor = get_cmd_sensor(store)
             sensor.add_response(trans_id, status, message)
