@@ -35,6 +35,7 @@ from .const import (
     DATA_DEVICES,
     DATA_LISTENERS,
     DOMAIN,
+    ESO_FAULT_CODES,
     MANUFACTURER
 )
 
@@ -311,14 +312,13 @@ async def async_setup_entry(
                     precision_battery,
                     config_id,
                 ),
-                StringValFerroampSensor(
+                FaultcodeFerroampSensor(
                     f"{device_name} Faultcode",
                     "faultcode",
-                    "",
-                    "mdi:traffic-light",
                     device_id,
                     device_name,
                     interval,
+                    ESO_FAULT_CODES,
                     config_id,
                 ),
                 RelayStatusFerroampSensor(
@@ -1000,6 +1000,32 @@ class VersionFerroampSensor(FerroampSensor):
 
     def set_version(self, version):
         self._state = version
+
+
+class FaultcodeFerroampSensor(KeyedFerroampSensor):
+    """Representation of a Ferroamp Faultcode Sensor."""
+
+    def __init__(self, name, key, device_id, device_name, interval, fault_codes, config_id, **kwargs):
+        """Initialize the sensor."""
+        super().__init__(name, key, "", "mdi:traffic-light", device_id, device_name, interval, config_id, **kwargs)
+        self._fault_codes = fault_codes
+        self.attrs = {}
+
+    def update_state_from_events(self, events):
+        temp = None
+        event = self.event
+        for e in events:
+            event.update(e)
+            v = event.get(self._state_key, None)
+            if v is not None:
+                temp = v["val"]
+        if temp is not None:
+            self._state = temp
+            x = int(temp, 16)
+            for i, code in enumerate(self._fault_codes):
+                v = 1 << i
+                if x & v == v:
+                    self.attrs[i] = code
 
 
 def ehub_sensors(slug, name, interval, precision_battery, precision_energy, precision_frequency, config_id):
