@@ -1,9 +1,9 @@
 """Platform for Ferroamp sensors integration."""
 import json
 import logging
+import re
 import uuid
 from datetime import datetime
-import re
 
 from homeassistant import config_entries, core
 from homeassistant.components import mqtt
@@ -52,6 +52,7 @@ EHUB = "ehub"
 EHUB_NAME = "EnergyHub"
 
 SSO_ID_REGEX = re.compile(r"^((PS\d+-[A-Z]\d+)-S)?(\d+)$")
+ESM_ID_REGEX = re.compile(r"^(.+?)?-?(\d{8})\s*$")
 
 
 async def async_setup_entry(
@@ -145,12 +146,13 @@ async def async_setup_entry(
         model = None
         match = SSO_ID_REGEX.match(sso_id)
         if match is not None and match.group(2) is not None:
-            migrate_sso_entities(
+            migrate_entities(
                 sso_id,
                 match.group(3),
                 ["upv", "ipv", "upv-ipv", "wpv", "faultcode", "relaystatus", "temp"],
                 slug,
-                entity_registry
+                entity_registry,
+                lambda s, i: build_sso_device_id(s, i)
             )
             sso_id = match.group(3)
             model = match.group(2)
@@ -344,6 +346,19 @@ async def async_setup_entry(
     def esm_event_received(msg):
         event = json.loads(msg.payload)
         esm_id = event["id"]["val"]
+        model = None
+        match = ESM_ID_REGEX.match(esm_id)
+        if match is not None and match.group(2) is not None:
+            migrate_entities(
+                esm_id,
+                match.group(2),
+                ["status", "soh", "soc", "ratedCapacity", "ratedPower"],
+                slug,
+                entity_registry,
+                lambda s, i: build_esm_device_id(s, i)
+            )
+            esm_id = match.group(2)
+            model = match.group(1)
         device_id = f"{slug}_esm_{esm_id}"
         device_name = f"{name} ESM {esm_id}"
         store, new = get_store(device_id)
@@ -359,6 +374,7 @@ async def async_setup_entry(
                     device_name,
                     interval,
                     config_id,
+                    model=model
                 ),
                 BatteryFerroampSensor(
                     f"{device_name} State of Health",
@@ -368,6 +384,7 @@ async def async_setup_entry(
                     interval,
                     precision_battery,
                     config_id,
+                    model=model
                 ),
                 BatteryFerroampSensor(
                     f"{device_name} State of Charge",
@@ -377,6 +394,7 @@ async def async_setup_entry(
                     interval,
                     precision_battery,
                     config_id,
+                    model=model
                 ),
                 IntValFerroampSensor(
                     f"{device_name} Rated Capacity",
@@ -387,6 +405,7 @@ async def async_setup_entry(
                     device_name,
                     interval,
                     config_id,
+                    model=model
                 ),
                 PowerFerroampSensor(
                     f"{device_name} Rated Power",
@@ -396,6 +415,7 @@ async def async_setup_entry(
                     device_name,
                     interval,
                     config_id,
+                    model=model
                 )
             ]
 
@@ -489,14 +509,18 @@ def build_sso_device_id(slug, sso_id):
     return f"{slug}_sso_{sso_id}"
 
 
-def migrate_sso_entities(old_id, new_id, keys, slug, entity_registry):
+def build_esm_device_id(slug, eso_id):
+    return f"{slug}_esm_{eso_id}"
+
+
+def migrate_entities(old_id, new_id, keys, slug, entity_registry, build_device_id):
     for key in keys:
         old_entity_id = entity_registry.async_get_entity_id(
-            "sensor", DOMAIN, f"{build_sso_device_id(slug, old_id)}-{key}"
+            "sensor", DOMAIN, f"{build_device_id(slug, old_id)}-{key}"
         )
         if old_entity_id is not None:
             entity_registry.async_update_entity(
-                old_entity_id, new_unique_id=f"{build_sso_device_id(slug, new_id)}-{key}"
+                old_entity_id, new_unique_id=f"{build_device_id(slug, new_id)}-{key}"
             )
 
 
@@ -621,9 +645,9 @@ class KeyedFerroampSensor(FerroampSensor):
 class IntValFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp integer value Sensor."""
 
-    def __init__(self, name, key, unit, icon, device_id, device_name, interval, config_id):
+    def __init__(self, name, key, unit, icon, device_id, device_name, interval, config_id, **kwargs):
         """Initialize the sensor."""
-        super().__init__(name, key, unit, icon, device_id, device_name, interval, config_id)
+        super().__init__(name, key, unit, icon, device_id, device_name, interval, config_id, **kwargs)
 
     def update_state_from_events(self, events):
         temp = 0
@@ -703,9 +727,9 @@ class DcLinkFerroampSensor(KeyedFerroampSensor):
 
 
 class BatteryFerroampSensor(FloatValFerroampSensor):
-    def __init__(self, name, key, device_id, device_name, interval, precision, config_id):
+    def __init__(self, name, key, device_id, device_name, interval, precision, config_id, **kwargs):
         super().__init__(
-            name, key, PERCENTAGE, "mdi:battery-low", device_id, device_name, interval, precision, config_id
+            name, key, PERCENTAGE, "mdi:battery-low", device_id, device_name, interval, precision, config_id, **kwargs
         )
 
     @property
@@ -828,8 +852,8 @@ class RelayStatusFerroampSensor(KeyedFerroampSensor):
 class PowerFerroampSensor(FloatValFerroampSensor):
     """Representation of a Ferroamp Power Sensor."""
 
-    def __init__(self, name, key, icon, device_id, device_name, interval, config_id):
-        super().__init__(name, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id)
+    def __init__(self, name, key, icon, device_id, device_name, interval, config_id, **kwargs):
+        super().__init__(name, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id, **kwargs)
 
 
 class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
