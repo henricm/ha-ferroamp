@@ -28,3 +28,17 @@ When not controlling batteries via extapi this indicates that the settings made 
 for trouble shooting the battery, or call Ferroamp Support.""",
     "Not a fault, just an indication that Battery Manufacturer is not Ferroamp",
 ]
+
+SSO_FAULT_CODES = [
+    'Unknown fault code',
+    'Unknown fault code',
+    'Unknown fault code',
+    'Unknown fault code',
+    'UNDERVOLTAGE',
+    'OVERVOLTAGE',
+    'OVERHEAT',
+    'Unknown fault code',
+    'Unknown fault code',
+    'Unknown fault code',
+    'POWERLIMITING'
+]
