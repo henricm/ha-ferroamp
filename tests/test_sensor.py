@@ -793,7 +793,8 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'Ferroamp ESO 1 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': ''
+        'unit_of_measurement': '',
+        7: 'Not a fault, just an indication that Battery Manufacturer is not Ferroamp'
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
