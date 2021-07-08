@@ -477,6 +477,9 @@ async def async_setup_entry(
             sensor = get_cmd_sensor(store)
             sensor.add_response(trans_id, status, message)
 
+    store, new = get_store(f"{slug}_{EHUB}")
+    get_version_sensor(store)
+
     listeners.append(await mqtt.async_subscribe(
         hass, f"{config_entry.data[CONF_PREFIX]}/{EHUB_TOPIC}", ehub_event_received, 0
     ))
@@ -1000,6 +1003,8 @@ class VersionFerroampSensor(FerroampSensor):
 
     def set_version(self, version):
         self._state = version
+        if self.entity_id is not None:
+            self.async_write_ha_state()
 
 
 class FaultcodeFerroampSensor(KeyedFerroampSensor):
