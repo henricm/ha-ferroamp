@@ -36,7 +36,8 @@ from .const import (
     DATA_LISTENERS,
     DOMAIN,
     ESO_FAULT_CODES,
-    MANUFACTURER
+    MANUFACTURER,
+    SSO_FAULT_CODES
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -207,14 +208,13 @@ async def async_setup_entry(
                     config_id,
                     model=model
                 ),
-                StringValFerroampSensor(
+                FaultcodeFerroampSensor(
                     f"{device_name} Faultcode",
                     "faultcode",
-                    "",
-                    "mdi:traffic-light",
                     device_id,
                     device_name,
                     interval,
+                    SSO_FAULT_CODES,
                     config_id,
                     model=model
                 ),
@@ -1026,10 +1026,17 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
         if temp is not None:
             self._state = temp
             x = int(temp, 16)
-            for i, code in enumerate(self._fault_codes):
-                v = 1 << i
-                if x & v == v:
-                    self.attrs[i] = code
+            if x == 0:
+                self.attrs[0] = "No errors"
+            else:
+                if 0 in self.attrs:
+                    del self.attrs[0]
+                for i, code in enumerate(self._fault_codes):
+                    v = 1 << i
+                    if x & v == v:
+                        self.attrs[i + 1] = code
+                    elif i+1 in self.attrs:
+                        del self.attrs[i + 1]
 
 
 def ehub_sensors(slug, name, interval, precision_battery, precision_energy, precision_frequency, config_id):

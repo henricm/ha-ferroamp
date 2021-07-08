@@ -794,7 +794,7 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'friendly_name': 'Ferroamp ESO 1 Faultcode',
         'icon': 'mdi:traffic-light',
         'unit_of_measurement': '',
-        7: 'Not a fault, just an indication that Battery Manufacturer is not Ferroamp'
+        8: 'Not a fault, just an indication that Battery Manufacturer is not Ferroamp'
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
@@ -1002,7 +1002,8 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'Ferroamp SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': ''
+        'unit_of_measurement': '',
+        0: 'No errors'
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_relay_status")
@@ -1094,7 +1095,8 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'Ferroamp SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': ''
+        'unit_of_measurement': '',
+        0: 'No errors'
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_relay_status")
@@ -1166,6 +1168,139 @@ async def test_migrate_old_sso_entities(hass, mqtt_mock):
         'friendly_name': 'Ferroamp SSO 12345678 PV String Voltage',
         'icon': 'mdi:current-dc',
         'unit_of_measurement': 'V'
+    }
+
+
+async def test_sso_fault_codes(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 1
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/sso"
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "0"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "0"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        'unit_of_measurement': '',
+        0: 'No errors'
+    }
+
+    time.sleep(1.1)
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "10"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "10"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        'unit_of_measurement': '',
+        5: 'UNDERVOLTAGE'
+    }
+
+    time.sleep(1.1)
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "20"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "20"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        'unit_of_measurement': '',
+        6: 'OVERVOLTAGE'
+    }
+
+    time.sleep(1.1)
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "40"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "40"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        'unit_of_measurement': '',
+        7: 'OVERHEAT'
+    }
+
+    time.sleep(1.1)
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "400"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "400"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        'unit_of_measurement': '',
+        11: 'POWERLIMITING'
     }
 
 
