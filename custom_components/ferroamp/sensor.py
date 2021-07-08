@@ -907,7 +907,6 @@ class ThreePhaseFerroampSensor(KeyedFerroampSensor):
 
     def get_phases(self, event):
         phases = event.get(self._state_key, None)
-        _LOGGER.debug(phases)
         if phases is not None:
             phases = dict(
                 L1=float(phases["L1"]), L2=float(phases["L2"]), L3=float(phases["L3"])
