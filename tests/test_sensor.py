@@ -44,7 +44,7 @@ def create_config():
             CONF_PREFIX: "extapi"
         },
         options={
-            CONF_INTERVAL: 1,
+            CONF_INTERVAL: 0,
         },
         version=1,
         unique_id="ferroamp",
@@ -1056,7 +1056,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
         0: 'No errors'
     }
 
-    time.sleep(1.1)
+    time.sleep(0.1)
     async_fire_mqtt_message(hass, topic, """{
                 "relaystatus": {"val": "0"},
                 "temp": {"val": "6.482"},
@@ -1079,7 +1079,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
         5: 'UNDERVOLTAGE'
     }
 
-    time.sleep(1.1)
+    time.sleep(0.1)
     async_fire_mqtt_message(hass, topic, """{
                 "relaystatus": {"val": "0"},
                 "temp": {"val": "6.482"},
@@ -1102,7 +1102,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
         6: 'OVERVOLTAGE'
     }
 
-    time.sleep(1.1)
+    time.sleep(0.1)
     async_fire_mqtt_message(hass, topic, """{
                 "relaystatus": {"val": "0"},
                 "temp": {"val": "6.482"},
@@ -1125,7 +1125,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
         7: 'OVERHEAT'
     }
 
-    time.sleep(1.1)
+    time.sleep(0.1)
     async_fire_mqtt_message(hass, topic, """{
                 "relaystatus": {"val": "0"},
                 "temp": {"val": "6.482"},
