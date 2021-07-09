@@ -6,33 +6,34 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_PREFIX
 )
-from homeassistant.core import CoreState, State
-from homeassistant.helpers import entity_registry, device_registry
-from pytest_homeassistant_custom_component.common import async_fire_mqtt_message, MockConfigEntry, mock_restore_cache, \
-    MockEntity, MockPlatform, MockEntityPlatform
+from homeassistant.helpers import device_registry
+from pytest_homeassistant_custom_component.common import async_fire_mqtt_message, MockConfigEntry
 
 from custom_components.ferroamp import ATTR_POWER, ATTR_TARGET
 from custom_components.ferroamp.const import DOMAIN, CONF_INTERVAL, DATA_DEVICES, DATA_PREFIXES, DATA_LISTENERS
-from custom_components.ferroamp.sensor import KeyedFerroampSensor
 
 
 def mock_uuid():
     return uuid.UUID(int=1)
 
 
-async def test_unload(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
+def create_config(name="Ferroamp", prefix="extapi", unique_id="ferroamp"):
+    return MockConfigEntry(
         domain=DOMAIN,
         data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
+            CONF_NAME: name,
+            CONF_PREFIX: prefix
         },
         options={
-            CONF_INTERVAL: 0
+            CONF_INTERVAL: 1,
         },
         version=1,
-        unique_id="ferroamp",
+        unique_id=unique_id,
     )
+
+
+async def test_unload(hass, mqtt_mock):
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -53,18 +54,7 @@ async def test_unload(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_service_charge(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -95,18 +85,7 @@ async def test_service_charge(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_service_charge_default_power(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -135,18 +114,7 @@ async def test_service_charge_default_power(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_service_discharge(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -177,18 +145,7 @@ async def test_service_discharge(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_service_discharge_default_power(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -217,18 +174,7 @@ async def test_service_discharge_default_power(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_service_autocharge(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -257,32 +203,10 @@ async def test_service_autocharge(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_multiple_configs_no_target(hass, mqtt_mock):
-    config_entry1 = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry1 = create_config()
     config_entry1.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry1.entry_id)
-    config_entry2 = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Other",
-            CONF_PREFIX: "other"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="other",
-    )
+    config_entry2 = create_config("Other", "other", "other")
     config_entry2.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry2.entry_id)
     await hass.async_block_till_done()
@@ -303,32 +227,10 @@ async def test_multiple_configs_no_target(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_multiple_configs_target_not_found(hass, mqtt_mock):
-    config_entry1 = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry1 = create_config()
     config_entry1.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry1.entry_id)
-    config_entry2 = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Other",
-            CONF_PREFIX: "other"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="other",
-    )
+    config_entry2 = create_config("Other", "other", "other")
     config_entry2.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry2.entry_id)
     await hass.async_block_till_done()
@@ -351,32 +253,10 @@ async def test_multiple_configs_target_not_found(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_multiple_configs_target_no_prefix_found(hass, mqtt_mock):
-    config_entry1 = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry1 = create_config()
     config_entry1.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry1.entry_id)
-    config_entry2 = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Other",
-            CONF_PREFIX: "other"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="other",
-    )
+    config_entry2 = create_config("Other", "other", "other")
     config_entry2.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry2.entry_id)
     config_entry3 = MockConfigEntry(
@@ -417,32 +297,10 @@ async def test_multiple_configs_target_no_prefix_found(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_multiple_configs_correct_prefix_is_used(hass, mqtt_mock):
-    config_entry1 = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry1 = create_config()
     config_entry1.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry1.entry_id)
-    config_entry2 = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Other",
-            CONF_PREFIX: "other"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="other",
-    )
+    config_entry2 = create_config("Other", "other", "other")
     config_entry2.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry2.entry_id)
     await hass.async_block_till_done()
