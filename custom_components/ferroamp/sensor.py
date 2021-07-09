@@ -1,7 +1,6 @@
 """Platform for Ferroamp sensors integration."""
 import json
 import logging
-import re
 import uuid
 from datetime import datetime
 
@@ -23,7 +22,6 @@ from homeassistant.core import callback
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_reg
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
-
 from .const import (
     CONF_INTERVAL,
     CONF_PRECISION_BATTERY,
@@ -35,26 +33,24 @@ from .const import (
     DATA_DEVICES,
     DATA_LISTENERS,
     DOMAIN,
-    ESO_FAULT_CODES,
+    EHUB,
+    EHUB_NAME,
+    FAULT_CODES_ESO,
+    FAULT_CODES_SSO,
     MANUFACTURER,
-    SSO_FAULT_CODES
+    REGEX_SSO_ID,
+    REGEX_ESM_ID,
+    TOPIC_CONTROL_REQUEST,
+    TOPIC_CONTROL_RESPONSE,
+    TOPIC_CONTROL_RESULT,
+    TOPIC_EHUB,
+    TOPIC_ESM,
+    TOPIC_ESO,
+    TOPIC_SSO
 )
 
+
 _LOGGER = logging.getLogger(__name__)
-
-EHUB_TOPIC = "data/ehub"
-SSO_TOPIC = "data/sso"
-ESO_TOPIC = "data/eso"
-ESM_TOPIC = "data/esm"
-CONTROL_REQUEST_TOPIC = "control/request"
-CONTROL_RESPONSE_TOPIC = "control/response"
-CONTROL_RESULT_TOPIC = "control/result"
-
-EHUB = "ehub"
-EHUB_NAME = "EnergyHub"
-
-SSO_ID_REGEX = re.compile(r"^((PS\d+-[A-Z]\d+)-S)?(\d+)$")
-ESM_ID_REGEX = re.compile(r"^(.+?)?-?(\d{8})\s*$")
 
 
 async def async_setup_entry(
@@ -146,7 +142,7 @@ async def async_setup_entry(
         event = json.loads(msg.payload)
         sso_id = event["id"]["val"]
         model = None
-        match = SSO_ID_REGEX.match(sso_id)
+        match = REGEX_SSO_ID.match(sso_id)
         if match is not None and match.group(2) is not None:
             migrate_entities(
                 sso_id,
@@ -214,7 +210,7 @@ async def async_setup_entry(
                     device_id,
                     device_name,
                     interval,
-                    SSO_FAULT_CODES,
+                    FAULT_CODES_SSO,
                     config_id,
                     model=model
                 ),
@@ -318,7 +314,7 @@ async def async_setup_entry(
                     device_id,
                     device_name,
                     interval,
-                    ESO_FAULT_CODES,
+                    FAULT_CODES_ESO,
                     config_id,
                 ),
                 RelayStatusFerroampSensor(
@@ -347,7 +343,7 @@ async def async_setup_entry(
         event = json.loads(msg.payload)
         esm_id = event["id"]["val"]
         model = None
-        match = ESM_ID_REGEX.match(esm_id)
+        match = REGEX_ESM_ID.match(esm_id)
         if match is not None and match.group(2) is not None:
             migrate_entities(
                 esm_id,
@@ -481,29 +477,29 @@ async def async_setup_entry(
     get_version_sensor(store)
 
     listeners.append(await mqtt.async_subscribe(
-        hass, f"{config_entry.data[CONF_PREFIX]}/{EHUB_TOPIC}", ehub_event_received, 0
+        hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_EHUB}", ehub_event_received, 0
     ))
     listeners.append(await mqtt.async_subscribe(
-        hass, f"{config_entry.data[CONF_PREFIX]}/{SSO_TOPIC}", sso_event_received, 0
+        hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_SSO}", sso_event_received, 0
     ))
     listeners.append(await mqtt.async_subscribe(
-        hass, f"{config_entry.data[CONF_PREFIX]}/{ESO_TOPIC}", eso_event_received, 0
+        hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_ESO}", eso_event_received, 0
     ))
     listeners.append(await mqtt.async_subscribe(
-        hass, f"{config_entry.data[CONF_PREFIX]}/{ESM_TOPIC}", esm_event_received, 0
+        hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_ESM}", esm_event_received, 0
     ))
     listeners.append(await mqtt.async_subscribe(
-        hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_REQUEST_TOPIC}", ehub_request_received, 0
+        hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_CONTROL_REQUEST}", ehub_request_received, 0
     ))
     listeners.append(await mqtt.async_subscribe(
-        hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_RESPONSE_TOPIC}", ehub_response_received, 0
+        hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_CONTROL_RESPONSE}", ehub_response_received, 0
     ))
     listeners.append(await mqtt.async_subscribe(
-        hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_RESULT_TOPIC}", ehub_response_received, 0
+        hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_CONTROL_RESULT}", ehub_response_received, 0
     ))
 
     payload = {"transId": str(uuid.uuid1()), "cmd": {"name": "extapiversion"}}
-    mqtt.async_publish(hass, f"{config_entry.data[CONF_PREFIX]}/{CONTROL_REQUEST_TOPIC}", json.dumps(payload))
+    mqtt.async_publish(hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_CONTROL_REQUEST}", json.dumps(payload))
 
     return True
 
