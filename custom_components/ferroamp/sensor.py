@@ -73,33 +73,13 @@ async def async_setup_entry(
     name = config_entry.data[CONF_NAME]
     slug = slugify(name)
 
-    interval = config_entry.options.get(CONF_INTERVAL)
-    if interval is None or interval == 0:
-        interval = 30
-
-    precision_battery = config_entry.options.get(CONF_PRECISION_BATTERY)
-    if precision_battery is None:
-        precision_battery = 1
-
-    precision_current = config_entry.options.get(CONF_PRECISION_CURRENT)
-    if precision_current is None:
-        precision_current = 0
-
-    precision_energy = config_entry.options.get(CONF_PRECISION_ENERGY)
-    if precision_energy is None:
-        precision_energy = 1
-
-    precision_frequency = config_entry.options.get(CONF_PRECISION_FREQUENCY)
-    if precision_frequency is None:
-        precision_frequency = 2
-
-    precision_temperature = config_entry.options.get(CONF_PRECISION_TEMPERATURE)
-    if precision_temperature is None:
-        precision_temperature = 0
-
-    precision_voltage = config_entry.options.get(CONF_PRECISION_VOLTAGE)
-    if precision_voltage is None:
-        precision_voltage = 0
+    interval = get_option(config_entry, CONF_INTERVAL, 30)
+    precision_battery = get_option(config_entry, CONF_PRECISION_BATTERY, 1)
+    precision_current = get_option(config_entry, CONF_PRECISION_CURRENT, 0)
+    precision_energy = get_option(config_entry, CONF_PRECISION_ENERGY, 1)
+    precision_frequency = get_option(config_entry, CONF_PRECISION_FREQUENCY, 2)
+    precision_temperature = get_option(config_entry, CONF_PRECISION_TEMPERATURE, 0)
+    precision_voltage = get_option(config_entry, CONF_PRECISION_VOLTAGE, 0)
 
     listeners.append(config_entry.add_update_listener(options_update_listener))
 
@@ -502,6 +482,13 @@ async def async_setup_entry(
     mqtt.async_publish(hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_CONTROL_REQUEST}", json.dumps(payload))
 
     return True
+
+
+def get_option(config_entry, key, default):
+    value = config_entry.options.get(key)
+    if value is None:
+        value = default
+    return value
 
 
 def build_sso_device_id(slug, sso_id):
