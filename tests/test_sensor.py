@@ -36,6 +36,21 @@ def mock_uuid():
     return uuid.UUID(int=1)
 
 
+def create_config():
+    return MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 1,
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+
+
 async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     config_entry = MockConfigEntry(
         domain=DOMAIN,
@@ -110,9 +125,6 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
                 "ilq": {"L2": "-13.69", "L3": "-13.67", "L1": "-13.75"},
                 "winvprodq": {"L2": "2610825033980", "L3": "2570987302422", "L1": "2567078340545"},
                 "il": {"L2": "9.85", "L3": "9.85", "L1": "9.89"}}"""
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
-    time.sleep(1.1)
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -425,18 +437,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
 
 
 async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -450,8 +451,6 @@ async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
         "ratedPower":{"val":"7000"},
         "status":{"val":"0"}
     }"""
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -497,26 +496,13 @@ async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
 
 
 async def test_battery_full(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
     topic = "extapi/data/esm"
     msg = '{"id":{"val":"1"},"soh":{"val":"89.2"},"soc":{"val":"100.0"},"ratedCapacity":{"val":"15300"}}'
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -538,18 +524,7 @@ async def test_battery_full(hass, mqtt_mock):
 
 
 async def test_trim_part_no_from_esm_id(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -564,8 +539,6 @@ async def test_trim_part_no_from_esm_id(hass, mqtt_mock):
         "status":{"val":"0"}
     }"""
 
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -618,18 +591,7 @@ async def test_trim_part_no_from_esm_id(hass, mqtt_mock):
 
 
 async def test_esm_trim_trailing_dash_from_model(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -646,8 +608,6 @@ async def test_esm_trim_trailing_dash_from_model(hass, mqtt_mock):
 
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
 
     state = hass.states.get("sensor.ferroamp_esm_21030023_state_of_health")
     assert state
@@ -661,18 +621,7 @@ async def test_esm_trim_trailing_dash_from_model(hass, mqtt_mock):
 
 
 async def test_migrate_old_esm_entities(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -693,8 +642,6 @@ async def test_migrate_old_esm_entities(hass, mqtt_mock):
 
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
 
     state = hass.states.get(entity.entity_id)
     assert state.state == "89.2"
@@ -706,18 +653,7 @@ async def test_migrate_old_esm_entities(hass, mqtt_mock):
 
 
 async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -735,8 +671,6 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
             "id": {"val": "1"},
             "wbatprod": {"val": 2465106122063}
             }"""
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -815,18 +749,7 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
 
 
 async def test_relay_status_open(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -846,26 +769,13 @@ async def test_relay_status_open(hass, mqtt_mock):
             }"""
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
 
     state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
     assert state.state == "open/disconnected"
 
 
 async def test_relay_status_precharge(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -885,26 +795,13 @@ async def test_relay_status_precharge(hass, mqtt_mock):
             }"""
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
 
     state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
     assert state.state == "precharge"
 
 
 async def test_ignore_eso_message_without_id(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -924,26 +821,13 @@ async def test_ignore_eso_message_without_id(hass, mqtt_mock):
             }"""
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
 
     er = await entity_registry.async_get_registry(hass)
     assert er.async_is_registered("sensor.ferroamp_eso__battery_voltage") is False
 
 
 async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -960,8 +844,6 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
                 "upv": {"val": "653.012"},
                 "id": {"val": "12345678"}
             }"""
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -1024,18 +906,7 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
 
 
 async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -1053,8 +924,6 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
                 "id": {"val": "PS00990-A02-S12345678"}
             }"""
 
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -1124,18 +993,7 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
 
 
 async def test_migrate_old_sso_entities(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -1159,8 +1017,6 @@ async def test_migrate_old_sso_entities(hass, mqtt_mock):
 
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
-    async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
 
     state = hass.states.get(entity.entity_id)
     assert state.state == "653"
@@ -1172,18 +1028,7 @@ async def test_migrate_old_sso_entities(hass, mqtt_mock):
 
 
 async def test_sso_fault_codes(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 1
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -1314,18 +1159,7 @@ async def test_restore_state(hass, mqtt_mock):
 
     hass.state = CoreState.starting
 
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -1344,18 +1178,7 @@ async def test_restore_state(hass, mqtt_mock):
 
 
 async def test_update_options(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -1429,18 +1252,7 @@ async def test_base_class_update_state_from_events():
 
 
 async def test_control_command(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -1530,18 +1342,7 @@ async def test_control_command_restore_state(hass, mqtt_mock):
 
     hass.state = CoreState.starting
 
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -1566,18 +1367,7 @@ async def test_control_command_restore_state(hass, mqtt_mock):
 
 @patch('uuid.uuid1', mock_uuid)
 async def test_extapi_version_request(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -1585,7 +1375,6 @@ async def test_extapi_version_request(hass, mqtt_mock):
     topic = "extapi/data/ehub"
     msg = '{}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
     await hass.async_block_till_done()
 
     mqtt_mock.async_publish.assert_called_once_with(
@@ -1597,18 +1386,7 @@ async def test_extapi_version_request(hass, mqtt_mock):
 
 
 async def test_extapi_version_response(hass, mqtt_mock):
-    config_entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_NAME: "Ferroamp",
-            CONF_PREFIX: "extapi"
-        },
-        options={
-            CONF_INTERVAL: 0
-        },
-        version=1,
-        unique_id="ferroamp",
-    )
+    config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
