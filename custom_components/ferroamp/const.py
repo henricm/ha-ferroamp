@@ -1,4 +1,5 @@
 """Constants for Ferroamp"""
+import re
 
 CONF_INTERVAL = "interval"
 CONF_PRECISION_BATTERY = "precision_battery"
@@ -13,7 +14,21 @@ DATA_PREFIXES = "prefixes"
 DOMAIN = "ferroamp"
 MANUFACTURER = "Ferroamp"
 
-ESO_FAULT_CODES = [
+TOPIC_EHUB = "data/ehub"
+TOPIC_SSO = "data/sso"
+TOPIC_ESO = "data/eso"
+TOPIC_ESM = "data/esm"
+TOPIC_CONTROL_REQUEST = "control/request"
+TOPIC_CONTROL_RESPONSE = "control/response"
+TOPIC_CONTROL_RESULT = "control/result"
+
+EHUB = "ehub"
+EHUB_NAME = "EnergyHub"
+
+REGEX_SSO_ID = re.compile(r"^((PS\d+-[A-Z]\d+)-S)?(\d+)$")
+REGEX_ESM_ID = re.compile(r"^(.+?)?-?(\d{8})\s*$")
+
+FAULT_CODES_ESO = [
     "The pre-charge from battery to ESO is not reaching the voltage goal prohibiting the closing of the relays.",
     "CAN communication issues between ESO and battery.",
     """This indicates that the SoC limits for the batteries are not configured correctly,
@@ -29,7 +44,7 @@ for trouble shooting the battery, or call Ferroamp Support.""",
     "Not a fault, just an indication that Battery Manufacturer is not Ferroamp",
 ]
 
-SSO_FAULT_CODES = [
+FAULT_CODES_SSO = [
     'Unknown fault code',
     'Unknown fault code',
     'Unknown fault code',
