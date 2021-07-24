@@ -55,6 +55,7 @@ async def test_flow_user_creates_config_entry(hass, mqtt_mock):
         "type": "create_entry",
         "flow_id": mock.ANY,
         "handler": "ferroamp",
+        "options": {},
         "title": "Ferroamp",
         "data": {
             "name": "Ferroamp",
