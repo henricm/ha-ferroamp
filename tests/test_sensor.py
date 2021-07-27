@@ -587,7 +587,7 @@ async def test_trim_part_no_from_esm_id(hass, mqtt_mock):
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_esm_12345678"][entity.unique_id]
     assert isinstance(sensor, StringValFerroampSensor)
-    assert sensor._device_model == "ES01Z0000"
+    assert sensor.device_info.get("model") == "ES01Z0000"
 
 
 async def test_esm_trim_trailing_dash_from_model(hass, mqtt_mock):
@@ -617,7 +617,7 @@ async def test_esm_trim_trailing_dash_from_model(hass, mqtt_mock):
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_esm_21030023"][entity.unique_id]
     assert isinstance(sensor, StringValFerroampSensor)
-    assert sensor._device_model == "30-H022"
+    assert sensor.device_info.get("model") == "30-H022"
 
 
 async def test_migrate_old_esm_entities(hass, mqtt_mock):
@@ -989,7 +989,7 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_sso_12345678"][entity.unique_id]
     assert isinstance(sensor, VoltageFerroampSensor)
-    assert sensor._device_model == "PS00990-A02"
+    assert sensor.device_info.get("model") == "PS00990-A02"
 
 
 async def test_migrate_old_sso_entities(hass, mqtt_mock):

@@ -22,6 +22,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_reg
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
+
 from .const import (
     CONF_INTERVAL,
     CONF_PRECISION_BATTERY,
@@ -49,14 +50,13 @@ from .const import (
     TOPIC_SSO
 )
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: core.HomeAssistant,
-    config_entry: config_entries.ConfigEntry,
-    async_add_entities,
+        hass: core.HomeAssistant,
+        config_entry: config_entries.ConfigEntry,
+        async_add_entities,
 ):
     """Setup sensors from a config entry created in the integrations UI."""
     hass.data[DOMAIN].setdefault(DATA_DEVICES, {})
@@ -114,7 +114,7 @@ async def async_setup_entry(
     @callback
     def ehub_event_received(msg):
         event = json.loads(msg.payload)
-        store, new = get_store(f"{slug}_{EHUB}")
+        store, _ = get_store(f"{slug}_{EHUB}")
         update_sensor_from_event(event, ehub, store)
 
     @callback
@@ -431,7 +431,7 @@ async def async_setup_entry(
     @callback
     def ehub_request_received(msg):
         command = json.loads(msg.payload)
-        store, new = get_store(f"{slug}_{EHUB}")
+        store, _ = get_store(f"{slug}_{EHUB}")
         sensor = get_cmd_sensor(store)
         trans_id = command["transId"]
         cmd = command["cmd"]
@@ -445,7 +445,7 @@ async def async_setup_entry(
         trans_id = response["transId"]
         status = response["status"]
         message = response["msg"]
-        store, new = get_store(f"{slug}_{EHUB}")
+        store, _ = get_store(f"{slug}_{EHUB}")
         if message.startswith("version: "):
             sensor = get_version_sensor(store)
             sensor.set_version(message[9:])
@@ -453,7 +453,7 @@ async def async_setup_entry(
             sensor = get_cmd_sensor(store)
             sensor.add_response(trans_id, status, message)
 
-    store, new = get_store(f"{slug}_{EHUB}")
+    store, _ = get_store(f"{slug}_{EHUB}")
     get_version_sensor(store)
 
     listeners.append(await mqtt.async_subscribe(
@@ -523,58 +523,19 @@ class FerroampSensor(RestoreEntity):
 
     def __init__(self, name, unit, icon, device_id, device_name, interval, config_id, **kwargs):
         """Initialize the sensor."""
-        self._state = None
-        self._name = name
-        self._unit_of_measurement = unit
-        self._icon = icon
-        self._device_id = device_id
-        self._device_name = device_name
-        self._device_model = kwargs.get("model")
-        self._interval = interval
-        self.config_id = config_id
-        self.attrs = None
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def icon(self):
-        return self._icon
-
-    @property
-    def device_id(self):
-        return self._device_id
-
-    @property
-    def device_info(self):
-        """Return the device_info of the device."""
-        device_info = {
-            "identifiers": {(DOMAIN, self._device_id)},
-            "name": self._device_name,
+        self._attr_name = name
+        self._attr_unit_of_measurement = unit
+        self._attr_icon = icon
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, device_id)},
+            "name": device_name,
             "manufacturer": MANUFACTURER,
-            "model": self._device_model
+            "model": kwargs.get("model")
         }
-        return device_info
-
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        return self._state
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement."""
-        return self._unit_of_measurement
-
-    @property
-    def should_poll(self) -> bool:
-        return False
-
-    @property
-    def state_attributes(self):
-        return self.attrs
+        self._attr_should_poll = False
+        self._interval = interval
+        self.device_id = device_id
+        self.config_id = config_id
 
     async def async_added_to_hass(self) -> None:
         """Handle entity which will be added."""
@@ -582,7 +543,7 @@ class FerroampSensor(RestoreEntity):
         state = await self.async_get_last_state()
         if not state:
             return
-        self._state = state.state
+        self._attr_state = state.state
         self.hass.data[DOMAIN][DATA_DEVICES][self.config_id][self.device_id][self.unique_id] = self
 
     def handle_options_update(self, options):
@@ -596,14 +557,10 @@ class KeyedFerroampSensor(FerroampSensor):
         """Initialize the sensor."""
         super().__init__(name, unit, icon, device_id, device_name, interval, config_id, **kwargs)
         self._state_key = key
+        self._attr_unique_id = f"{self.device_id}-{self._state_key}"
         self.updated = datetime.min
         self.event = {}
         self.events = []
-
-    @property
-    def unique_id(self):
-        """Return unique ID of entity."""
-        return f"{self.device_id}-{self._state_key}"
 
     def add_event(self, event):
         self.events.append(event)
@@ -643,7 +600,7 @@ class IntValFerroampSensor(KeyedFerroampSensor):
             v = event.get(self._state_key, None)
             if v is not None:
                 temp += float(v["val"])
-        self._state = int(temp / len(events))
+        self._attr_state = int(temp / len(events))
 
 
 class StringValFerroampSensor(KeyedFerroampSensor):
@@ -662,7 +619,7 @@ class StringValFerroampSensor(KeyedFerroampSensor):
             if v is not None:
                 temp = v["val"]
         if temp is not None:
-            self._state = temp
+            self._attr_state = temp
 
 
 class FloatValFerroampSensor(KeyedFerroampSensor):
@@ -681,9 +638,9 @@ class FloatValFerroampSensor(KeyedFerroampSensor):
             v = event.get(self._state_key, None)
             if v is not None:
                 temp += float(v["val"])
-        self._state = round(temp / len(events), self._precision)
+        self._attr_state = round(temp / len(events), self._precision)
         if self._precision == 0:
-            self._state = int(self._state)
+            self._attr_state = int(self._attr_state)
 
 
 class DcLinkFerroampSensor(KeyedFerroampSensor):
@@ -708,8 +665,9 @@ class DcLinkFerroampSensor(KeyedFerroampSensor):
             if voltage is not None:
                 neg += voltage["neg"]
                 pos += voltage["pos"]
-        self._state = int(neg / len(events) + pos / len(events))
-        self.attrs = dict(neg=round(float(neg / len(events)), 2), pos=round(float(pos / len(events)), 2))
+        self._attr_state = int(neg / len(events) + pos / len(events))
+        self._attr_extra_state_attributes = dict(neg=round(float(neg / len(events)), 2),
+                                                 pos=round(float(pos / len(events)), 2))
 
 
 class BatteryFerroampSensor(FloatValFerroampSensor):
@@ -718,17 +676,14 @@ class BatteryFerroampSensor(FloatValFerroampSensor):
             name, key, PERCENTAGE, "mdi:battery-low", device_id, device_name, interval, precision, config_id, **kwargs
         )
 
-    @property
-    def icon(self):
-        if self.state is None:
-            return self._icon
-        pct = int(int(self.state) / 10) * 10
-        if pct <= 90:
-            self._icon = f"mdi:battery-{pct}"
-        else:
-            self._icon = "mdi:battery"
-
-        return self._icon
+    def update_state_from_events(self, events):
+        super().update_state_from_events(events)
+        if self.state is not None:
+            pct = int(int(self.state) / 10) * 10
+            if pct <= 90:
+                self._attr_icon = f"mdi:battery-{pct}"
+            else:
+                self._attr_icon = "mdi:battery"
 
     def handle_options_update(self, options):
         super().handle_options_update(options)
@@ -803,9 +758,9 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
             v = event.get(self._state_key, None)
             if v is not None:
                 temp += float(v["val"])
-        self._state = round(temp / len(events) / 3600000000, self._precision)
+        self._attr_state = round(temp / len(events) / 3600000000, self._precision)
         if self._precision == 0:
-            self._state = int(self._state)
+            self._attr_state = int(self._attr_state)
 
     def handle_options_update(self, options):
         super().handle_options_update(options)
@@ -832,7 +787,7 @@ class RelayStatusFerroampSensor(KeyedFerroampSensor):
                 elif val == 2:
                     temp = "precharge"
         if temp is not None:
-            self._state = temp
+            self._attr_state = temp
 
 
 class PowerFerroampSensor(FloatValFerroampSensor):
@@ -860,11 +815,7 @@ class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
         )
         self._voltage_key = voltage_key
         self._current_key = current_key
-
-    @property
-    def unique_id(self):
-        """Return unique ID of entity."""
-        return f"{self.device_id}-{self._voltage_key}-{self._current_key}"
+        self._attr_unique_id = f"{self.device_id}-{self._voltage_key}-{self._current_key}"
 
     def update_state_from_events(self, events):
         temp_voltage = temp_current = 0
@@ -877,7 +828,7 @@ class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
                 temp_voltage += float(voltage["val"])
                 temp_current += float(current["val"])
 
-        self._state = int(round(temp_voltage / len(events) * temp_current / len(events), 0))
+        self._attr_state = int(round(temp_voltage / len(events) * temp_current / len(events), 0))
 
 
 class ThreePhaseFerroampSensor(KeyedFerroampSensor):
@@ -906,10 +857,10 @@ class ThreePhaseFerroampSensor(KeyedFerroampSensor):
                 l1 += phases["L1"]
                 l2 += phases["L2"]
                 l3 += phases["L3"]
-        self._state = round(l1 / len(events) + l2 / len(events) + l3 / len(events), self._precision)
+        self._attr_state = round(l1 / len(events) + l2 / len(events) + l3 / len(events), self._precision)
         if self._precision == 0:
-            self._state = int(self._state)
-        self.attrs = dict(
+            self._attr_state = int(self._attr_state)
+        self._attr_extra_state_attributes = dict(
             L1=round(float(l1 / len(events)), 2),
             L2=round(float(l2 / len(events)), 2),
             L3=round(float(l3 / len(events)), 2),
@@ -946,29 +897,24 @@ class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
 class CommandFerroampSensor(FerroampSensor):
     def __init__(self, name, device_id, device_name, config_id):
         super().__init__(name, None, "mdi:cog-transfer-outline", device_id, device_name, 0, config_id)
-        self._state = None
-        self.attrs = {}
-
-    @property
-    def unique_id(self):
-        """Return unique ID of entity."""
-        return f"{self.device_id}_last_cmd"
+        self._attr_unique_id = f"{self.device_id}_last_cmd"
+        self._attr_extra_state_attributes = {}
 
     def add_request(self, trans_id, cmd, arg):
         if arg is not None:
-            self._state = f"{cmd} ({arg})"
+            self._attr_state = f"{cmd} ({arg})"
         else:
-            self._state = cmd
-        self.attrs["transId"] = trans_id
-        self.attrs["status"] = None
-        self.attrs["message"] = None
+            self._attr_state = cmd
+        self._attr_extra_state_attributes["transId"] = trans_id
+        self._attr_extra_state_attributes["status"] = None
+        self._attr_extra_state_attributes["message"] = None
         if self.entity_id is not None:
             self.async_write_ha_state()
 
     def add_response(self, trans_id, status, message):
-        if self.attrs["transId"] == trans_id:
-            self.attrs["status"] = status
-            self.attrs["message"] = message
+        if self._attr_extra_state_attributes["transId"] == trans_id:
+            self._attr_extra_state_attributes["status"] = status
+            self._attr_extra_state_attributes["message"] = message
             if self.entity_id is not None:
                 self.async_write_ha_state()
 
@@ -976,15 +922,11 @@ class CommandFerroampSensor(FerroampSensor):
 class VersionFerroampSensor(FerroampSensor):
     def __init__(self, name, device_id, device_name, config_id):
         super().__init__(name, None, "mdi:counter", device_id, device_name, 0, config_id)
-        self.attrs = {}
-
-    @property
-    def unique_id(self):
-        """Return unique ID of entity."""
-        return f"{self.device_id}_extapi-version"
+        self._attr_unique_id = f"{self.device_id}_extapi-version"
+        self._attr_extra_state_attributes = {}
 
     def set_version(self, version):
-        self._state = version
+        self._attr_state = version
         if self.entity_id is not None:
             self.async_write_ha_state()
 
@@ -996,7 +938,7 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
         """Initialize the sensor."""
         super().__init__(name, key, "", "mdi:traffic-light", device_id, device_name, interval, config_id, **kwargs)
         self._fault_codes = fault_codes
-        self.attrs = {}
+        self._attr_extra_state_attributes = {}
 
     def update_state_from_events(self, events):
         temp = None
@@ -1007,19 +949,19 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
             if v is not None:
                 temp = v["val"]
         if temp is not None:
-            self._state = temp
+            self._attr_state = temp
             x = int(temp, 16)
             if x == 0:
-                self.attrs[0] = "No errors"
+                self._attr_extra_state_attributes[0] = "No errors"
             else:
-                if 0 in self.attrs:
-                    del self.attrs[0]
+                if 0 in self._attr_extra_state_attributes:
+                    del self._attr_extra_state_attributes[0]
                 for i, code in enumerate(self._fault_codes):
                     v = 1 << i
                     if x & v == v:
-                        self.attrs[i + 1] = code
-                    elif i+1 in self.attrs:
-                        del self.attrs[i + 1]
+                        self._attr_extra_state_attributes[i + 1] = code
+                    elif i + 1 in self._attr_extra_state_attributes:
+                        del self._attr_extra_state_attributes[i + 1]
 
 
 def ehub_sensors(slug, name, interval, precision_battery, precision_energy, precision_frequency, config_id):
