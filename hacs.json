@@ -1,3 +1,4 @@
 {
-  "name": "Ferroamp Sensors"
+  "name": "Ferroamp Sensors",
+  "homeassistant": "2021.6"
 }
