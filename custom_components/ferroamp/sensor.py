@@ -904,6 +904,27 @@ class ThreePhaseFerroampSensor(KeyedFerroampSensor):
             L3=round(float(l3 / len(events)), 2),
         )
 
+class ThreePhaseMinFerroampSensor(ThreePhaseFerroampSensor):
+    """Representation of a Ferroamp ThreePhase Sensor returning the minimum phase value as state value. Used in load balancing applications."""
+
+    def update_state_from_events(self, events):
+        l1 = l2 = l3 = 0
+        event = self.event
+        for e in events:
+            event.update(e)
+            phases = self.get_phases(event)
+            if phases is not None:
+                l1 += phases["L1"]
+                l2 += phases["L2"]
+                l3 += phases["L3"]
+        self._attr_state = round(min([l1 / len(events), l2 / len(events), l3 / len(events)]), self._precision)        
+        if self._precision == 0:
+            self._attr_state = int(self._attr_state)
+        self._attr_extra_state_attributes = dict(
+            L1=round(float(l1 / len(events)), 2),
+            L2=round(float(l2 / len(events)), 2),
+            L3=round(float(l3 / len(events)), 2),
+        )
 
 class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
     def __init__(self, name, key, icon, device_id, device_name, interval, precision, config_id, **kwargs):
@@ -1327,6 +1348,28 @@ def ehub_sensors(slug, name, interval, precision_battery, precision_energy, prec
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
+            config_id,
+        ),
+        FloatValFerroampSensor(
+            f"{name} Available three phase reactive current for load balancing",
+            "iavblq_3p",
+            ELECTRICAL_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            f"{name} {EHUB_NAME}",
+            interval,
+            2,
+            config_id,
+        ),
+        ThreePhaseMinFerroampSensor(
+            f"{name} Available reactive current for load balancing",
+            "iavblq",
+            ELECTRICAL_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            f"{name} {EHUB_NAME}",
+            interval,
+            2,
             config_id,
         ),
     ]
