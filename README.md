@@ -36,7 +36,7 @@ Install HACS and add the repository to the Custom repositories under HACS Settin
 2. Set a name for the integration as well as the MQTT-prefix where updates are sent (default values are probably fine for a standard-setup but if a bridge-connection is used the MQTT-topics can be re-mapped)
 3. Wait for all the devices to become present (EnergyHub, SSO's, ESOs and ESMs depending on your setup. Be patient since ESMs are only updated every 60 seconds.)
 
-This integration will add some sensors with the prefix `<integration name>_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`.
+This integration will add lots of sensors for the installed hardware with the prefix `<integration name>_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`.
 
 I'm also still figuring out what some of the sensors actually are, since the Ferroamp API documentaiton still seems to be incomplete in some areas.
 
