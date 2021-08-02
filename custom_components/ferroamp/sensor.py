@@ -324,7 +324,7 @@ async def async_setup_entry(
         esm_id = event["id"]["val"]
         model = None
         match = REGEX_ESM_ID.match(esm_id)
-        if match is not None and match.group(2) is not None:
+        if match is not None and match.group(2) is not None and match.group(1) is not None:
             migrate_entities(
                 esm_id,
                 match.group(2),
