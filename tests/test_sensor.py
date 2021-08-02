@@ -652,6 +652,38 @@ async def test_migrate_old_esm_entities(hass, mqtt_mock):
     }
 
 
+async def test_migrate_only_esm_entities_that_needs_migrating(hass, mqtt_mock):
+    config_entry = create_config()
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    er = await entity_registry.async_get_registry(hass)
+    entity = er.async_get_or_create(
+        'sensor', DOMAIN, 'ferroamp_esm_12345678-soh', config_entry=config_entry)
+
+    topic = "extapi/data/esm"
+    msg = """{
+        "id":{"val":"12345678"},
+        "soh":{"val":"89.2"},
+        "soc":{"val":"45.5"},
+        "ratedCapacity":{"val":"15300"},
+        "ratedPower":{"val":"7000"},
+        "status":{"val":"0"}
+    }"""
+
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get(entity.entity_id)
+    assert state.state == "89.2"
+    assert state.attributes == {
+        'friendly_name': 'Ferroamp ESM 12345678 State of Health',
+        'icon': 'mdi:battery-80',
+        'unit_of_measurement': '%'
+    }
+
+
 async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
