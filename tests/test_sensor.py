@@ -134,8 +134,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 228.81,
         'L2': 233.81,
         'L3': 231.18,
+        'device_class': 'voltage',
         'friendly_name': 'Ferroamp External Voltage',
         'icon': 'mdi:current-ac',
+        'state_class': 'measurement',
         'unit_of_measurement': 'V'
     }
 
@@ -145,8 +147,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 9.89,
         'L2': 9.85,
         'L3': 9.85,
+        'device_class': 'current',
         'friendly_name': 'Ferroamp Inverter RMS current',
         'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
 
@@ -156,8 +160,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 2.66,
         'L2': 2.65,
         'L3': 2.72,
+        'device_class': 'current',
         'friendly_name': 'Ferroamp Inverter reactive current',
         'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
 
@@ -167,8 +173,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 7.59,
         'L2': 8.9,
         'L3': 7.49,
+        'device_class': 'current',
         'friendly_name': 'Ferroamp Grid Current',
         'icon': 'mdi:current-ac',
+        'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
 
@@ -186,8 +194,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 4.21,
         'L2': 1.98,
         'L3': 3.28,
+        'device_class': 'current',
         'friendly_name': 'Ferroamp Grid Reactive Current',
         'icon': 'mdi:current-ac',
+        'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
 
@@ -197,8 +207,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': -9.86,
         'L2': -12.53,
         'L3': -10.06,
+        'device_class': 'current',
         'friendly_name': 'Ferroamp External Active Current',
         'icon': 'mdi:current-ac',
+        'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
 
@@ -208,8 +220,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 0,
         'L2': 0,
         'L3': 0,
+        'device_class': 'current',
         'friendly_name': 'Ferroamp Adaptive Current Equalization',
         'icon': 'mdi:current-ac',
+        'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
 
@@ -219,8 +233,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': -1595.28,
         'L2': -2071.57,
         'L3': -1644.5,
+        'device_class': 'power',
         'friendly_name': 'Ferroamp Grid Power',
         'icon': 'mdi:transmission-tower',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
@@ -230,8 +246,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 681.15,
         'L2': 327.35,
         'L3': 536.18,
+        'device_class': 'power',
         'friendly_name': 'Ferroamp Grid Power Reactive',
         'icon': 'mdi:transmission-tower',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
@@ -241,8 +259,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': -2224.66,
         'L2': -2263.35,
         'L3': -2234.62,
+        'device_class': 'power',
         'friendly_name': 'Ferroamp Inverter Power, active',
         'icon': 'mdi:solar-power',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
@@ -252,8 +272,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 430.37,
         'L2': 438.12,
         'L3': 444.64,
+        'device_class': 'power',
         'friendly_name': 'Ferroamp Inverter Power, reactive',
         'icon': 'mdi:solar-power',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
@@ -263,8 +285,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 629.38,
         'L2': 191.78,
         'L3': 590.12,
+        'device_class': 'power',
         'friendly_name': 'Ferroamp Consumption Power',
         'icon': 'mdi:power-plug',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
@@ -274,8 +298,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 250.78,
         'L2': -110.77,
         'L3': 91.54,
+        'device_class': 'power',
         'friendly_name': 'Ferroamp Consumption Power Reactive',
         'icon': 'mdi:power-plug',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
@@ -285,8 +311,11 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 183.92,
         'L2': 310.57,
         'L3': 167.93,
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp External Energy Produced',
         'icon': 'mdi:power-plug',
+        'last_reset': '1970-01-01T00:00:00+00:00',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
@@ -296,8 +325,11 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 2021.64,
         'L2': 1490.26,
         'L3': 2810.7,
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp External Energy Consumed',
         'icon': 'mdi:power-plug',
+        'last_reset': '1970-01-01T00:00:00+00:00',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
@@ -307,8 +339,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 713.08,
         'L2': 725.23,
         'L3': 714.16,
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp Inverter Energy Produced',
         'icon': 'mdi:power-plug',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
@@ -318,8 +352,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 399.01,
         'L2': 409.75,
         'L3': 403.32,
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp Inverter Energy Consumed',
         'icon': 'mdi:power-plug',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
@@ -329,8 +365,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 0.0,
         'L2': 5.01,
         'L3': 0.0,
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp Load Energy Produced',
         'icon': 'mdi:power-plug',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
@@ -340,32 +378,41 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L1': 2195.03,
         'L2': 1530.34,
         'L3': 3014.51,
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp Load Energy Consumed',
         'icon': 'mdi:power-plug',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
     state = hass.states.get("sensor.ferroamp_total_solar_energy")
     assert state.state == "1228"
     assert state.attributes == {
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp Total Solar Energy',
         'icon': 'mdi:solar-power',
+        'last_reset': '1970-01-01T00:00:00+00:00',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
     state = hass.states.get("sensor.ferroamp_battery_energy_produced")
     assert state.state == "1366"
     assert state.attributes == {
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp Battery Energy Produced',
         'icon': 'mdi:solar-power',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
     state = hass.states.get("sensor.ferroamp_battery_energy_consumed")
     assert state.state == "1242"
     assert state.attributes == {
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp Battery Energy Consumed',
         'icon': 'mdi:solar-power',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
@@ -380,18 +427,22 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_dc_link_voltage")
     assert state.state == "0"
     assert state.attributes == {
+        'device_class': 'voltage',
         'friendly_name': 'Ferroamp DC Link Voltage',
         'icon': 'mdi:current-ac',
         'neg': -383.96,
         'pos': 384.31,
+        'state_class': 'measurement',
         'unit_of_measurement': 'V'
     }
 
     state = hass.states.get("sensor.ferroamp_system_state_of_charge")
     assert state.state == "0"
     assert state.attributes == {
+        'device_class': 'battery',
         'friendly_name': 'Ferroamp System State of Charge',
         'icon': 'mdi:battery-0',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
@@ -400,6 +451,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'Ferroamp System State of Health',
         'icon': 'mdi:battery-0',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
@@ -414,16 +466,20 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_solar_power")
     assert state.state == "10108"
     assert state.attributes == {
+        'device_class': 'power',
         'friendly_name': 'Ferroamp Solar Power',
         'icon': 'mdi:solar-power',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
     state = hass.states.get("sensor.ferroamp_battery_power")
     assert state.state == "-3219"
     assert state.attributes == {
+        'device_class': 'power',
         'friendly_name': 'Ferroamp Battery Power',
         'icon': 'mdi:battery',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
@@ -459,14 +515,17 @@ async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'Ferroamp ESM 1 State of Health',
         'icon': 'mdi:battery-80',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
     state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
     assert state.state == "45.5"
     assert state.attributes == {
+        'device_class': 'battery',
         'friendly_name': 'Ferroamp ESM 1 State of Charge',
         'icon': 'mdi:battery-40',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
@@ -481,6 +540,7 @@ async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_esm_1_rated_power")
     assert state.state == "7000"
     assert state.attributes == {
+        'device_class': 'power',
         'friendly_name': 'Ferroamp ESM 1 Rated Power',
         'icon': 'mdi:battery',
         'unit_of_measurement': 'W'
@@ -509,8 +569,10 @@ async def test_battery_full(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
     assert state.state == "100.0"
     assert state.attributes == {
+        'device_class': 'battery',
         'friendly_name': 'Ferroamp ESM 1 State of Charge',
         'icon': 'mdi:battery',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
@@ -547,14 +609,17 @@ async def test_trim_part_no_from_esm_id(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'Ferroamp ESM 12345678 State of Health',
         'icon': 'mdi:battery-80',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
     state = hass.states.get("sensor.ferroamp_esm_12345678_state_of_charge")
     assert state.state == "45.5"
     assert state.attributes == {
+        'device_class': 'battery',
         'friendly_name': 'Ferroamp ESM 12345678 State of Charge',
         'icon': 'mdi:battery-40',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
@@ -569,6 +634,7 @@ async def test_trim_part_no_from_esm_id(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_esm_12345678_rated_power")
     assert state.state == "7000"
     assert state.attributes == {
+        'device_class': 'power',
         'friendly_name': 'Ferroamp ESM 12345678 Rated Power',
         'icon': 'mdi:battery',
         'unit_of_measurement': 'W'
@@ -648,6 +714,7 @@ async def test_migrate_old_esm_entities(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'Ferroamp ESM 12345678 State of Health',
         'icon': 'mdi:battery-80',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
@@ -680,6 +747,7 @@ async def test_migrate_only_esm_entities_that_needs_migrating(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'Ferroamp ESM 12345678 State of Health',
         'icon': 'mdi:battery-80',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
@@ -709,48 +777,60 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_eso_1_battery_voltage")
     assert state.state == "623"
     assert state.attributes == {
+        'device_class': 'voltage',
         'friendly_name': 'Ferroamp ESO 1 Battery Voltage',
         'icon': 'mdi:battery',
+        'state_class': 'measurement',
         'unit_of_measurement': 'V'
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_battery_current")
     assert state.state == "2"
     assert state.attributes == {
+        'device_class': 'current',
         'friendly_name': 'Ferroamp ESO 1 Battery Current',
         'icon': 'mdi:battery',
+        'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_battery_power")
     assert state.state == "977"
     assert state.attributes == {
+        'device_class': 'power',
         'friendly_name': 'Ferroamp ESO 1 Battery Power',
         'icon': 'mdi:battery',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_total_energy_produced")
     assert state.state == "684.8"
     assert state.attributes == {
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp ESO 1 Total Energy Produced',
         'icon': 'mdi:battery',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_total_energy_consumed")
     assert state.state == "614.9"
     assert state.attributes == {
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp ESO 1 Total Energy Consumed',
         'icon': 'mdi:battery',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_state_of_charge")
     assert state.state == "48.1"
     assert state.attributes == {
+        'device_class': 'battery',
         'friendly_name': 'Ferroamp ESO 1 State of Charge',
         'icon': 'mdi:battery-40',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
@@ -774,8 +854,10 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_eso_1_pcb_temperature")
     assert state.state == "20"
     assert state.attributes == {
+        'device_class': 'temperature',
         'friendly_name': 'Ferroamp ESO 1 PCB Temperature',
         'icon': 'mdi:thermometer',
+        'state_class': 'measurement',
         'unit_of_measurement': '°C'
     }
 
@@ -882,32 +964,40 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_voltage")
     assert state.state == "653"
     assert state.attributes == {
+        'device_class': 'voltage',
         'friendly_name': 'Ferroamp SSO 12345678 PV String Voltage',
         'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
         'unit_of_measurement': 'V'
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_current")
     assert state.state == "5"
     assert state.attributes == {
+        'device_class': 'current',
         'friendly_name': 'Ferroamp SSO 12345678 PV String Current',
         'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_power")
     assert state.state == "3151"
     assert state.attributes == {
+        'device_class': 'power',
         'friendly_name': 'Ferroamp SSO 12345678 PV String Power',
         'icon': 'mdi:solar-power',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_total_energy")
     assert state.state == "234.3"
     assert state.attributes == {
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp SSO 12345678 Total Energy',
         'icon': 'mdi:solar-power',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
@@ -931,8 +1021,10 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_sso_12345678_pcb_temperature")
     assert state.state == "6"
     assert state.attributes == {
+        'device_class': 'temperature',
         'friendly_name': 'Ferroamp SSO 12345678 PCB Temperature',
         'icon': 'mdi:thermometer',
+        'state_class': 'measurement',
         'unit_of_measurement': '°C'
     }
 
@@ -962,32 +1054,40 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_voltage")
     assert state.state == "653"
     assert state.attributes == {
+        'device_class': 'voltage',
         'friendly_name': 'Ferroamp SSO 12345678 PV String Voltage',
         'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
         'unit_of_measurement': 'V'
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_current")
     assert state.state == "5"
     assert state.attributes == {
+        'device_class': 'current',
         'friendly_name': 'Ferroamp SSO 12345678 PV String Current',
         'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_power")
     assert state.state == "3151"
     assert state.attributes == {
+        'device_class': 'power',
         'friendly_name': 'Ferroamp SSO 12345678 PV String Power',
         'icon': 'mdi:solar-power',
+        'state_class': 'measurement',
         'unit_of_measurement': 'W'
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_total_energy")
     assert state.state == "234.3"
     assert state.attributes == {
+        'device_class': 'energy',
         'friendly_name': 'Ferroamp SSO 12345678 Total Energy',
         'icon': 'mdi:solar-power',
+        'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
 
@@ -1011,8 +1111,10 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_sso_12345678_pcb_temperature")
     assert state.state == "6"
     assert state.attributes == {
+        'device_class': 'temperature',
         'friendly_name': 'Ferroamp SSO 12345678 PCB Temperature',
         'icon': 'mdi:thermometer',
+        'state_class': 'measurement',
         'unit_of_measurement': '°C'
     }
 
@@ -1053,8 +1155,10 @@ async def test_migrate_old_sso_entities(hass, mqtt_mock):
     state = hass.states.get(entity.entity_id)
     assert state.state == "653"
     assert state.attributes == {
+        'device_class': 'voltage',
         'friendly_name': 'Ferroamp SSO 12345678 PV String Voltage',
         'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
         'unit_of_measurement': 'V'
     }
 
@@ -1203,8 +1307,10 @@ async def test_restore_state(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
     assert state.state == "0.0"
     assert state.attributes == {
+        'device_class': 'battery',
         'friendly_name': 'Ferroamp ESM 1 State of Charge',
         'icon': 'mdi:battery-0',
+        'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
