@@ -1,11 +1,11 @@
-export function preVersionGeneration(version) {
+exports.preVersionGeneration = (version) => {
   if (process.env.GITHUB_REF !== 'refs/heads/master') {
     return version + '-beta'
   }
   return version
 }
 
-export function preTagGeneration(tag) {
+exports.preTagGeneration = (tag) => {
   if (process.env.GITHUB_REF !== 'refs/heads/master') {
     return tag + '-beta'
   }
