@@ -16,6 +16,7 @@ jobs:
           output-file: "false"
           preset: conventionalcommits
           version-file: "custom_components/ferroamp/manifest.json"
+          pre-changelog-generation: "./.github/scripts/tagname.js"
 
       - name: Create Release
         uses: actions/create-release@v1
