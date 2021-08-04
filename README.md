@@ -2,8 +2,6 @@
 [![Join the chat at https://gitter.im/ha-ferroamp/community](https://img.shields.io/gitter/room/henricm/ha-ferroamp?style=for-the-badge)](https://gitter.im/ha-ferroamp/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Home assistant sensors for Ferroamp EnergyHub
-This is still very much still work in progress, so please use this component with caution.
-
 Ferroamp MQTT support sends updates to these topics:
 
  * extapi/data/ehub (interval 1s)
