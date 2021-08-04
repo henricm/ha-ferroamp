@@ -12,7 +12,7 @@ Ferroamp MQTT support sends updates to these topics:
  * extapi/data/esm (interval 60s)
 
 ## Prerequisites
-- Home assistant `2021.7`
+- Home assistant `2021.8`
 - Enable Ferroamp MQTT by contacting [Ferroamp Support](https://ferroamp.com/sv/kontakt/) to get the username and password for your Energy MQTT broker.
 - Enable MQTT in Home assistant and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp (or setup a bridge-connection if you already have an MQTT-server, see the `Configuring Bridges`-section in the [Mosquitto documentation](https://mosquitto.org/man/mosquitto-conf-5.html)).
 
