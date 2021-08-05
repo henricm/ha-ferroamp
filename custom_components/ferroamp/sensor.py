@@ -917,7 +917,7 @@ class ThreePhaseMinFerroampSensor(ThreePhaseFerroampSensor):
                 l1 += phases["L1"]
                 l2 += phases["L2"]
                 l3 += phases["L3"]
-        self._attr_state = round(min([l1 / len(events), l2 / len(events), l3 / len(events)]), self._precision)        
+        self._attr_state = round(min([l1 / len(events), l2 / len(events), l3 / len(events)]), self._precision)
         if self._precision == 0:
             self._attr_state = int(self._attr_state)
         self._attr_extra_state_attributes = dict(
@@ -1353,18 +1353,19 @@ def ehub_sensors(slug, name, interval, precision_battery, precision_energy, prec
         FloatValFerroampSensor(
             f"{name} Available three phase reactive current for load balancing",
             "iavblq_3p",
-            ELECTRICAL_CURRENT_AMPERE,
+            ELECTRIC_CURRENT_AMPERE,
             "mdi:current-ac",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",
             interval,
             2,
             config_id,
+            state_class=STATE_CLASS_MEASUREMENT,
         ),
         ThreePhaseMinFerroampSensor(
             f"{name} Available reactive current for load balancing",
             "iavblq",
-            ELECTRICAL_CURRENT_AMPERE,
+            ELECTRIC_CURRENT_AMPERE,
             "mdi:current-ac",
             f"{slug}_{EHUB}",
             f"{name} {EHUB_NAME}",

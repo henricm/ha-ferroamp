@@ -493,25 +493,25 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'icon': 'mdi:battery',
         'unit_of_measurement': 'Wh'
     }
-    
-    state = hass.states.get("sensor.ferroamp_available_current_for_load_balancing")
+
+    state = hass.states.get("sensor.ferroamp_available_reactive_current_for_load_balancing")
     assert state.state == "29.05"
     assert state.attributes == {
         'L1': 35.89,
         'L2': 29.05,
         'L3': 33.93,
         'device_class': 'current',
-        'friendly_name': 'Ferroamp Available current for load balancing',
+        'friendly_name': 'Ferroamp Available reactive current for load balancing',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
-    
-    state = hass.states.get("sensor.ferroamp_available_three_phase_current_for_load_balancing")
+
+    state = hass.states.get("sensor.ferroamp_available_three_phase_reactive_current_for_load_balancing")
     assert state.state == "29.05"
     assert state.attributes == {
         'device_class': 'current',
-        'friendly_name': 'Ferroamp Available three phase current for load balancing',
+        'friendly_name': 'Ferroamp Available three phase reactive current for load balancing',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
