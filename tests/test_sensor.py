@@ -106,6 +106,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
                 "ploadreactive": {"L2": "-110.77", "L3": "91.54", "L1": "250.78"},
                 "state": {"val": "4097"},
                 "wloadprodq": {"L2": "18020837409", "L3": "8433745", "L1": "4976003"},
+                "iavbl": {"L2": "26.31", "L3": "29.69", "L1": "31.20"},
                 "pinv": {"L2": "-2263.35", "L3": "-2234.62", "L1": "-2224.66"},
                 "iextq": {"L2": "-12.53", "L3": "-10.06", "L1": "-9.86"},
                 "pext": {"L2": "-2071.57", "L3": "-1644.50", "L1": "-1595.28"},
@@ -118,7 +119,9 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
                 "sext": {"val": "5549.12"},
                 "pbat": {"val": "-3218.99"},
                 "iextd": {"L2": "1.98", "L3": "3.28", "L1": "4.21"},
+                "iavblq_3p": {"val": "29.05"},
                 "wbatprod": {"val": "4918944968551"},
+                "iavblq": {"L2": "29.05", "L3": "33.93", "L1": "35.89"},
                 "ild": {"L2": "2.65", "L3": "2.72", "L1": "2.66"},
                 "gridfreq": {"val": "50.07"},
                 "pload": {"L2": "191.78", "L3": "590.12", "L1": "629.38"},
@@ -489,6 +492,29 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'friendly_name': 'Ferroamp Total rated capacity of all batteries',
         'icon': 'mdi:battery',
         'unit_of_measurement': 'Wh'
+    }
+
+    state = hass.states.get("sensor.ferroamp_available_reactive_current_for_load_balancing")
+    assert state.state == "29.05"
+    assert state.attributes == {
+        'L1': 35.89,
+        'L2': 29.05,
+        'L3': 33.93,
+        'device_class': 'current',
+        'friendly_name': 'Ferroamp Available reactive current for load balancing',
+        'icon': 'mdi:current-ac',
+        'state_class': 'measurement',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_available_three_phase_reactive_current_for_load_balancing")
+    assert state.state == "29.05"
+    assert state.attributes == {
+        'device_class': 'current',
+        'friendly_name': 'Ferroamp Available three phase reactive current for load balancing',
+        'icon': 'mdi:current-ac',
+        'state_class': 'measurement',
+        'unit_of_measurement': 'A'
     }
 
 
