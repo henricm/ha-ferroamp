@@ -404,7 +404,8 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'device_class': 'energy',
         'friendly_name': 'Ferroamp Battery Energy Produced',
-        'icon': 'mdi:solar-power',
+        'icon': 'mdi:battery-plus',
+        'last_reset': '1970-01-01T00:00:00+00:00',
         'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
@@ -414,7 +415,8 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'device_class': 'energy',
         'friendly_name': 'Ferroamp Battery Energy Consumed',
-        'icon': 'mdi:solar-power',
+        'icon': 'mdi:battery-minus',
+        'last_reset': '1970-01-01T00:00:00+00:00',
         'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
@@ -835,7 +837,8 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'device_class': 'energy',
         'friendly_name': 'Ferroamp ESO 1 Total Energy Produced',
-        'icon': 'mdi:battery',
+        'icon': 'mdi:battery-plus',
+        'last_reset': '1970-01-01T00:00:00+00:00',
         'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
@@ -845,7 +848,8 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'device_class': 'energy',
         'friendly_name': 'Ferroamp ESO 1 Total Energy Consumed',
-        'icon': 'mdi:battery',
+        'icon': 'mdi:battery-minus',
+        'last_reset': '1970-01-01T00:00:00+00:00',
         'state_class': 'measurement',
         'unit_of_measurement': 'kWh'
     }
