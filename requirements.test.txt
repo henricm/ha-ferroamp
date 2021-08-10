@@ -5,6 +5,4 @@ pytest-homeassistant-custom-component==0.4.3
 # From our manifest.json for our custom component
 aiohttp_cors==0.7.0
 paho-mqtt==1.5.1
-
-homeassistant==2021.8.0b0
 voluptuous==0.12.1
