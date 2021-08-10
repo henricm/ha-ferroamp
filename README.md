@@ -86,6 +86,18 @@ power: 1000
 ### ferroamp.autocharge
 No parameters - sets the battery back into autocharge.
 
+## Energy Dashboard
+With the Home Assistant Core 2021.8 release an [Energy Dashboard](https://www.home-assistant.io/blog/2021/08/04/home-energy-management/#energy-dashboard) was introduced.
+To set it up correctly with your Ferroamp EnergyHub use the sensors as described below.
+
+### Electricity grid
+#### Grid consumption
+`Ferroamp External Energy Consumed`
+#### Return to grid
+`Ferroamp External Energy Produced`
+### Solar Panels
+#### Solar production
+`Ferroamp Total Solar Energy`
 ## Utility meter
 
 Inspired from this [blog post](https://www.planet4.se/home-assistant-and-solar-panel-dashboards/), I discovered the [utility meter sensor](https://www.home-assistant.io/integrations/utility_meter/) available in home assistant. I use it to track grid, solar and battery energy, hourly, daily, monthly by the configuration below in `configuration.yml`:
