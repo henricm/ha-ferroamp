@@ -1435,7 +1435,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         FloatValFerroampSensor(
-            "Available three phase reactive current for load balancing",
+            "Available three phase active current for load balancing",
             slug,
             "iavblq_3p",
             ELECTRIC_CURRENT_AMPERE,
@@ -1448,7 +1448,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             state_class=STATE_CLASS_MEASUREMENT,
         ),
         ThreePhaseMinFerroampSensor(
-            "Available reactive current for load balancing",
+            "Available active current for load balancing",
             slug,
             "iavblq",
             ELECTRIC_CURRENT_AMPERE,
