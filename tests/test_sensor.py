@@ -317,8 +317,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'External Energy Produced',
         'icon': 'mdi:power-plug',
-        'last_reset': '1970-01-01T00:00:00+00:00',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -331,8 +330,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'External Energy Consumed',
         'icon': 'mdi:power-plug',
-        'last_reset': '1970-01-01T00:00:00+00:00',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -394,8 +392,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'Total Solar Energy',
         'icon': 'mdi:solar-power',
-        'last_reset': '1970-01-01T00:00:00+00:00',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -405,8 +402,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'Battery Energy Produced',
         'icon': 'mdi:battery-plus',
-        'last_reset': '1970-01-01T00:00:00+00:00',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -416,8 +412,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'Battery Energy Consumed',
         'icon': 'mdi:battery-minus',
-        'last_reset': '1970-01-01T00:00:00+00:00',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -838,8 +833,7 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'ESO 1 Total Energy Produced',
         'icon': 'mdi:battery-plus',
-        'last_reset': '1970-01-01T00:00:00+00:00',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -849,8 +843,7 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'ESO 1 Total Energy Consumed',
         'icon': 'mdi:battery-minus',
-        'last_reset': '1970-01-01T00:00:00+00:00',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
