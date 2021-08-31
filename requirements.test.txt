@@ -1,5 +1,5 @@
 # Strictly for tests
-pytest==6.2.4
+pytest==6.2.5
 pytest-cov<3.0.0
 pytest-homeassistant-custom-component==0.4.3
 # From our manifest.json for our custom component
