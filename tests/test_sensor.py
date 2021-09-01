@@ -1020,7 +1020,7 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'SSO 12345678 Total Energy',
         'icon': 'mdi:solar-power',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -1110,7 +1110,7 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'SSO 12345678 Total Energy',
         'icon': 'mdi:solar-power',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 

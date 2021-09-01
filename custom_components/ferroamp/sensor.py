@@ -4,7 +4,7 @@ import logging
 import uuid
 from datetime import datetime
 
-from homeassistant import config_entries, core, util
+from homeassistant import config_entries, core
 from homeassistant.components import mqtt
 from homeassistant.components.sensor import (
     DEVICE_CLASS_BATTERY,
@@ -208,7 +208,8 @@ async def async_setup_entry(
                     interval,
                     precision_energy,
                     config_id,
-                    model=model
+                    model=model,
+                    state_class=STATE_CLASS_TOTAL_INCREASING
                 ),
                 FaultcodeFerroampSensor(
                     f"{device_name} Faultcode",
