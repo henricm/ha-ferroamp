@@ -97,7 +97,8 @@ To set it up correctly with your Ferroamp EnergyHub use the sensors as described
 `External Energy Produced`
 ### Solar Panels
 #### Solar production
-`Total Solar Energy`
+`Total Solar Energy`  or add one for each SSO and use `SSO xxx Total Energy`
+
 ## Utility meter
 
 Inspired from this [blog post](https://www.planet4.se/home-assistant-and-solar-panel-dashboards/), I discovered the [utility meter sensor](https://www.home-assistant.io/integrations/utility_meter/) available in home assistant. I use it to track grid, solar and battery energy, hourly, daily, monthly by the configuration below in `configuration.yml`:

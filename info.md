@@ -31,4 +31,4 @@ To set it up correctly with your Ferroamp EnergyHub use the sensors as described
 `External Energy Produced`
 ### Solar Panels
 #### Solar production
-`Total Solar Energy`
+`Total Solar Energy` or add one for each SSO and use `SSO xxx Total Energy`
