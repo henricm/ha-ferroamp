@@ -19,3 +19,16 @@ To avoid too much data into home assistant, we only update sensors with new valu
 This integration adds services for charging, discharging and autocharge. Please see Ferroamp API documentation for more info about this functionality.
 
 If more than one EnergyHub is configured, the target parameter needs to be set to the name of the EnergyHub to control.
+
+## Energy Dashboard
+With the Home Assistant Core 2021.8 release an [Energy Dashboard](https://www.home-assistant.io/blog/2021/08/04/home-energy-management/#energy-dashboard) was introduced.
+To set it up correctly with your Ferroamp EnergyHub use the sensors as described below.
+
+### Electricity grid
+#### Grid consumption
+`External Energy Consumed`
+#### Return to grid
+`External Energy Produced`
+### Solar Panels
+#### Solar production
+`Total Solar Energy`
