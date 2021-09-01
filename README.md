@@ -92,7 +92,7 @@ To set it up correctly with your Ferroamp EnergyHub use the sensors as described
 
 ### Electricity grid
 #### Grid consumption
-`Ferroamp External Energy Consumed`
+`External Energy Consumed`
 #### Return to grid
 `Ferroamp External Energy Produced`
 ### Solar Panels
