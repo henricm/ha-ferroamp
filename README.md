@@ -98,6 +98,11 @@ To set it up correctly with your Ferroamp EnergyHub use the sensors as described
 ### Solar Panels
 #### Solar production
 `Total Solar Energy`  or add one for each SSO and use `SSO xxx Total Energy`
+### Home Battery Storage
+#### Energy going in to the battery
+`Battery Energy Produced`
+#### Energy coming out of the battery
+`Battery Energy Consumed`
 
 ## Utility meter
 
