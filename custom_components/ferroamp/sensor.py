@@ -861,10 +861,14 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
         if temp is None:
             return False
         else:
-            self._attr_native_value = round(temp / count / 3600000000, self._precision)
-            if self._precision == 0:
-                self._attr_native_value = int(self._attr_native_value)
-            return True
+            val = round(temp / count / 3600000000, self._precision)
+            if self._attr_native_value is None or self._attr_state_class != STATE_CLASS_TOTAL_INCREASING or val > float(self._attr_native_value):
+                self._attr_native_value = val
+                if self._precision == 0:
+                    self._attr_native_value = int(self._attr_native_value)
+                return True
+            else:
+                return False
 
     def handle_options_update(self, options):
         super().handle_options_update(options)
