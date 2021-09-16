@@ -127,7 +127,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
                 "pload": {"L2": "191.78", "L3": "590.12", "L1": "629.38"},
                 "ilq": {"L2": "-13.69", "L3": "-13.67", "L1": "-13.75"},
                 "winvprodq": {"L2": "2610825033980", "L3": "2570987302422", "L1": "2567078340545"},
-                "il": {"L2": "9.85", "L3": "9.85", "L1": "9.89"}}"""
+                "il": {"L2": "9.85", "L3": "9.85", "L1": "9.89"},
+                "soc":{"val":"79.9"},
+                "soh":{"val":"98.9"},
+                "ratedcap":{"val":"15300"}}"""
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -437,20 +440,20 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     }
 
     state = hass.states.get("sensor.ferroamp_system_state_of_charge")
-    assert state.state == "0"
+    assert state.state == "80"
     assert state.attributes == {
         'device_class': 'battery',
         'friendly_name': 'System State of Charge',
-        'icon': 'mdi:battery-0',
+        'icon': 'mdi:battery-80',
         'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
     state = hass.states.get("sensor.ferroamp_system_state_of_health")
-    assert state.state == "0"
+    assert state.state == "99"
     assert state.attributes == {
         'friendly_name': 'System State of Health',
-        'icon': 'mdi:battery-0',
+        'icon': 'mdi:battery-90',
         'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
@@ -484,7 +487,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     }
 
     state = hass.states.get("sensor.ferroamp_total_rated_capacity_of_all_batteries")
-    assert state.state == "0"
+    assert state.state == "15300"
     assert state.attributes == {
         'friendly_name': 'Total rated capacity of all batteries',
         'icon': 'mdi:battery',
@@ -1328,11 +1331,11 @@ async def test_restore_state(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
-    assert state.state == "0.0"
+    assert state.state == "11"
     assert state.attributes == {
         'device_class': 'battery',
         'friendly_name': 'ESM 1 State of Charge',
-        'icon': 'mdi:battery-0',
+        'icon': 'mdi:battery-10',
         'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
@@ -1344,7 +1347,7 @@ async def test_update_options(hass, mqtt_mock):
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    msg = '{"id":{"val":"1"}}'
+    msg = '{"id":{"val":"1"},"wpv":{"val": "4422089590383"}}'
     async_fire_mqtt_message(hass, "extapi/data/ehub", msg)
     async_fire_mqtt_message(hass, "extapi/data/esm", msg)
     async_fire_mqtt_message(hass, "extapi/data/eso", msg)
@@ -1403,7 +1406,7 @@ async def test_update_options(hass, mqtt_mock):
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
-    assert sensor.state == 0
+    assert sensor.state == 1228.4
 
 
 async def test_base_class_update_state_from_events():
