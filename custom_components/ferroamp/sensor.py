@@ -616,7 +616,6 @@ class KeyedFerroampSensor(FerroampSensor):
         self._state_key = key
         self._attr_unique_id = f"{self.device_id}-{self._state_key}"
         self.updated = datetime.min
-        self.event = {}
         self.events = []
 
     def add_event(self, event):
@@ -653,9 +652,7 @@ class IntValFerroampSensor(KeyedFerroampSensor):
     def update_state_from_events(self, events) -> bool:
         temp = None
         count = 0
-        event = self.event
-        for e in events:
-            event.update(e)
+        for event in events:
             v = event.get(self._state_key, None)
             if v is not None:
                 count += 1
@@ -676,9 +673,7 @@ class StringValFerroampSensor(KeyedFerroampSensor):
 
     def update_state_from_events(self, events) -> bool:
         temp = None
-        event = self.event
-        for e in events:
-            event.update(e)
+        for event in events:
             v = event.get(self._state_key, None)
             if v is not None:
                 temp = v["val"]
@@ -700,13 +695,11 @@ class FloatValFerroampSensor(KeyedFerroampSensor):
     def update_state_from_events(self, events) -> bool:
         temp = None
         count = 0
-        event = self.event
-        for e in events:
-            event.update(e)
+        for event in events:
             v = event.get(self._state_key, None)
             if v is not None:
                 count += 1
-                temp = temp or 0 + float(v["val"])
+                temp = (temp or 0) + float(v["val"])
         if temp is None:
             return False
         else:
@@ -733,13 +726,11 @@ class DcLinkFerroampSensor(KeyedFerroampSensor):
     def update_state_from_events(self, events):
         neg = pos = None
         count = 0
-        event = self.event
-        for e in events:
-            event.update(e)
+        for event in events:
             voltage = self.get_voltage(event)
             if voltage is not None:
-                neg = neg or 0 + voltage["neg"]
-                pos = pos or 0 + voltage["pos"]
+                neg = (neg or 0) + voltage["neg"]
+                pos = (pos or 0) + voltage["pos"]
                 count += 1
         if neg is None and pos is None:
             return False
@@ -761,7 +752,7 @@ class PercentageFerroampSensor(FloatValFerroampSensor):
     def update_state_from_events(self, events):
         res = super().update_state_from_events(events)
         if self.state is not None:
-            pct = int(int(self.state) / 10) * 10
+            pct = int(float(self.state) / 10) * 10
             if pct <= 90:
                 self._attr_icon = f"mdi:battery-{pct}"
             else:
@@ -851,18 +842,18 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
     def update_state_from_events(self, events):
         temp = None
         count = 0
-        event = self.event
-        for e in events:
-            event.update(e)
+        for event in events:
             v = event.get(self._state_key, None)
             if v is not None:
-                temp = temp or 0 + float(v["val"])
+                temp = (temp or 0) + float(v["val"])
                 count += 1
         if temp is None:
             return False
         else:
             val = round(temp / count / 3600000000, self._precision)
-            if self._attr_native_value is None or self._attr_state_class != STATE_CLASS_TOTAL_INCREASING or val > float(self._attr_native_value):
+            if self._attr_native_value is None\
+                    or self._attr_state_class != STATE_CLASS_TOTAL_INCREASING\
+                    or val > float(self._attr_native_value):
                 self._attr_native_value = val
                 if self._precision == 0:
                     self._attr_native_value = int(self._attr_native_value)
@@ -882,9 +873,7 @@ class RelayStatusFerroampSensor(KeyedFerroampSensor):
 
     def update_state_from_events(self, events):
         temp = None
-        event = self.event
-        for e in events:
-            event.update(e)
+        for event in events:
             v = event.get(self._state_key, None)
             if v is not None:
                 val = int(v["val"])
@@ -934,14 +923,12 @@ class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
     def update_state_from_events(self, events):
         temp_voltage = temp_current = None
         count = 0
-        event = self.event
-        for e in events:
-            event.update(e)
+        for event in events:
             voltage = event.get(self._voltage_key, None)
             current = event.get(self._current_key, None)
             if current is not None and voltage is not None:
-                temp_voltage = temp_voltage or 0 + float(voltage["val"])
-                temp_current = temp_current or 0 + float(current["val"])
+                temp_voltage = (temp_voltage or 0) + float(voltage["val"])
+                temp_current = (temp_current or 0) + float(current["val"])
                 count += 1
 
         if temp_voltage is None and temp_current is None:
@@ -963,11 +950,12 @@ class ThreePhaseFerroampSensor(KeyedFerroampSensor):
 
     def get_phases(self, event):
         phases = event.get(self._state_key, None)
-        if phases is not None:
+        if phases is not None and (phases["L1"] is not None or phases["L2"] is not None or phases["L3"] is not None):
             phases = dict(
                 L1=float(phases["L1"]), L2=float(phases["L2"]), L3=float(phases["L3"])
             )
-        return phases
+            return phases
+        return None
 
     def calculate_value(self, l1, l2, l3, count):
         return round(l1 / count + l2 / count + l3 / count, self._precision)
@@ -975,14 +963,12 @@ class ThreePhaseFerroampSensor(KeyedFerroampSensor):
     def update_state_from_events(self, events):
         l1 = l2 = l3 = None
         count = 0
-        event = self.event
-        for e in events:
-            event.update(e)
+        for event in events:
             phases = self.get_phases(event)
             if phases is not None:
-                l1 = l1 or 0 + phases["L1"]
-                l2 = l2 or 0 + phases["L2"]
-                l3 = l3 or 0 + phases["L3"]
+                l1 = (l1 or 0) + phases["L1"]
+                l2 = (l2 or 0) + phases["L2"]
+                l3 = (l3 or 0) + phases["L3"]
                 count += 1
         if l1 is None and l2 is None and l3 is None:
             return False
@@ -1028,14 +1014,14 @@ class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
 
     def get_phases(self, event):
         phases = super().get_phases(event)
-        if phases is not None:
+        if phases is not None and (phases["L1"] is not None or phases["L2"] is not None or phases["L3"] is not None):
             phases = dict(
                 L1=round(phases["L1"] / 3600000000, 2),
                 L2=round(phases["L2"] / 3600000000, 2),
                 L3=round(phases["L3"] / 3600000000, 2),
             )
-
-        return phases
+            return phases
+        return None
 
     def handle_options_update(self, options):
         super().handle_options_update(options)
@@ -1098,9 +1084,7 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
 
     def update_state_from_events(self, events):
         temp = None
-        event = self.event
-        for e in events:
-            event.update(e)
+        for event in events:
             v = event.get(self._state_key, None)
             if v is not None:
                 temp = v["val"]

@@ -1555,6 +1555,61 @@ async def test_always_increasing(hass, mqtt_mock):
     assert sensor.state == "1348.5"
 
 
+async def test_average_calculation(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 1,
+            CONF_PRECISION_BATTERY: 0,
+            CONF_PRECISION_CURRENT: 0,
+            CONF_PRECISION_ENERGY: 0,
+            CONF_PRECISION_FREQUENCY: 0,
+            CONF_PRECISION_TEMPERATURE: 0,
+            CONF_PRECISION_VOLTAGE: 0,
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    er = await entity_registry.async_get_registry(hass)
+    er.async_get_or_create(
+        'sensor', DOMAIN, 'ferroamp_ehub-wextprodq', config_entry=config_entry,
+        suggested_object_id="ferroamp_external_energy_produced")
+
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/ehub"
+
+    def msg(l1, l2, l3) -> str:
+        return f"""{{"wextprodq": {{"L1": "{l1}", "L2": "{l2}", "L3": "{l3}"}}}}"""
+
+    async_fire_mqtt_message(hass, topic, msg(662115344893, 1118056851556, 604554554552))
+    async_fire_mqtt_message(hass, topic, "{}")
+    async_fire_mqtt_message(hass, topic, msg(662115344893, 1118056851556, 604554554552))
+    async_fire_mqtt_message(hass, topic, "{}")
+    async_fire_mqtt_message(hass, topic, "{}")
+    async_fire_mqtt_message(hass, topic, msg(662115344893, 1118056851556, 604554554552))
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_external_energy_produced")
+    assert state.state == "662"
+    assert state.attributes == {
+        'L1': 183.92,
+        'L2': 310.57,
+        'L3': 167.93,
+        'device_class': 'energy',
+        'friendly_name': 'External Energy Produced',
+        'icon': 'mdi:power-plug',
+        'state_class': 'total_increasing',
+        'unit_of_measurement': 'kWh'
+    }
+
+
 @patch('uuid.uuid1', mock_uuid)
 async def test_extapi_version_request(hass, mqtt_mock):
     config_entry = create_config()
