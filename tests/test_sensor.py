@@ -127,7 +127,10 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
                 "pload": {"L2": "191.78", "L3": "590.12", "L1": "629.38"},
                 "ilq": {"L2": "-13.69", "L3": "-13.67", "L1": "-13.75"},
                 "winvprodq": {"L2": "2610825033980", "L3": "2570987302422", "L1": "2567078340545"},
-                "il": {"L2": "9.85", "L3": "9.85", "L1": "9.89"}}"""
+                "il": {"L2": "9.85", "L3": "9.85", "L1": "9.89"},
+                "soc":{"val":"79.9"},
+                "soh":{"val":"98.9"},
+                "ratedcap":{"val":"15300"}}"""
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -437,20 +440,20 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     }
 
     state = hass.states.get("sensor.ferroamp_system_state_of_charge")
-    assert state.state == "0"
+    assert state.state == "80"
     assert state.attributes == {
         'device_class': 'battery',
         'friendly_name': 'System State of Charge',
-        'icon': 'mdi:battery-0',
+        'icon': 'mdi:battery-80',
         'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
 
     state = hass.states.get("sensor.ferroamp_system_state_of_health")
-    assert state.state == "0"
+    assert state.state == "99"
     assert state.attributes == {
         'friendly_name': 'System State of Health',
-        'icon': 'mdi:battery-0',
+        'icon': 'mdi:battery-90',
         'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
@@ -484,7 +487,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     }
 
     state = hass.states.get("sensor.ferroamp_total_rated_capacity_of_all_batteries")
-    assert state.state == "0"
+    assert state.state == "15300"
     assert state.attributes == {
         'friendly_name': 'Total rated capacity of all batteries',
         'icon': 'mdi:battery',
@@ -1328,11 +1331,11 @@ async def test_restore_state(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
-    assert state.state == "0.0"
+    assert state.state == "11"
     assert state.attributes == {
         'device_class': 'battery',
         'friendly_name': 'ESM 1 State of Charge',
-        'icon': 'mdi:battery-0',
+        'icon': 'mdi:battery-10',
         'state_class': 'measurement',
         'unit_of_measurement': '%'
     }
@@ -1344,7 +1347,7 @@ async def test_update_options(hass, mqtt_mock):
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    msg = '{"id":{"val":"1"}}'
+    msg = '{"id":{"val":"1"},"wpv":{"val": "4422089590383"}}'
     async_fire_mqtt_message(hass, "extapi/data/ehub", msg)
     async_fire_mqtt_message(hass, "extapi/data/esm", msg)
     async_fire_mqtt_message(hass, "extapi/data/eso", msg)
@@ -1403,7 +1406,7 @@ async def test_update_options(hass, mqtt_mock):
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
-    assert sensor.state == 0
+    assert sensor.state == 1228.4
 
 
 async def test_base_class_update_state_from_events():
@@ -1523,6 +1526,87 @@ async def test_control_command_restore_state(hass, mqtt_mock):
         'transId': 'abc-123',
         'status': None,
         'message': None
+    }
+
+
+async def test_always_increasing(hass, mqtt_mock):
+    mock_restore_cache(
+        hass,
+        [
+            State("sensor.ferroamp_total_solar_energy", "1348.5")
+        ],
+    )
+
+    hass.state = CoreState.starting
+
+    config_entry = create_config()
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    topic = "extapi/data/ehub"
+    msg = '{"id":{"val":"1"},"wpv":{"val": "4422089590383"}}'
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    er = await entity_registry.async_get_registry(hass)
+    entity = er.async_get("sensor.ferroamp_total_solar_energy")
+    assert entity is not None
+    sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
+    assert sensor.state == "1348.5"
+
+
+async def test_average_calculation(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 1,
+            CONF_PRECISION_BATTERY: 0,
+            CONF_PRECISION_CURRENT: 0,
+            CONF_PRECISION_ENERGY: 0,
+            CONF_PRECISION_FREQUENCY: 0,
+            CONF_PRECISION_TEMPERATURE: 0,
+            CONF_PRECISION_VOLTAGE: 0,
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    er = await entity_registry.async_get_registry(hass)
+    er.async_get_or_create(
+        'sensor', DOMAIN, 'ferroamp_ehub-wextprodq', config_entry=config_entry,
+        suggested_object_id="ferroamp_external_energy_produced")
+
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/ehub"
+
+    def msg(l1, l2, l3) -> str:
+        return f"""{{"wextprodq": {{"L1": "{l1}", "L2": "{l2}", "L3": "{l3}"}}}}"""
+
+    async_fire_mqtt_message(hass, topic, msg(662115344893, 1118056851556, 604554554552))
+    async_fire_mqtt_message(hass, topic, "{}")
+    async_fire_mqtt_message(hass, topic, msg(662115344893, 1118056851556, 604554554552))
+    async_fire_mqtt_message(hass, topic, "{}")
+    async_fire_mqtt_message(hass, topic, "{}")
+    async_fire_mqtt_message(hass, topic, msg(662115344893, 1118056851556, 604554554552))
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_external_energy_produced")
+    assert state.state == "662"
+    assert state.attributes == {
+        'L1': 183.92,
+        'L2': 310.57,
+        'L3': 167.93,
+        'device_class': 'energy',
+        'friendly_name': 'External Energy Produced',
+        'icon': 'mdi:power-plug',
+        'state_class': 'total_increasing',
+        'unit_of_measurement': 'kWh'
     }
 
 
