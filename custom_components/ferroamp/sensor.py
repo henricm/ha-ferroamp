@@ -30,6 +30,7 @@ from homeassistant.const import (
     ELECTRIC_POTENTIAL_VOLT
 )
 from homeassistant.core import callback
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_reg
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
@@ -568,12 +569,12 @@ class FerroampSensor(SensorEntity, RestoreEntity):
         self._attr_name = name
         self._attr_unit_of_measurement = unit
         self._attr_icon = icon
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, device_id)},
-            "name": device_name,
-            "manufacturer": MANUFACTURER,
-            "model": kwargs.get("model")
-        }
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_id)},
+            name=device_name,
+            manufacturer=MANUFACTURER,
+            model=kwargs.get("model")
+        )
         self._attr_should_poll = False
         if unit == ENERGY_KILO_WATT_HOUR:
             self._attr_device_class = DEVICE_CLASS_ENERGY
