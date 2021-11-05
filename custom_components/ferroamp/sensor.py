@@ -853,6 +853,7 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
         else:
             val = round(temp / count / 3600000000, self._precision)
             if self._attr_native_value is None\
+                    or (isinstance(self._attr_native_value, str) and not self.isfloat(self._attr_native_value))\
                     or self._attr_state_class != STATE_CLASS_TOTAL_INCREASING\
                     or val > float(self._attr_native_value):
                 self._attr_native_value = val
@@ -865,6 +866,13 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
     def handle_options_update(self, options):
         super().handle_options_update(options)
         self._precision = options.get(CONF_PRECISION_ENERGY)
+
+    def isfloat(self, value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
 
 
 class RelayStatusFerroampSensor(KeyedFerroampSensor):
