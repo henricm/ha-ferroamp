@@ -1,4 +1,6 @@
 """Platform for Ferroamp sensors integration."""
+from __future__ import annotations
+
 import json
 import logging
 import uuid
@@ -564,7 +566,7 @@ async def options_update_listener(hass, entry):
 class FerroampSensor(SensorEntity, RestoreEntity):
     """Representation of a Ferroamp Sensor."""
 
-    def __init__(self, name, entity_prefix, unit, icon, device_id, device_name, interval, config_id, **kwargs):
+    def __init__(self, name, entity_prefix, unit: str | None, icon, device_id, device_name, interval, config_id, **kwargs):
         """Initialize the sensor."""
         self._attr_name = name
         self._attr_unit_of_measurement = unit
@@ -611,7 +613,7 @@ class FerroampSensor(SensorEntity, RestoreEntity):
 class KeyedFerroampSensor(FerroampSensor):
     """Representation of a Ferroamp Sensor using a single key to extract state from MQTT-messages."""
 
-    def __init__(self, name, entity_prefix, key, unit, icon, device_id, device_name, interval, config_id, **kwargs):
+    def __init__(self, name, entity_prefix, key, unit: str | None, icon, device_id, device_name, interval, config_id, **kwargs):
         """Initialize the sensor."""
         super().__init__(name, entity_prefix, unit, icon, device_id, device_name, interval, config_id, **kwargs)
         self._state_key = key
@@ -646,7 +648,7 @@ class KeyedFerroampSensor(FerroampSensor):
 class IntValFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp integer value Sensor."""
 
-    def __init__(self, name, entity_prefix, key, unit, icon, device_id, device_name, interval, config_id, **kwargs):
+    def __init__(self, name, entity_prefix, key, unit: str | None, icon, device_id, device_name, interval, config_id, **kwargs):
         """Initialize the sensor."""
         super().__init__(name, entity_prefix, key, unit, icon, device_id, device_name, interval, config_id, **kwargs)
 
@@ -668,7 +670,7 @@ class IntValFerroampSensor(KeyedFerroampSensor):
 class StringValFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp string value Sensor."""
 
-    def __init__(self, name, entity_prefix, key, unit, icon, device_id, device_name, interval, config_id, **kwargs):
+    def __init__(self, name, entity_prefix, key, unit: str | None, icon, device_id, device_name, interval, config_id, **kwargs):
         """Initialize the sensor."""
         super().__init__(name, entity_prefix, key, unit, icon, device_id, device_name, interval, config_id, **kwargs)
 
@@ -688,7 +690,7 @@ class StringValFerroampSensor(KeyedFerroampSensor):
 class FloatValFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp float value Sensor."""
 
-    def __init__(self, name, entity_prefix, key, unit, icon, device_id, device_name, interval, precision, config_id, **kwargs):
+    def __init__(self, name, entity_prefix, key, unit: str | None, icon, device_id, device_name, interval, precision, config_id, **kwargs):
         """Initialize the sensor."""
         super().__init__(name, entity_prefix, key, unit, icon, device_id, device_name, interval, config_id, **kwargs)
         self._precision = precision
@@ -878,7 +880,7 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
 class RelayStatusFerroampSensor(KeyedFerroampSensor):
     def __init__(self, name, entity_prefix, key, device_id, device_name, interval, config_id, **kwargs):
         """Initialize the sensor"""
-        super().__init__(name, entity_prefix, key, "", "", device_id, device_name, interval, config_id, **kwargs)
+        super().__init__(name, entity_prefix, key, None, "", device_id, device_name, interval, config_id, **kwargs)
 
     def update_state_from_events(self, events):
         temp = None
@@ -950,7 +952,7 @@ class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
 class ThreePhaseFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp ThreePhase Sensor."""
 
-    def __init__(self, name, entity_prefix, key, unit, icon, device_id, device_name, interval, precision, config_id, **kwargs):
+    def __init__(self, name, entity_prefix, key, unit: str | None, icon, device_id, device_name, interval, precision, config_id, **kwargs):
         """Initialize the sensor."""
         super().__init__(name, entity_prefix, key, unit, icon, device_id, device_name, interval, config_id, **kwargs)
         if self._attr_state_class is None:
@@ -1086,7 +1088,7 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
 
     def __init__(self, name, entity_prefix, key, device_id, device_name, interval, fault_codes, config_id, **kwargs):
         """Initialize the sensor."""
-        super().__init__(name, entity_prefix, key, "", "mdi:traffic-light", device_id, device_name, interval, config_id,
+        super().__init__(name, entity_prefix, key, None, "mdi:traffic-light", device_id, device_name, interval, config_id,
                          **kwargs)
         self._fault_codes = fault_codes
         self._attr_extra_state_attributes = {}
