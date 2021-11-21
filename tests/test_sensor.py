@@ -865,7 +865,6 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'ESO 1 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': '',
         8: 'Not a fault, just an indication that Battery Manufacturer is not Ferroamp'
     }
 
@@ -874,7 +873,6 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'ESO 1 Relay Status',
         'icon': '',
-        'unit_of_measurement': ''
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_pcb_temperature")
@@ -1032,7 +1030,6 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': '',
         0: 'No errors'
     }
 
@@ -1041,7 +1038,6 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Relay Status',
         'icon': '',
-        'unit_of_measurement': ''
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_pcb_temperature")
@@ -1122,7 +1118,6 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': '',
         0: 'No errors'
     }
 
@@ -1131,7 +1126,6 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Relay Status',
         'icon': '',
-        'unit_of_measurement': ''
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_pcb_temperature")
@@ -1214,7 +1208,6 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': '',
         0: 'No errors'
     }
 
@@ -1237,7 +1230,6 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': '',
         5: 'UNDERVOLTAGE'
     }
 
@@ -1260,7 +1252,6 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': '',
         6: 'OVERVOLTAGE'
     }
 
@@ -1283,7 +1274,6 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': '',
         7: 'OVERHEAT'
     }
 
@@ -1306,7 +1296,6 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        'unit_of_measurement': '',
         11: 'POWERLIMITING'
     }
 
