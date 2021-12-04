@@ -506,6 +506,19 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
+    
+    state = hass.states.get("sensor.ferroamp_available_rms_current_for_load_balancing")
+    assert state.state == "26"
+    assert state.attributes == {
+        'L1': 31.20,
+        'L2': 26.31,
+        'L3': 29.69,
+        'device_class': 'current',
+        'friendly_name': 'Available RMS current for load balancing',
+        'icon': 'mdi:current-ac',
+        'state_class': 'measurement',
+        'unit_of_measurement': 'A'
+    }
 
     state = hass.states.get("sensor.ferroamp_available_three_phase_active_current_for_load_balancing")
     assert state.state == "29"

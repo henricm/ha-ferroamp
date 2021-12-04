@@ -1491,4 +1491,16 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             precision_current,
             config_id,
         ),
+         ThreePhaseMinFerroampSensor(
+            "Available RMS current for load balancing",
+            slug,
+            "iavbl",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_current,
+            config_id,
+        ),
     ]
