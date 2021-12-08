@@ -524,7 +524,7 @@ async def async_setup_entry(
     ))
 
     payload = {"transId": str(uuid.uuid1()), "cmd": {"name": "extapiversion"}}
-    mqtt.async_publish(hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_CONTROL_REQUEST}", json.dumps(payload))
+    await mqtt.async_publish(hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_CONTROL_REQUEST}", json.dumps(payload))
 
     return True
 
