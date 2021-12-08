@@ -56,7 +56,7 @@ async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     hass.data.setdefault(DOMAIN, {})
     device_registry = await dr.async_get_registry(hass)
 
-    def control_request(cmd_name, target, power=None):
+    async def control_request(cmd_name, target, power=None):
         prefix = list(hass.data[DOMAIN][DATA_PREFIXES].values())[0]
         if len(hass.data[DOMAIN][DATA_PREFIXES]) > 1:
             if len(target) == 0:
@@ -83,24 +83,24 @@ async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
             f"Sending control request {cmd} with payload {payload} to {prefix}/{CONTROL_REQUEST}"
         )
 
-        mqtt.async_publish(hass, f"{prefix}/{CONTROL_REQUEST}", json.dumps(payload))
+        await mqtt.async_publish(hass, f"{prefix}/{CONTROL_REQUEST}", json.dumps(payload))
 
-    def charge_battery(call):
+    async def charge_battery(call):
         power = call.data.get(ATTR_POWER, DEFAULT_POWER)
         target = call.data.get(ATTR_TARGET, "")
         _LOGGER.info(f"Sending battery charging request of {power} W to {target}")
-        control_request("charge", target, power)
+        await control_request("charge", target, power)
 
-    def discharge_battery(call):
+    async def discharge_battery(call):
         power = call.data.get(ATTR_POWER, DEFAULT_POWER)
         target = call.data.get(ATTR_TARGET, "")
         _LOGGER.info(f"Sending battery discharging request of {power} W to {target}")
-        control_request("discharge", target, power)
+        await control_request("discharge", target, power)
 
-    def autocharge_battery(call):
+    async def autocharge_battery(call):
         target = call.data.get(ATTR_TARGET, "")
         _LOGGER.info(f"Sending battery auto charging request to {target}")
-        control_request("auto", target)
+        await control_request("auto", target)
 
     hass.services.async_register(DOMAIN, "charge", charge_battery)
     hass.services.async_register(DOMAIN, "discharge", discharge_battery)
