@@ -1,6 +1,6 @@
 # Strictly for tests
 # TODO: Replace master-branch version when a new release is available
-pytest-homeassistant-custom-component==0.5.0
+pytest-homeassistant-custom-component==0.5.9
 # From our manifest.json for our custom component
 aiohttp_cors==0.7.0
 paho-mqtt==1.6.1
