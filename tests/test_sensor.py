@@ -506,7 +506,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
     }
-    
+
     state = hass.states.get("sensor.ferroamp_available_rms_current_for_load_balancing")
     assert state.state == "26"
     assert state.attributes == {
@@ -1224,7 +1224,6 @@ async def test_sso_fault_codes(hass, mqtt_mock):
         0: 'No errors'
     }
 
-    time.sleep(0.1)
     async_fire_mqtt_message(hass, topic, """{
                 "relaystatus": {"val": "0"},
                 "temp": {"val": "6.482"},
@@ -1246,7 +1245,6 @@ async def test_sso_fault_codes(hass, mqtt_mock):
         5: 'UNDERVOLTAGE'
     }
 
-    time.sleep(0.1)
     async_fire_mqtt_message(hass, topic, """{
                 "relaystatus": {"val": "0"},
                 "temp": {"val": "6.482"},
@@ -1268,7 +1266,6 @@ async def test_sso_fault_codes(hass, mqtt_mock):
         6: 'OVERVOLTAGE'
     }
 
-    time.sleep(0.1)
     async_fire_mqtt_message(hass, topic, """{
                 "relaystatus": {"val": "0"},
                 "temp": {"val": "6.482"},
@@ -1290,7 +1287,6 @@ async def test_sso_fault_codes(hass, mqtt_mock):
         7: 'OVERHEAT'
     }
 
-    time.sleep(0.1)
     async_fire_mqtt_message(hass, topic, """{
                 "relaystatus": {"val": "0"},
                 "temp": {"val": "6.482"},
