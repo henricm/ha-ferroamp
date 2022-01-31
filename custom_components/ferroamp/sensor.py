@@ -9,15 +9,9 @@ from datetime import datetime
 from homeassistant import config_entries, core
 from homeassistant.components import mqtt
 from homeassistant.components.sensor import (
-    DEVICE_CLASS_BATTERY,
-    DEVICE_CLASS_CURRENT,
-    DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_TEMPERATURE,
-    DEVICE_CLASS_VOLTAGE,
+    SensorDeviceClass,
     SensorEntity,
-    STATE_CLASS_MEASUREMENT,
-    STATE_CLASS_TOTAL_INCREASING
+    SensorStateClass
 )
 from homeassistant.const import (
     CONF_NAME,
@@ -212,7 +206,7 @@ async def async_setup_entry(
                     precision_energy,
                     config_id,
                     model=model,
-                    state_class=STATE_CLASS_TOTAL_INCREASING
+                    state_class=SensorStateClass.TOTAL_INCREASING
                 ),
                 FaultcodeFerroampSensor(
                     f"{device_name} Faultcode",
@@ -305,7 +299,7 @@ async def async_setup_entry(
                     interval,
                     precision_energy,
                     config_id,
-                    state_class=STATE_CLASS_TOTAL_INCREASING,
+                    state_class=SensorStateClass.TOTAL_INCREASING,
                 ),
                 EnergyFerroampSensor(
                     f"{device_name} Total Energy Consumed",
@@ -317,7 +311,7 @@ async def async_setup_entry(
                     interval,
                     precision_energy,
                     config_id,
-                    state_class=STATE_CLASS_TOTAL_INCREASING,
+                    state_class=SensorStateClass.TOTAL_INCREASING,
                 ),
                 BatteryFerroampSensor(
                     f"{device_name} State of Charge",
@@ -579,15 +573,15 @@ class FerroampSensor(SensorEntity, RestoreEntity):
         )
         self._attr_should_poll = False
         if unit == ENERGY_KILO_WATT_HOUR:
-            self._attr_device_class = DEVICE_CLASS_ENERGY
+            self._attr_device_class = SensorDeviceClass.ENERGY
         elif unit == POWER_WATT:
-            self._attr_device_class = DEVICE_CLASS_POWER
+            self._attr_device_class = SensorDeviceClass.POWER
         elif unit == ELECTRIC_POTENTIAL_VOLT:
-            self._attr_device_class = DEVICE_CLASS_VOLTAGE
+            self._attr_device_class = SensorDeviceClass.VOLTAGE
         elif unit == ELECTRIC_CURRENT_AMPERE:
-            self._attr_device_class = DEVICE_CLASS_CURRENT
+            self._attr_device_class = SensorDeviceClass.CURRENT
         elif unit == TEMP_CELSIUS:
-            self._attr_device_class = DEVICE_CLASS_TEMPERATURE
+            self._attr_device_class = SensorDeviceClass.TEMPERATURE
         self._interval = interval
         entity_id = slugify(name)
         self.entity_id = f"sensor.{entity_prefix}_{entity_id}"
@@ -718,7 +712,7 @@ class DcLinkFerroampSensor(KeyedFerroampSensor):
     def __init__(self, name, entity_prefix, key, icon, device_id, device_name, interval, config_id):
         """Initialize the sensor."""
         super().__init__(name, entity_prefix, key, ELECTRIC_POTENTIAL_VOLT, icon, device_id, device_name, interval, config_id)
-        self._attr_state_class = STATE_CLASS_MEASUREMENT
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
     def get_voltage(self, event):
         voltage = event.get(self._state_key, None)
@@ -750,7 +744,7 @@ class PercentageFerroampSensor(FloatValFerroampSensor):
             name, entity_prefix, key, PERCENTAGE, "mdi:battery-low", device_id, device_name, interval, precision, config_id,
             **kwargs
         )
-        self._attr_state_class = STATE_CLASS_MEASUREMENT
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
     def update_state_from_events(self, events):
         res = super().update_state_from_events(events)
@@ -768,7 +762,7 @@ class BatteryFerroampSensor(PercentageFerroampSensor):
         super().__init__(
             name, entity_prefix, key, device_id, device_name, interval, precision, config_id, **kwargs
         )
-        self._attr_device_class = DEVICE_CLASS_BATTERY
+        self._attr_device_class = SensorDeviceClass.BATTERY
 
     def handle_options_update(self, options):
         super().handle_options_update(options)
@@ -781,7 +775,7 @@ class TemperatureFerroampSensor(FloatValFerroampSensor):
             name, entity_prefix, key, TEMP_CELSIUS, "mdi:thermometer", device_id, device_name, interval, precision, config_id,
             **kwargs
         )
-        self._attr_state_class = STATE_CLASS_MEASUREMENT
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
     def handle_options_update(self, options):
         super().handle_options_update(options)
@@ -803,7 +797,7 @@ class CurrentFerroampSensor(FloatValFerroampSensor):
             config_id,
             **kwargs
         )
-        self._attr_state_class = STATE_CLASS_MEASUREMENT
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
     def handle_options_update(self, options):
         super().handle_options_update(options)
@@ -816,7 +810,7 @@ class VoltageFerroampSensor(FloatValFerroampSensor):
             name, entity_prefix, key, ELECTRIC_POTENTIAL_VOLT, icon, device_id, device_name, interval, precision, config_id,
             **kwargs
         )
-        self._attr_state_class = STATE_CLASS_MEASUREMENT
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
     def handle_options_update(self, options):
         super().handle_options_update(options)
@@ -856,7 +850,7 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
             val = round(temp / count / 3600000000, self._precision)
             if self._attr_native_value is None\
                     or (isinstance(self._attr_native_value, str) and not self.isfloat(self._attr_native_value))\
-                    or self._attr_state_class != STATE_CLASS_TOTAL_INCREASING\
+                    or self._attr_state_class != SensorStateClass.TOTAL_INCREASING\
                     or val > float(self._attr_native_value):
                 self._attr_native_value = val
                 if self._precision == 0:
@@ -929,7 +923,7 @@ class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
         self._voltage_key = voltage_key
         self._current_key = current_key
         self._attr_unique_id = f"{self.device_id}-{self._voltage_key}-{self._current_key}"
-        self._attr_state_class = STATE_CLASS_MEASUREMENT
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
     def update_state_from_events(self, events):
         temp_voltage = temp_current = None
@@ -956,7 +950,7 @@ class ThreePhaseFerroampSensor(KeyedFerroampSensor):
         """Initialize the sensor."""
         super().__init__(name, entity_prefix, key, unit, icon, device_id, device_name, interval, config_id, **kwargs)
         if self._attr_state_class is None:
-            self._attr_state_class = STATE_CLASS_MEASUREMENT
+            self._attr_state_class = SensorStateClass.MEASUREMENT
         self._precision = precision
 
     def get_phases(self, event):
@@ -1043,7 +1037,7 @@ class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
     def __init__(self, name, entity_prefix, key, icon, device_id, device_name, interval, config_id):
         """Initialize the sensor."""
         super().__init__(name, entity_prefix, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id)
-        self._attr_state_class = STATE_CLASS_MEASUREMENT
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
 
 class CommandFerroampSensor(FerroampSensor):
@@ -1287,7 +1281,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
-            state_class=STATE_CLASS_TOTAL_INCREASING,
+            state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         ThreePhaseEnergyFerroampSensor(
             "External Energy Consumed",
@@ -1299,7 +1293,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
-            state_class=STATE_CLASS_TOTAL_INCREASING,
+            state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         ThreePhaseEnergyFerroampSensor(
             "Inverter Energy Produced",
@@ -1355,7 +1349,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
-            state_class=STATE_CLASS_TOTAL_INCREASING,
+            state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         EnergyFerroampSensor(
             "Battery Energy Produced",
@@ -1367,7 +1361,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
-            state_class=STATE_CLASS_TOTAL_INCREASING,
+            state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         EnergyFerroampSensor(
             "Battery Energy Consumed",
@@ -1379,7 +1373,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
-            state_class=STATE_CLASS_TOTAL_INCREASING,
+            state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         IntValFerroampSensor(
             "System State",
@@ -1442,7 +1436,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             EHUB_NAME,
             interval,
             config_id,
-            state_class=STATE_CLASS_MEASUREMENT,
+            state_class=SensorStateClass.MEASUREMENT,
         ),
         PowerFerroampSensor(
             "Battery Power",
@@ -1453,7 +1447,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             EHUB_NAME,
             interval,
             config_id,
-            state_class=STATE_CLASS_MEASUREMENT
+            state_class=SensorStateClass.MEASUREMENT
         ),
         IntValFerroampSensor(
             "Total rated capacity of all batteries",
@@ -1477,7 +1471,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_current,
             config_id,
-            state_class=STATE_CLASS_MEASUREMENT,
+            state_class=SensorStateClass.MEASUREMENT,
         ),
         ThreePhaseMinFerroampSensor(
             "Available active current for load balancing",
