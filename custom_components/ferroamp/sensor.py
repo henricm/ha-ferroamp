@@ -817,6 +817,14 @@ class VoltageFerroampSensor(FloatValFerroampSensor):
         self._precision = options.get(CONF_PRECISION_VOLTAGE)
 
 
+def isfloat(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+
 class EnergyFerroampSensor(FloatValFerroampSensor):
     """Representation of a Ferroamp energy in kWh value Sensor."""
 
@@ -849,7 +857,7 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
         else:
             val = round(temp / count / 3600000000, self._precision)
             if self._attr_native_value is None\
-                    or (isinstance(self._attr_native_value, str) and not self.isfloat(self._attr_native_value))\
+                    or (isinstance(self._attr_native_value, str) and not isfloat(self._attr_native_value))\
                     or self._attr_state_class != SensorStateClass.TOTAL_INCREASING\
                     or val > float(self._attr_native_value):
                 self._attr_native_value = val
@@ -862,13 +870,6 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
     def handle_options_update(self, options):
         super().handle_options_update(options)
         self._precision = options.get(CONF_PRECISION_ENERGY)
-
-    def isfloat(self, value):
-        try:
-            float(value)
-            return True
-        except ValueError:
-            return False
 
 
 class RelayStatusFerroampSensor(KeyedFerroampSensor):
@@ -978,15 +979,22 @@ class ThreePhaseFerroampSensor(KeyedFerroampSensor):
         if l1 is None and l2 is None and l3 is None:
             return False
         else:
-            self._attr_native_value = self.calculate_value(l1, l2, l3, count)
-            if self._precision == 0:
-                self._attr_native_value = int(self._attr_native_value)
-            self._attr_extra_state_attributes = dict(
-                L1=round(float(l1 / count), 2),
-                L2=round(float(l2 / count), 2),
-                L3=round(float(l3 / count), 2),
-            )
-            return True
+            val = self.calculate_value(l1, l2, l3, count)
+            if self._attr_native_value is None \
+                    or (isinstance(self._attr_native_value, str) and not isfloat(self._attr_native_value)) \
+                    or self._attr_state_class != SensorStateClass.TOTAL_INCREASING \
+                    or val > float(self._attr_native_value):
+                self._attr_native_value = val
+                if self._precision == 0:
+                    self._attr_native_value = int(self._attr_native_value)
+                self._attr_extra_state_attributes = dict(
+                    L1=round(float(l1 / count), 2),
+                    L2=round(float(l2 / count), 2),
+                    L3=round(float(l3 / count), 2),
+                )
+                return True
+            else:
+                return False
 
 
 class ThreePhaseMinFerroampSensor(ThreePhaseFerroampSensor):
