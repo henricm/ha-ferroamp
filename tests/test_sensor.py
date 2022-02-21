@@ -1579,6 +1579,58 @@ async def test_always_increasing_unknown_value(hass, mqtt_mock):
     assert sensor.state == 1228.4
 
 
+async def test_3phase_always_increasing(hass, mqtt_mock):
+    mock_restore_cache(
+        hass,
+        [
+            State("sensor.ferroamp_external_energy_produced", "662.5")
+        ],
+    )
+
+    hass.state = CoreState.starting
+
+    config_entry = create_config()
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    topic = "extapi/data/ehub"
+    msg = '{"id":{"val":"1"},"wextprodq": {"L2": "1118056851556", "L3": "604554554552", "L1": "662115344893"}}'
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    er = await entity_registry.async_get_registry(hass)
+    entity = er.async_get("sensor.ferroamp_external_energy_produced")
+    assert entity is not None
+    sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
+    assert sensor.state == "662.5"
+
+
+async def test_3phase_always_increasing_unknown_value(hass, mqtt_mock):
+    mock_restore_cache(
+        hass,
+        [
+            State("sensor.ferroamp_external_energy_produced", "unknown")
+        ],
+    )
+
+    hass.state = CoreState.starting
+
+    config_entry = create_config()
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    topic = "extapi/data/ehub"
+    msg = '{"id":{"val":"1"},"wextprodq": {"L2": "1118056851556", "L3": "604554554552", "L1": "662115344893"}}'
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    er = await entity_registry.async_get_registry(hass)
+    entity = er.async_get("sensor.ferroamp_external_energy_produced")
+    assert entity is not None
+    sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
+    assert sensor.state == 662.4
+
+
 async def test_average_calculation(hass, mqtt_mock):
     config_entry = MockConfigEntry(
         domain=DOMAIN,
