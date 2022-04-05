@@ -564,6 +564,7 @@ class FerroampSensor(SensorEntity, RestoreEntity):
         """Initialize the sensor."""
         self._attr_name = name
         self._attr_unit_of_measurement = unit
+        self._attr_native_unit_of_measurement = unit
         self._attr_icon = icon
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_id)},
