@@ -748,7 +748,7 @@ class PercentageFerroampSensor(FloatValFerroampSensor):
 
     def update_state_from_events(self, events):
         res = super().update_state_from_events(events)
-        if self.state is not None:
+        if self.state is not None and self.state != "unknown":
             pct = int(float(self.state) / 10) * 10
             if pct <= 90:
                 self._attr_icon = f"mdi:battery-{pct}"

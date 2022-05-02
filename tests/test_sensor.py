@@ -1339,6 +1339,36 @@ async def test_restore_state(hass, mqtt_mock):
     }
 
 
+async def test_restore_state_unknown(hass, mqtt_mock):
+    mock_restore_cache(
+        hass,
+        [
+            State("sensor.ferroamp_esm_1_state_of_charge", "unknown")
+        ],
+    )
+
+    hass.state = CoreState.starting
+
+    config_entry = create_config()
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    topic = "extapi/data/esm"
+    msg = '{"id":{"val":"1"}}'
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
+    assert state.state == "unknown"
+    assert state.attributes == {
+        'device_class': 'battery',
+        'friendly_name': 'ESM 1 State of Charge',
+        'icon': 'mdi:battery-low',
+        'state_class': 'measurement',
+        'unit_of_measurement': '%'
+    }
+
+
 async def test_update_options(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
