@@ -346,7 +346,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'Inverter Energy Produced',
         'icon': 'mdi:power-plug',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -359,7 +359,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'Inverter Energy Consumed',
         'icon': 'mdi:power-plug',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -372,7 +372,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'Load Energy Produced',
         'icon': 'mdi:power-plug',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 
@@ -385,7 +385,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'device_class': 'energy',
         'friendly_name': 'Load Energy Consumed',
         'icon': 'mdi:power-plug',
-        'state_class': 'measurement',
+        'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
     }
 

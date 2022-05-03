@@ -1313,6 +1313,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
+            state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         ThreePhaseEnergyFerroampSensor(
             "Inverter Energy Consumed",
@@ -1324,6 +1325,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
+            state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         ThreePhaseEnergyFerroampSensor(
             "Load Energy Produced",
@@ -1335,6 +1337,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
+            state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         ThreePhaseEnergyFerroampSensor(
             "Load Energy Consumed",
@@ -1346,6 +1349,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
+            state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         EnergyFerroampSensor(
             "Total Solar Energy",
@@ -1493,7 +1497,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             precision_current,
             config_id,
         ),
-         ThreePhaseMinFerroampSensor(
+        ThreePhaseMinFerroampSensor(
             "Available RMS current for load balancing",
             slug,
             "iavbl",
