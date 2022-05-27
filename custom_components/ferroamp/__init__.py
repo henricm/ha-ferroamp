@@ -54,7 +54,7 @@ async def async_unload_entry(hass, entry):
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     _LOGGER.debug("Setting up ferroamp battery service calls")
     hass.data.setdefault(DOMAIN, {})
-    device_registry = await dr.async_get_registry(hass)
+    device_registry = dr.async_get(hass)
 
     async def control_request(cmd_name, target, power=None):
         prefix = list(hass.data[DOMAIN][DATA_PREFIXES].values())[0]

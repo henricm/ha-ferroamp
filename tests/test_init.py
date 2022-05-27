@@ -275,7 +275,7 @@ async def test_multiple_configs_target_no_prefix_found(hass, mqtt_mock):
     msg = '{}'
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
-    dr = await device_registry.async_get_registry(hass)
+    dr = device_registry.async_get(hass)
     dev = dr.async_get_or_create(
         config_entry_id="1234",
         connections={("ethernet", "12:34:56:78:90:AB:CD:EF")},
@@ -309,7 +309,7 @@ async def test_multiple_configs_correct_prefix_is_used(hass, mqtt_mock):
     async_fire_mqtt_message(hass, "extapi/data/ehub", msg)
     async_fire_mqtt_message(hass, "other/data/ehub", msg)
     await hass.async_block_till_done()
-    dr = await device_registry.async_get_registry(hass)
+    dr = device_registry.async_get(hass)
     dev = dr.async_get_or_create(
         config_entry_id=config_entry2.entry_id,
         identifiers={(DOMAIN, "other_ehub")},
