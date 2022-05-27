@@ -1,8 +1,7 @@
-import time
-
-import pytest
 import uuid
 from unittest.mock import patch
+
+import pytest
 from homeassistant.const import (
     CONF_NAME,
     CONF_PREFIX
@@ -72,7 +71,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     )
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     er.async_get_or_create(
         'sensor', DOMAIN, 'ferroamp_ehub-ul', config_entry=config_entry,
         suggested_object_id="ferroamp_external_voltage")
@@ -687,7 +686,7 @@ async def test_trim_part_no_from_esm_id(hass, mqtt_mock):
         'unit_of_measurement': ''
     }
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_esm_12345678_status")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_esm_12345678"][entity.unique_id]
@@ -717,7 +716,7 @@ async def test_esm_trim_trailing_dash_from_model(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_esm_21030023_state_of_health")
     assert state
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_esm_21030023_status")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_esm_21030023"][entity.unique_id]
@@ -731,7 +730,7 @@ async def test_migrate_old_esm_entities(hass, mqtt_mock):
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get_or_create(
         'sensor', DOMAIN, 'ferroamp_esm_ES01Z000012345678 -soh', config_entry=config_entry)
 
@@ -764,7 +763,7 @@ async def test_migrate_only_esm_entities_that_needs_migrating(hass, mqtt_mock):
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get_or_create(
         'sensor', DOMAIN, 'ferroamp_esm_12345678-soh', config_entry=config_entry)
 
@@ -973,7 +972,7 @@ async def test_ignore_eso_message_without_id(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     assert er.async_is_registered("sensor.ferroamp_eso__battery_voltage") is False
 
 
@@ -1151,7 +1150,7 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
         'unit_of_measurement': '°C'
     }
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_sso_12345678_pv_string_voltage")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_sso_12345678"][entity.unique_id]
@@ -1165,7 +1164,7 @@ async def test_migrate_old_sso_entities(hass, mqtt_mock):
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get_or_create(
         'sensor', DOMAIN, 'ferroamp_sso_PS00990-A02-S12345678-upv', config_entry=config_entry)
 
@@ -1396,7 +1395,7 @@ async def test_update_options(hass, mqtt_mock):
     )
     await hass.async_block_till_done()
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_esm_1_state_of_charge")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_esm_1"][entity.unique_id]
@@ -1576,7 +1575,7 @@ async def test_always_increasing(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
@@ -1602,7 +1601,7 @@ async def test_always_increasing_unknown_value(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
@@ -1628,7 +1627,7 @@ async def test_3phase_always_increasing(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_external_energy_produced")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
@@ -1654,7 +1653,7 @@ async def test_3phase_always_increasing_unknown_value(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_external_energy_produced")
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
@@ -1682,7 +1681,7 @@ async def test_average_calculation(hass, mqtt_mock):
     )
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    er = await entity_registry.async_get_registry(hass)
+    er = entity_registry.async_get(hass)
     er.async_get_or_create(
         'sensor', DOMAIN, 'ferroamp_ehub-wextprodq', config_entry=config_entry,
         suggested_object_id="ferroamp_external_energy_produced")
