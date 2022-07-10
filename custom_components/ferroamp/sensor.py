@@ -160,8 +160,8 @@ async def async_setup_entry(
         if new:
             sensors = sso_sensors[sso_id] = [
                 VoltageFerroampSensor(
-                    f"{device_name} PV String Voltage",
-                    slug,
+                    "PV String Voltage",
+                    device_id,
                     "upv",
                     "mdi:current-dc",
                     device_id,
@@ -172,8 +172,8 @@ async def async_setup_entry(
                     model=model
                 ),
                 CurrentFerroampSensor(
-                    f"{device_name} PV String Current",
-                    slug,
+                    "PV String Current",
+                    device_id,
                     "ipv",
                     "mdi:current-dc",
                     device_id,
@@ -184,8 +184,8 @@ async def async_setup_entry(
                     model=model
                 ),
                 CalculatedPowerFerroampSensor(
-                    f"{device_name} PV String Power",
-                    slug,
+                    "PV String Power",
+                    device_id,
                     "upv",
                     "ipv",
                     "mdi:solar-power",
@@ -196,8 +196,8 @@ async def async_setup_entry(
                     model=model
                 ),
                 EnergyFerroampSensor(
-                    f"{device_name} Total Energy",
-                    slug,
+                    "Total Energy",
+                    device_id,
                     "wpv",
                     "mdi:solar-power",
                     device_id,
@@ -209,8 +209,8 @@ async def async_setup_entry(
                     state_class=SensorStateClass.TOTAL_INCREASING
                 ),
                 FaultcodeFerroampSensor(
-                    f"{device_name} Faultcode",
-                    slug,
+                    "Faultcode",
+                    device_id,
                     "faultcode",
                     device_id,
                     device_name,
@@ -220,8 +220,8 @@ async def async_setup_entry(
                     model=model
                 ),
                 RelayStatusFerroampSensor(
-                    f"{device_name} Relay Status",
-                    slug,
+                    "Relay Status",
+                    device_id,
                     "relaystatus",
                     device_id,
                     device_name,
@@ -230,8 +230,8 @@ async def async_setup_entry(
                     model=model
                 ),
                 TemperatureFerroampSensor(
-                    f"{device_name} PCB Temperature",
-                    slug,
+                    "PCB Temperature",
+                    device_id,
                     "temp",
                     device_id,
                     device_name,
@@ -257,8 +257,8 @@ async def async_setup_entry(
         if new:
             sensors = eso_sensors[eso_id] = [
                 VoltageFerroampSensor(
-                    f"{device_name} Battery Voltage",
-                    slug,
+                    "Battery Voltage",
+                    device_id,
                     "ubat",
                     "mdi:battery",
                     device_id,
@@ -268,8 +268,8 @@ async def async_setup_entry(
                     config_id,
                 ),
                 CurrentFerroampSensor(
-                    f"{device_name} Battery Current",
-                    slug,
+                    "Battery Current",
+                    device_id,
                     "ibat",
                     "mdi:battery",
                     device_id,
@@ -279,8 +279,8 @@ async def async_setup_entry(
                     config_id
                 ),
                 CalculatedPowerFerroampSensor(
-                    f"{device_name} Battery Power",
-                    slug,
+                    "Battery Power",
+                    device_id,
                     "ubat",
                     "ibat",
                     "mdi:battery",
@@ -290,8 +290,8 @@ async def async_setup_entry(
                     config_id,
                 ),
                 EnergyFerroampSensor(
-                    f"{device_name} Total Energy Produced",
-                    slug,
+                    "Total Energy Produced",
+                    device_id,
                     "wbatprod",
                     "mdi:battery-plus",
                     device_id,
@@ -302,8 +302,8 @@ async def async_setup_entry(
                     state_class=SensorStateClass.TOTAL_INCREASING,
                 ),
                 EnergyFerroampSensor(
-                    f"{device_name} Total Energy Consumed",
-                    slug,
+                    "Total Energy Consumed",
+                    device_id,
                     "wbatcons",
                     "mdi:battery-minus",
                     device_id,
@@ -314,8 +314,8 @@ async def async_setup_entry(
                     state_class=SensorStateClass.TOTAL_INCREASING,
                 ),
                 BatteryFerroampSensor(
-                    f"{device_name} State of Charge",
-                    slug,
+                    "State of Charge",
+                    device_id,
                     "soc",
                     device_id,
                     device_name,
@@ -324,8 +324,8 @@ async def async_setup_entry(
                     config_id,
                 ),
                 FaultcodeFerroampSensor(
-                    f"{device_name} Faultcode",
-                    slug,
+                    "Faultcode",
+                    device_id,
                     "faultcode",
                     device_id,
                     device_name,
@@ -334,8 +334,8 @@ async def async_setup_entry(
                     config_id,
                 ),
                 RelayStatusFerroampSensor(
-                    f"{device_name} Relay Status",
-                    slug,
+                    "Relay Status",
+                    device_id,
                     "relaystatus",
                     device_id,
                     device_name,
@@ -343,8 +343,8 @@ async def async_setup_entry(
                     config_id,
                 ),
                 TemperatureFerroampSensor(
-                    f"{device_name} PCB Temperature",
-                    slug,
+                    "PCB Temperature",
+                    device_id,
                     "temp",
                     device_id,
                     device_name,
@@ -361,6 +361,8 @@ async def async_setup_entry(
         event = json.loads(msg.payload)
         esm_id = event["id"]["val"]
         model = None
+        device_id = f"{slug}_esm_{esm_id}"
+        device_name = f"ESM {esm_id}"
         match = REGEX_ESM_ID.match(esm_id)
         if match is not None and match.group(2) is not None and match.group(1) is not None:
             migrate_entities(
@@ -373,15 +375,15 @@ async def async_setup_entry(
             )
             esm_id = match.group(2)
             model = match.group(1)
-        device_id = f"{slug}_esm_{esm_id}"
-        device_name = f"ESM {esm_id}"
+            device_id = f"{slug}_esm_{esm_id}"
+            device_name = f"ESM {esm_id}"
         store, new = get_store(device_id)
         sensors = esm_sensors.get(esm_id)
         if new:
             sensors = esm_sensors[esm_id] = [
                 StringValFerroampSensor(
-                    f"{device_name} Status",
-                    slug,
+                    "Status",
+                    device_id,
                     "status",
                     "",
                     "mdi:traffic-light",
@@ -392,8 +394,8 @@ async def async_setup_entry(
                     model=model
                 ),
                 PercentageFerroampSensor(
-                    f"{device_name} State of Health",
-                    slug,
+                    "State of Health",
+                    device_id,
                     "soh",
                     device_id,
                     device_name,
@@ -403,8 +405,8 @@ async def async_setup_entry(
                     model=model
                 ),
                 BatteryFerroampSensor(
-                    f"{device_name} State of Charge",
-                    slug,
+                    "State of Charge",
+                    device_id,
                     "soc",
                     device_id,
                     device_name,
@@ -414,8 +416,8 @@ async def async_setup_entry(
                     model=model
                 ),
                 IntValFerroampSensor(
-                    f"{device_name} Rated Capacity",
-                    slug,
+                    "Rated Capacity",
+                    device_id,
                     "ratedCapacity",
                     ENERGY_WATT_HOUR,
                     "mdi:battery",
@@ -426,8 +428,8 @@ async def async_setup_entry(
                     model=model
                 ),
                 PowerFerroampSensor(
-                    f"{device_name} Rated Power",
-                    slug,
+                    "Rated Power",
+                    device_id,
                     "ratedPower",
                     "mdi:battery",
                     device_id,
@@ -563,6 +565,7 @@ class FerroampSensor(SensorEntity, RestoreEntity):
     def __init__(self, name, entity_prefix, unit: str | None, icon, device_id, device_name, interval, config_id, **kwargs):
         """Initialize the sensor."""
         self._attr_name = name
+        self._attr_has_entity_name = True
         self._attr_unit_of_measurement = unit
         self._attr_native_unit_of_measurement = unit
         self._attr_icon = icon

@@ -140,7 +140,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 233.81,
         'L3': 231.18,
         'device_class': 'voltage',
-        'friendly_name': 'External Voltage',
+        'friendly_name': 'EnergyHub External Voltage',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'V'
@@ -153,7 +153,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 9.85,
         'L3': 9.85,
         'device_class': 'current',
-        'friendly_name': 'Inverter RMS current',
+        'friendly_name': 'EnergyHub Inverter RMS current',
         'icon': 'mdi:current-dc',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
@@ -166,7 +166,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 2.65,
         'L3': 2.72,
         'device_class': 'current',
-        'friendly_name': 'Inverter reactive current',
+        'friendly_name': 'EnergyHub Inverter reactive current',
         'icon': 'mdi:current-dc',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
@@ -179,7 +179,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 8.9,
         'L3': 7.49,
         'device_class': 'current',
-        'friendly_name': 'Grid Current',
+        'friendly_name': 'EnergyHub Grid Current',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
@@ -188,7 +188,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_estimated_grid_frequency")
     assert state.state == "50"
     assert state.attributes == {
-        'friendly_name': 'Estimated Grid Frequency',
+        'friendly_name': 'EnergyHub Estimated Grid Frequency',
         'icon': 'mdi:sine-wave',
         'unit_of_measurement': 'Hz'
     }
@@ -200,7 +200,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 1.98,
         'L3': 3.28,
         'device_class': 'current',
-        'friendly_name': 'Grid Reactive Current',
+        'friendly_name': 'EnergyHub Grid Reactive Current',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
@@ -213,7 +213,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': -12.53,
         'L3': -10.06,
         'device_class': 'current',
-        'friendly_name': 'External Active Current',
+        'friendly_name': 'EnergyHub External Active Current',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
@@ -226,7 +226,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 0,
         'L3': 0,
         'device_class': 'current',
-        'friendly_name': 'Adaptive Current Equalization',
+        'friendly_name': 'EnergyHub Adaptive Current Equalization',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
@@ -239,7 +239,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': -2071.57,
         'L3': -1644.5,
         'device_class': 'power',
-        'friendly_name': 'Grid Power',
+        'friendly_name': 'EnergyHub Grid Power',
         'icon': 'mdi:transmission-tower',
         'state_class': 'measurement',
         'unit_of_measurement': 'W'
@@ -252,7 +252,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 327.35,
         'L3': 536.18,
         'device_class': 'power',
-        'friendly_name': 'Grid Power Reactive',
+        'friendly_name': 'EnergyHub Grid Power Reactive',
         'icon': 'mdi:transmission-tower',
         'state_class': 'measurement',
         'unit_of_measurement': 'W'
@@ -265,7 +265,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': -2263.35,
         'L3': -2234.62,
         'device_class': 'power',
-        'friendly_name': 'Inverter Power, active',
+        'friendly_name': 'EnergyHub Inverter Power, active',
         'icon': 'mdi:solar-power',
         'state_class': 'measurement',
         'unit_of_measurement': 'W'
@@ -278,7 +278,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 438.12,
         'L3': 444.64,
         'device_class': 'power',
-        'friendly_name': 'Inverter Power, reactive',
+        'friendly_name': 'EnergyHub Inverter Power, reactive',
         'icon': 'mdi:solar-power',
         'state_class': 'measurement',
         'unit_of_measurement': 'W'
@@ -291,7 +291,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 191.78,
         'L3': 590.12,
         'device_class': 'power',
-        'friendly_name': 'Consumption Power',
+        'friendly_name': 'EnergyHub Consumption Power',
         'icon': 'mdi:power-plug',
         'state_class': 'measurement',
         'unit_of_measurement': 'W'
@@ -304,7 +304,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': -110.77,
         'L3': 91.54,
         'device_class': 'power',
-        'friendly_name': 'Consumption Power Reactive',
+        'friendly_name': 'EnergyHub Consumption Power Reactive',
         'icon': 'mdi:power-plug',
         'state_class': 'measurement',
         'unit_of_measurement': 'W'
@@ -317,7 +317,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 310.57,
         'L3': 167.93,
         'device_class': 'energy',
-        'friendly_name': 'External Energy Produced',
+        'friendly_name': 'EnergyHub External Energy Produced',
         'icon': 'mdi:power-plug',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -330,7 +330,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 1490.26,
         'L3': 2810.7,
         'device_class': 'energy',
-        'friendly_name': 'External Energy Consumed',
+        'friendly_name': 'EnergyHub External Energy Consumed',
         'icon': 'mdi:power-plug',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -343,7 +343,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 725.23,
         'L3': 714.16,
         'device_class': 'energy',
-        'friendly_name': 'Inverter Energy Produced',
+        'friendly_name': 'EnergyHub Inverter Energy Produced',
         'icon': 'mdi:power-plug',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -356,7 +356,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 409.75,
         'L3': 403.32,
         'device_class': 'energy',
-        'friendly_name': 'Inverter Energy Consumed',
+        'friendly_name': 'EnergyHub Inverter Energy Consumed',
         'icon': 'mdi:power-plug',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -369,7 +369,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 5.01,
         'L3': 0.0,
         'device_class': 'energy',
-        'friendly_name': 'Load Energy Produced',
+        'friendly_name': 'EnergyHub Load Energy Produced',
         'icon': 'mdi:power-plug',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -382,7 +382,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 1530.34,
         'L3': 3014.51,
         'device_class': 'energy',
-        'friendly_name': 'Load Energy Consumed',
+        'friendly_name': 'EnergyHub Load Energy Consumed',
         'icon': 'mdi:power-plug',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -392,7 +392,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.state == "1228"
     assert state.attributes == {
         'device_class': 'energy',
-        'friendly_name': 'Total Solar Energy',
+        'friendly_name': 'EnergyHub Total Solar Energy',
         'icon': 'mdi:solar-power',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -402,7 +402,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.state == "1366"
     assert state.attributes == {
         'device_class': 'energy',
-        'friendly_name': 'Battery Energy Produced',
+        'friendly_name': 'EnergyHub Battery Energy Produced',
         'icon': 'mdi:battery-plus',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -412,7 +412,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.state == "1242"
     assert state.attributes == {
         'device_class': 'energy',
-        'friendly_name': 'Battery Energy Consumed',
+        'friendly_name': 'EnergyHub Battery Energy Consumed',
         'icon': 'mdi:battery-minus',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -421,7 +421,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_system_state")
     assert state.state == "4097"
     assert state.attributes == {
-        'friendly_name': 'System State',
+        'friendly_name': 'EnergyHub System State',
         'icon': 'mdi:traffic-light',
         'unit_of_measurement': ''
     }
@@ -430,7 +430,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.state == "0"
     assert state.attributes == {
         'device_class': 'voltage',
-        'friendly_name': 'DC Link Voltage',
+        'friendly_name': 'EnergyHub DC Link Voltage',
         'icon': 'mdi:current-ac',
         'neg': -383.96,
         'pos': 384.31,
@@ -442,7 +442,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.state == "80"
     assert state.attributes == {
         'device_class': 'battery',
-        'friendly_name': 'System State of Charge',
+        'friendly_name': 'EnergyHub System State of Charge',
         'icon': 'mdi:battery-80',
         'state_class': 'measurement',
         'unit_of_measurement': '%'
@@ -451,7 +451,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_system_state_of_health")
     assert state.state == "99"
     assert state.attributes == {
-        'friendly_name': 'System State of Health',
+        'friendly_name': 'EnergyHub System State of Health',
         'icon': 'mdi:battery-90',
         'state_class': 'measurement',
         'unit_of_measurement': '%'
@@ -460,7 +460,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_apparent_power")
     assert state.state == "5549"
     assert state.attributes == {
-        'friendly_name': 'Apparent power',
+        'friendly_name': 'EnergyHub Apparent power',
         'icon': 'mdi:transmission-tower',
         'unit_of_measurement': 'VA'
     }
@@ -469,7 +469,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.state == "10108"
     assert state.attributes == {
         'device_class': 'power',
-        'friendly_name': 'Solar Power',
+        'friendly_name': 'EnergyHub Solar Power',
         'icon': 'mdi:solar-power',
         'state_class': 'measurement',
         'unit_of_measurement': 'W'
@@ -479,7 +479,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.state == "-3219"
     assert state.attributes == {
         'device_class': 'power',
-        'friendly_name': 'Battery Power',
+        'friendly_name': 'EnergyHub Battery Power',
         'icon': 'mdi:battery',
         'state_class': 'measurement',
         'unit_of_measurement': 'W'
@@ -488,7 +488,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_total_rated_capacity_of_all_batteries")
     assert state.state == "15300"
     assert state.attributes == {
-        'friendly_name': 'Total rated capacity of all batteries',
+        'friendly_name': 'EnergyHub Total rated capacity of all batteries',
         'icon': 'mdi:battery',
         'unit_of_measurement': 'Wh'
     }
@@ -500,7 +500,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 29.05,
         'L3': 33.93,
         'device_class': 'current',
-        'friendly_name': 'Available active current for load balancing',
+        'friendly_name': 'EnergyHub Available active current for load balancing',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
@@ -513,7 +513,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'L2': 26.31,
         'L3': 29.69,
         'device_class': 'current',
-        'friendly_name': 'Available RMS current for load balancing',
+        'friendly_name': 'EnergyHub Available RMS current for load balancing',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
@@ -523,7 +523,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.state == "29"
     assert state.attributes == {
         'device_class': 'current',
-        'friendly_name': 'Available three phase active current for load balancing',
+        'friendly_name': 'EnergyHub Available three phase active current for load balancing',
         'icon': 'mdi:current-ac',
         'state_class': 'measurement',
         'unit_of_measurement': 'A'
@@ -1458,7 +1458,7 @@ async def test_control_command(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
     assert state.attributes == {
-        'friendly_name': 'Control Status',
+        'friendly_name': 'EnergyHub Control Status',
         'icon': 'mdi:cog-transfer-outline',
         'transId': 'abc-123',
         'status': None,
@@ -1479,7 +1479,7 @@ async def test_control_command(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
     assert state.attributes == {
-        'friendly_name': 'Control Status',
+        'friendly_name': 'EnergyHub Control Status',
         'icon': 'mdi:cog-transfer-outline',
         'transId': 'abc-123',
         'status': None,
@@ -1497,7 +1497,7 @@ async def test_control_command(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
     assert state.attributes == {
-        'friendly_name': 'Control Status',
+        'friendly_name': 'EnergyHub Control Status',
         'icon': 'mdi:cog-transfer-outline',
         'transId': 'abc-123',
         'status': "ack",
@@ -1515,7 +1515,7 @@ async def test_control_command(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
     assert state.attributes == {
-        'friendly_name': 'Control Status',
+        'friendly_name': 'EnergyHub Control Status',
         'icon': 'mdi:cog-transfer-outline',
         'transId': 'abc-123',
         'status': "nack",
@@ -1548,7 +1548,7 @@ async def test_control_command_restore_state(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
     assert state.attributes == {
-        'friendly_name': 'Control Status',
+        'friendly_name': 'EnergyHub Control Status',
         'icon': 'mdi:cog-transfer-outline',
         'transId': 'abc-123',
         'status': None,
@@ -1708,7 +1708,7 @@ async def test_average_calculation(hass, mqtt_mock):
         'L2': 310.57,
         'L3': 167.93,
         'device_class': 'energy',
-        'friendly_name': 'External Energy Produced',
+        'friendly_name': 'EnergyHub External Energy Produced',
         'icon': 'mdi:power-plug',
         'state_class': 'total_increasing',
         'unit_of_measurement': 'kWh'
@@ -1752,6 +1752,6 @@ async def test_extapi_version_response(hass, mqtt_mock):
     state = hass.states.get("sensor.ferroamp_extapi_version")
     assert state.state == "1.2.3"
     assert state.attributes == {
-        'friendly_name': 'Extapi Version',
+        'friendly_name': 'EnergyHub Extapi Version',
         'icon': 'mdi:counter'
     }
