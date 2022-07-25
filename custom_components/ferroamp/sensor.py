@@ -28,6 +28,7 @@ from homeassistant.const import (
 from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_reg
+from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
@@ -751,7 +752,7 @@ class PercentageFerroampSensor(FloatValFerroampSensor):
         if self.state is not None and self.state != "unknown":
             pct = int(float(self.state) / 10) * 10
             if pct <= 90:
-                self._attr_icon = f"mdi:battery-{pct}"
+                self._attr_icon = icon_for_battery_level(battery_level=pct)
             else:
                 self._attr_icon = "mdi:battery"
         return res
