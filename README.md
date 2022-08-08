@@ -17,7 +17,7 @@ Ferroamp MQTT support sends updates to these topics:
 ### Install using HACS (recommended)
 The repository is compatible with HACS (Home Assistant Community Store).
 
-Install HACS and add the repository to the Custom repositories under HACS Settings tab.
+Install HACS and search for Ferroamp Sensors and install it directly from HACS. HACS will keep track of updates and you can easly upgrade this component to latest version.
 
 * https://hacs.xyz/docs/installation/manual
    * https://hacs.xyz/docs/basic/getting_started
