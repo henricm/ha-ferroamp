@@ -1,4 +1,4 @@
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![Join the chat at https://gitter.im/ha-ferroamp/community](https://img.shields.io/gitter/room/henricm/ha-ferroamp?style=for-the-badge)](https://gitter.im/ha-ferroamp/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Home assistant sensors for Ferroamp EnergyHub
