@@ -4,6 +4,7 @@
   "version": "1.8.0",
   "config_flow": true,
   "documentation": "https://github.com/henricm/ha-ferroamp/",
+  "issue_tracker": "https://github.com/henricm/ha-ferroamp/issues",
   "dependencies": [
     "mqtt"
   ],
