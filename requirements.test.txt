@@ -1,5 +1,5 @@
 # Strictly for tests
-pytest-homeassistant-custom-component==0.10.2
+pytest-homeassistant-custom-component==0.11.8
 # From our manifest.json for our custom component
 aiohttp_cors==0.7.0
 paho-mqtt==1.6.1
