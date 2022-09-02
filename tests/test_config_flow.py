@@ -65,7 +65,8 @@ async def test_flow_user_creates_config_entry(hass, mqtt_mock):
         "description_placeholders": None,
         "result": mock.ANY,
     }
-    assert expected == result
+
+    assert expected == {k: v for k,v in result.items() if k != "context"}
 
 
 async def test_options_flow(hass, mqtt_mock):
