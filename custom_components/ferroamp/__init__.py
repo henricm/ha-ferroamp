@@ -52,6 +52,15 @@ async def async_unload_entry(hass, entry):
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
+    # Make sure MQTT is available and the entry is loaded
+    if not hass.config_entries.async_entries(
+            mqtt.DOMAIN
+    ) or not await hass.config_entries.async_wait_component(
+        hass.config_entries.async_entries(mqtt.DOMAIN)[0]
+    ):
+        _LOGGER.error("MQTT integration is not available")
+        return False
+
     _LOGGER.debug("Setting up ferroamp battery service calls")
     hass.data.setdefault(DOMAIN, {})
     device_registry = dr.async_get(hass)

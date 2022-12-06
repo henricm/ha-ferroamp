@@ -9,7 +9,7 @@ from homeassistant.const import (
 from homeassistant.helpers import device_registry
 from pytest_homeassistant_custom_component.common import async_fire_mqtt_message, MockConfigEntry
 
-from custom_components.ferroamp import ATTR_POWER, ATTR_TARGET
+from custom_components.ferroamp import ATTR_POWER, ATTR_TARGET, async_setup
 from custom_components.ferroamp.const import DOMAIN, CONF_INTERVAL, DATA_DEVICES, DATA_PREFIXES, DATA_LISTENERS
 
 
@@ -30,6 +30,12 @@ def create_config(name="Ferroamp", prefix="extapi", unique_id="ferroamp"):
         version=1,
         unique_id=unique_id,
     )
+
+
+async def test_no_mqtt(hass, caplog):
+    result = await async_setup(hass, {})
+    assert not result
+    assert "MQTT integration is not available" in caplog.text
 
 
 async def test_unload(hass, mqtt_mock):
