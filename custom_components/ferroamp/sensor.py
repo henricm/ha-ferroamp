@@ -17,13 +17,12 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_PREFIX,
     ELECTRIC_CURRENT_AMPERE,
-    ENERGY_KILO_WATT_HOUR,
-    ENERGY_WATT_HOUR,
     FREQUENCY_HERTZ,
     PERCENTAGE,
-    POWER_WATT,
-    TEMP_CELSIUS,
-    ELECTRIC_POTENTIAL_VOLT
+    ELECTRIC_POTENTIAL_VOLT,
+    UnitOfEnergy,
+    UnitOfPower,
+    UnitOfTemperature
 )
 from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
@@ -420,7 +419,7 @@ async def async_setup_entry(
                     "Rated Capacity",
                     device_id,
                     "ratedCapacity",
-                    ENERGY_WATT_HOUR,
+                    UnitOfEnergy.WATT_HOUR,
                     "mdi:battery",
                     device_id,
                     device_name,
@@ -577,15 +576,15 @@ class FerroampSensor(SensorEntity, RestoreEntity):
             model=kwargs.get("model")
         )
         self._attr_should_poll = False
-        if unit == ENERGY_KILO_WATT_HOUR:
+        if unit == UnitOfEnergy.KILO_WATT_HOUR:
             self._attr_device_class = SensorDeviceClass.ENERGY
-        elif unit == POWER_WATT:
+        elif unit == UnitOfPower.WATT:
             self._attr_device_class = SensorDeviceClass.POWER
         elif unit == ELECTRIC_POTENTIAL_VOLT:
             self._attr_device_class = SensorDeviceClass.VOLTAGE
         elif unit == ELECTRIC_CURRENT_AMPERE:
             self._attr_device_class = SensorDeviceClass.CURRENT
-        elif unit == TEMP_CELSIUS:
+        elif unit == UnitOfTemperature.CELSIUS:
             self._attr_device_class = SensorDeviceClass.TEMPERATURE
         self._interval = interval
         entity_id = slugify(name)
@@ -776,7 +775,7 @@ class BatteryFerroampSensor(PercentageFerroampSensor):
 class TemperatureFerroampSensor(FloatValFerroampSensor):
     def __init__(self, name, entity_prefix, key, device_id, device_name, interval, precision, config_id, **kwargs):
         super().__init__(
-            name, entity_prefix, key, TEMP_CELSIUS, "mdi:thermometer", device_id, device_name, interval, precision, config_id,
+            name, entity_prefix, key, UnitOfTemperature.CELSIUS, "mdi:thermometer", device_id, device_name, interval, precision, config_id,
             **kwargs
         )
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -838,7 +837,7 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
             name,
             entity_prefix,
             key,
-            ENERGY_KILO_WATT_HOUR,
+            UnitOfEnergy.KILO_WATT_HOUR,
             icon,
             device_id,
             device_name,
@@ -904,7 +903,7 @@ class PowerFerroampSensor(FloatValFerroampSensor):
     """Representation of a Ferroamp Power Sensor."""
 
     def __init__(self, name, entity_prefix, key, icon, device_id, device_name, interval, config_id, **kwargs):
-        super().__init__(name, entity_prefix, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id, **kwargs)
+        super().__init__(name, entity_prefix, key, UnitOfPower.WATT, icon, device_id, device_name, interval, 0, config_id, **kwargs)
 
 
 class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
@@ -917,7 +916,7 @@ class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
             name,
             entity_prefix,
             voltage_key,
-            POWER_WATT,
+            UnitOfPower.WATT,
             icon,
             device_id,
             device_name,
@@ -1019,7 +1018,7 @@ class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
         super().__init__(
             name,
             entity_prefix, key,
-            ENERGY_KILO_WATT_HOUR,
+            UnitOfEnergy.KILO_WATT_HOUR,
             icon,
             device_id,
             device_name,
@@ -1048,7 +1047,7 @@ class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
 class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
     def __init__(self, name, entity_prefix, key, icon, device_id, device_name, interval, config_id):
         """Initialize the sensor."""
-        super().__init__(name, entity_prefix, key, POWER_WATT, icon, device_id, device_name, interval, 0, config_id)
+        super().__init__(name, entity_prefix, key, UnitOfPower.WATT, icon, device_id, device_name, interval, 0, config_id)
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
 
@@ -1469,7 +1468,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             "Total rated capacity of all batteries",
             slug,
             "ratedcap",
-            ENERGY_WATT_HOUR,
+            UnitOfEnergy.WATT_HOUR,
             "mdi:battery",
             f"{slug}_{EHUB}",
             EHUB_NAME,
