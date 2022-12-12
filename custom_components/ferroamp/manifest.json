@@ -1,7 +1,7 @@
 {
   "domain": "ferroamp",
   "name": "Ferroamp MQTT Sensors",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "config_flow": true,
   "documentation": "https://github.com/henricm/ha-ferroamp/",
   "issue_tracker": "https://github.com/henricm/ha-ferroamp/issues",
