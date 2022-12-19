@@ -52,13 +52,15 @@ async def async_unload_entry(hass, entry):
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
-    # Make sure MQTT is available and the entry is loaded
-    if not hass.config_entries.async_entries(
-            mqtt.DOMAIN
-    ) or not await hass.config_entries.async_wait_component(
-        hass.config_entries.async_entries(mqtt.DOMAIN)[0]
-    ):
+    # Make sure MQTT is available and the entry component is loaded    
+    entries = hass.config_entries.async_entries(mqtt.DOMAIN)
+    if len(entries) == 0:
         _LOGGER.error("MQTT integration is not available")
+        return False
+    if not await hass.config_entries.async_wait_component(entries[0]):
+        if len(entries) > 1: 
+            _LOGGER.warn("Multiple MQTT integrations entries available, please check your configuration")
+        _LOGGER.error("MQTT integration component is not loaded")
         return False
 
     _LOGGER.debug("Setting up ferroamp battery service calls")
@@ -69,7 +71,7 @@ async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
         prefix = list(hass.data[DOMAIN][DATA_PREFIXES].values())[0]
         if len(hass.data[DOMAIN][DATA_PREFIXES]) > 1:
             if len(target) == 0:
-                raise Exception(f"Target needs to be specified since more than one instance of Ferroamp is available")
+                raise Exception("Target needs to be specified since more than one instance of Ferroamp is available")
             _LOGGER.info(f"Looking up prefix for device with id {target}")
             device = device_registry.async_get(target)
             if device is None:
