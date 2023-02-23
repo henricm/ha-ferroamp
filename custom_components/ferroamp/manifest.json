@@ -1,17 +1,17 @@
 {
   "domain": "ferroamp",
   "name": "Ferroamp MQTT Sensors",
-  "version": "1.10.1",
-  "config_flow": true,
-  "documentation": "https://github.com/henricm/ha-ferroamp/",
-  "issue_tracker": "https://github.com/henricm/ha-ferroamp/issues",
-  "dependencies": [
-    "mqtt"
-  ],
   "codeowners": [
     "@henricm",
     "@argoyle"
   ],
+  "config_flow": true,
+  "dependencies": [
+    "mqtt"
+  ],
+  "documentation": "https://github.com/henricm/ha-ferroamp/",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/henricm/ha-ferroamp/issues",
   "requirements": [],
-  "iot_class": "cloud_push"
+  "version": "1.10.1"
 }
