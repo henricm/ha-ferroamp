@@ -117,12 +117,13 @@ async def async_setup_entry(
 
     def register_sensor(sensor, event, store):
         if sensor.unique_id not in store:
-            store[sensor.unique_id] = sensor
-            _LOGGER.debug(
-                "Registering new sensor %(unique_id)s => %(event)s",
-                dict(unique_id=sensor.unique_id, event=event),
-            )
-            async_add_entities((sensor,), True)
+            if not sensor.check_presence or sensor.present(event):
+                store[sensor.unique_id] = sensor
+                _LOGGER.debug(
+                    "Registering new sensor %(unique_id)s => %(event)s",
+                    dict(unique_id=sensor.unique_id, event=event),
+                )
+                async_add_entities((sensor,), True)
 
     def update_sensor_from_event(event, sensors, store):
         for sensor in sensors:
@@ -593,6 +594,10 @@ class FerroampSensor(SensorEntity, RestoreEntity):
         self.config_id = config_id
         self._attr_state_class = kwargs.get('state_class')
         self._added = False
+        self.check_presence = False
+
+    def present(self, event) -> bool:
+        return True
 
     async def async_added_to_hass(self) -> None:
         """Handle entity which will be added."""
@@ -617,6 +622,10 @@ class KeyedFerroampSensor(FerroampSensor):
         self._attr_unique_id = f"{self.device_id}-{self._state_key}"
         self.updated = datetime.min
         self.events = []
+        self.check_presence = kwargs.get("check_presence") or False
+
+    def present(self, event) -> bool:
+        return event.get(self._state_key, None) is not None
 
     def add_event(self, event):
         self.events.append(event)
@@ -1489,6 +1498,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             precision_current,
             config_id,
             state_class=SensorStateClass.MEASUREMENT,
+            check_presence=True,
         ),
         ThreePhaseMinFerroampSensor(
             "Available active current for load balancing",
@@ -1501,6 +1511,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_current,
             config_id,
+            check_presence=True,
         ),
         ThreePhaseMinFerroampSensor(
             "Available RMS current for load balancing",
@@ -1513,5 +1524,6 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_current,
             config_id,
+            check_presence=True,
         ),
     ]
