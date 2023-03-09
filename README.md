@@ -141,3 +141,15 @@ utility_meter:
     source: sensor.ferroamp_external_energy_produced
     cycle: monthly
  ```
+
+## Contributing
+Everybody is invited and welcome to contribute to the Ferroamp Sensors integration.
+
+The process is straight-forward.
+
+- Read [How to get faster PR reviews](https://github.com/kubernetes/community/blob/master/contributors/guide/pull-requests.md#best-practices-for-faster-reviews) by Kubernetes (but skip step 0 and 1)
+- Fork the Ferroamp Sensors [git repository](https://github.com/henricm/ha-ferroamp).
+- Make the changes.
+- Ensure tests work.
+- Commit the code following the [Conventional Commits](https://www.conventionalcommits.org/) format.
+- Create a Pull Request against the [**master**](https://github.com/henricm/ha-ferroamp/tree/master) branch of Ferroamp Sensors.
