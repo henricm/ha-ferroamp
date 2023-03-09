@@ -862,7 +862,8 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
             if self._attr_native_value is None\
                     or (isinstance(self._attr_native_value, str) and not isfloat(self._attr_native_value))\
                     or self._attr_state_class != SensorStateClass.TOTAL_INCREASING\
-                    or val > float(self._attr_native_value):
+                    or val > float(self._attr_native_value) \
+                    or val * 1.1 < float(self._attr_native_value):
                 self._attr_native_value = val
                 if self._precision == 0:
                     self._attr_native_value = int(self._attr_native_value)
@@ -986,7 +987,8 @@ class ThreePhaseFerroampSensor(KeyedFerroampSensor):
             if self._attr_native_value is None \
                     or (isinstance(self._attr_native_value, str) and not isfloat(self._attr_native_value)) \
                     or self._attr_state_class != SensorStateClass.TOTAL_INCREASING \
-                    or val > float(self._attr_native_value):
+                    or val > float(self._attr_native_value) \
+                    or val * 1.1 < float(self._attr_native_value):
                 self._attr_native_value = val
                 if self._precision == 0:
                     self._attr_native_value = int(self._attr_native_value)
