@@ -530,6 +530,96 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     }
 
 
+async def test_only_adding_load_balancing_sensors_if_present_in_message(hass, mqtt_mock):
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_NAME: "Ferroamp",
+            CONF_PREFIX: "extapi"
+        },
+        options={
+            CONF_INTERVAL: 1,
+            CONF_PRECISION_BATTERY: 0,
+            CONF_PRECISION_CURRENT: 0,
+            CONF_PRECISION_ENERGY: 0,
+            CONF_PRECISION_FREQUENCY: 0,
+            CONF_PRECISION_TEMPERATURE: 0,
+            CONF_PRECISION_VOLTAGE: 0,
+        },
+        version=1,
+        unique_id="ferroamp",
+    )
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    er = entity_registry.async_get(hass)
+    er.async_get_or_create(
+        'sensor', DOMAIN, 'ferroamp_ehub-ul', config_entry=config_entry,
+        suggested_object_id="ferroamp_external_voltage")
+    er.async_get_or_create(
+        'sensor', DOMAIN, 'ferroamp_ehub-il', config_entry=config_entry,
+        suggested_object_id="ferroamp_inverter_rms_current")
+    er.async_get_or_create(
+        'sensor', DOMAIN, 'ferroamp_ehub-gridfreq', config_entry=config_entry,
+        suggested_object_id="ferroamp_estimated_grid_frequency")
+    er.async_get_or_create(
+        'sensor', DOMAIN, 'ferroamp_ehub-pext', config_entry=config_entry,
+        suggested_object_id="ferroamp_grid_power")
+    er.async_get_or_create(
+        'sensor', DOMAIN, 'ferroamp_ehub-wextprodq', config_entry=config_entry,
+        suggested_object_id="ferroamp_external_energy_produced")
+
+    await hass.async_block_till_done()
+
+    topic = "extapi/data/ehub"
+    msg = """{
+                "wloadconsq": {"L2": "5509231063416", "L3": "10852247351438", "L1": "7902091810549"},
+                "iloadd": {"L2": "-0.67", "L3": "0.56", "L1": "1.55"},
+                "wextconsq": {"L2": "5364952651263", "L3": "10118502962305", "L1": "7277915408026"},
+                "ppv": {"val": "10107.51"},
+                "iext": {"L2": "8.90", "L3": "7.49", "L1": "7.59"},
+                "iloadq": {"L2": "1.16", "L3": "3.61", "L1": "3.89"},
+                "iace": {"L2": "0.00", "L3": "0.00", "L1": "0.00"},
+                "ul": {"L2": "233.81", "L3": "231.18", "L1": "228.81"},
+                "pinvreactive": {"L2": "438.12", "L3": "444.64", "L1": "430.37"},
+                "ts": {"val": "2021-03-08T08:43:12UTC"},
+                "ploadreactive": {"L2": "-110.77", "L3": "91.54", "L1": "250.78"},
+                "state": {"val": "4097"},
+                "wloadprodq": {"L2": "18020837409", "L3": "8433745", "L1": "4976003"},
+                "pinv": {"L2": "-2263.35", "L3": "-2234.62", "L1": "-2224.66"},
+                "iextq": {"L2": "-12.53", "L3": "-10.06", "L1": "-9.86"},
+                "pext": {"L2": "-2071.57", "L3": "-1644.50", "L1": "-1595.28"},
+                "wbatcons": {"val": "4472794198593"},
+                "wextprodq": {"L2": "1118056851556", "L3": "604554554552", "L1": "662115344893"},
+                "wpv": {"val": "4422089590383"},
+                "winvconsq": {"L2": "1475109889749", "L3": "1451934095829", "L1": "1436427014025"},
+                "pextreactive": {"L2": "327.35", "L3": "536.18", "L1": "681.15"},
+                "udc": {"neg": "-383.96", "pos": "384.31"},
+                "sext": {"val": "5549.12"},
+                "pbat": {"val": "-3218.99"},
+                "iextd": {"L2": "1.98", "L3": "3.28", "L1": "4.21"},
+                "wbatprod": {"val": "4918944968551"},
+                "ild": {"L2": "2.65", "L3": "2.72", "L1": "2.66"},
+                "gridfreq": {"val": "50.07"},
+                "pload": {"L2": "191.78", "L3": "590.12", "L1": "629.38"},
+                "ilq": {"L2": "-13.69", "L3": "-13.67", "L1": "-13.75"},
+                "winvprodq": {"L2": "2610825033980", "L3": "2570987302422", "L1": "2567078340545"},
+                "il": {"L2": "9.85", "L3": "9.85", "L1": "9.89"},
+                "soc":{"val":"79.9"},
+                "soh":{"val":"98.9"},
+                "ratedcap":{"val":"15300"}}"""
+    async_fire_mqtt_message(hass, topic, msg)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_available_active_current_for_load_balancing")
+    assert state is None
+
+    state = hass.states.get("sensor.ferroamp_available_rms_current_for_load_balancing")
+    assert state is None
+
+    state = hass.states.get("sensor.ferroamp_available_three_phase_active_current_for_load_balancing")
+    assert state is None
+
+
 async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
@@ -1607,6 +1697,7 @@ async def test_always_increasing_unknown_value(hass, mqtt_mock):
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
     assert sensor.state == 1228.4
 
+
 async def test_always_increasing_counter_reset(hass, mqtt_mock):
     mock_restore_cache(
         hass,
@@ -1632,6 +1723,7 @@ async def test_always_increasing_counter_reset(hass, mqtt_mock):
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
     assert sensor.state == 100.0
+
 
 async def test_3phase_always_increasing(hass, mqtt_mock):
     mock_restore_cache(
@@ -1684,6 +1776,7 @@ async def test_3phase_always_increasing_unknown_value(hass, mqtt_mock):
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
     assert sensor.state == 662.4
 
+
 async def test_3phase_always_increasing_counter_reset(hass, mqtt_mock):
     mock_restore_cache(
         hass,
@@ -1709,6 +1802,7 @@ async def test_3phase_always_increasing_counter_reset(hass, mqtt_mock):
     assert entity is not None
     sensor = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]["ferroamp_ehub"][entity.unique_id]
     assert sensor.state == 30.0
+
 
 async def test_average_calculation(hass, mqtt_mock):
     config_entry = MockConfigEntry(
