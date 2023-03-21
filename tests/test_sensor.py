@@ -1397,6 +1397,27 @@ async def test_sso_fault_codes(hass, mqtt_mock):
         11: 'POWERLIMITING'
     }
 
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "0"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "0"
+    assert state.attributes == {
+        'friendly_name': 'SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        0: 'No errors'
+    }
+
 
 async def test_restore_state(hass, mqtt_mock):
     mock_restore_cache(
