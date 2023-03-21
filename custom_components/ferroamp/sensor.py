@@ -1125,12 +1125,12 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
             else:
                 if 0 in self._attr_extra_state_attributes:
                     del self._attr_extra_state_attributes[0]
-                for i, code in enumerate(self._fault_codes):
-                    v = 1 << i
-                    if x & v == v:
-                        self._attr_extra_state_attributes[i + 1] = code
-                    elif i + 1 in self._attr_extra_state_attributes:
-                        del self._attr_extra_state_attributes[i + 1]
+            for i, code in enumerate(self._fault_codes):
+                v = 1 << i
+                if x & v == v:
+                    self._attr_extra_state_attributes[i + 1] = code
+                elif i + 1 in self._attr_extra_state_attributes:
+                    del self._attr_extra_state_attributes[i + 1]
             return True
 
 
