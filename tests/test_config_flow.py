@@ -67,6 +67,7 @@ async def test_flow_user_creates_config_entry(hass, mqtt_mock):
     }
 
     assert expected == {k: v for k,v in result.items() if k != "context"}
+    await hass.async_block_till_done()
 
 
 async def test_options_flow(hass, mqtt_mock):
