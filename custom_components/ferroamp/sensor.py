@@ -628,7 +628,8 @@ class KeyedFerroampSensor(FerroampSensor):
         return event.get(self._state_key, None) is not None
 
     def add_event(self, event):
-        self.events.append(event)
+        if not self.check_presence or self.present(event):
+            self.events.append(event)
         now = datetime.now()
         delta = (now - self.updated).total_seconds()
         if delta > self._interval and self._added:
