@@ -126,6 +126,10 @@ async def async_setup_entry(
                 async_add_entities((sensor,), True)
 
     def update_sensor_from_event(event, sensors, store):
+        _LOGGER.debug(
+            "Event received %s",
+            event
+        )
         for sensor in sensors:
             register_sensor(sensor, event, store)
             sensor.hass = hass
@@ -867,6 +871,8 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
     def add_event(self, event):
         if self.get_float_value(event) > 0:
             super().add_event(event)
+        else:
+            _LOGGER.info("%s value %s seems to be zero. Ignoring", self.entity_id, self.get_value(event))
 
     def update_state_from_events(self, events):
         temp = None
@@ -1057,6 +1063,9 @@ class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
         if phases is not None and (phases["L1"] is not None or phases["L2"] is not None or phases["L3"] is not None):
             if (phases["L1"] + phases["L2"] + phases["L3"]) > 0:
                 super().add_event(event)
+                return
+
+        _LOGGER.info("%s value %s seems to be zero or None. Ignoring", self.entity_id, self.get_value(event))
 
     def get_phases(self, event):
         phases = super().get_phases(event)
