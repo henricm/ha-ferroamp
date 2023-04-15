@@ -498,6 +498,7 @@ async def async_setup_entry(
 
     store, _ = get_store(f"{slug}_{EHUB}")
     get_version_sensor(store)
+    get_cmd_sensor(store)
 
     listeners.append(await mqtt.async_subscribe(
         hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_EHUB}", ehub_event_received, 0
