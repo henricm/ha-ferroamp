@@ -1409,6 +1409,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
+            check_presence=True,
         ),
         EnergyFerroampSensor(
             "Battery Energy Consumed",
@@ -1420,6 +1421,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_energy,
             config_id,
+            check_presence=True,
         ),
         IntValFerroampSensor(
             "System State",
@@ -1451,6 +1453,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_battery,
             config_id,
+            check_presence=True,
         ),
         PercentageFerroampSensor(
             "System State of Health",
@@ -1461,6 +1464,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             precision_battery,
             config_id,
+            check_presence=True,
         ),
         IntValFerroampSensor(
             "Apparent power",
@@ -1493,7 +1497,8 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             EHUB_NAME,
             interval,
             config_id,
-            state_class=SensorStateClass.MEASUREMENT
+            state_class=SensorStateClass.MEASUREMENT,
+            check_presence=True,
         ),
         IntValFerroampSensor(
             "Total rated capacity of all batteries",
@@ -1505,6 +1510,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             EHUB_NAME,
             interval,
             config_id,
+            check_presence=True,
         ),
         FloatValFerroampSensor(
             "Available three phase active current for load balancing",
