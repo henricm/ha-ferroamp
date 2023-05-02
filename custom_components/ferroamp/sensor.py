@@ -605,7 +605,7 @@ class FerroampSensor(SensorEntity, RestoreEntity):
         """Handle entity which will be added."""
         await super().async_added_to_hass()
         state = await self.async_get_last_state()
-        if state:
+        if state and state.state != "unknown":
             self._attr_native_value = state.state
         self.hass.data[DOMAIN][DATA_DEVICES][self.config_id][self.device_id][self.unique_id] = self
         self._added = True
