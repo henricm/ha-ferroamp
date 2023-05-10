@@ -142,7 +142,7 @@ utility_meter:
     cycle: monthly
  ```
 
-## Monitoring latest ferroamp version
+## Monitoring latest Ferroamp version
 If you are tired of manually verifying if there is any new version available from ferroamp you can configure this scraper and also using the provided automation to get notifications when ferroamp releases a new version.
 ```
 scrape:
