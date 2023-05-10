@@ -142,6 +142,48 @@ utility_meter:
     cycle: monthly
  ```
 
+## Monitoring latest Ferroamp version
+If you are tired of manually verifying if there is any new version available from ferroamp you can configure this scraper and also using the provided automation to get notifications when ferroamp releases a new version.
+```
+scrape:
+  - resource: https://support.ferroamp.com/sv-SE/support/solutions/47000522529
+    timeout: 10
+    sensor:
+      - name: Ferroamp Latest Version
+        select: '.file-card > .fw-no-bullet > li'
+        icon: mdi:counter
+        index: 0
+        value_template: >
+          {{ value | replace ("Programvarurelease ", "") }}
+```
+
+```
+automation:
+  - id: 'notify_new_ferroamp_version'
+    alias: Notify New Ferroamp Version
+    description: 'Notify when ferroamp release a new firmware version'
+    trigger:
+      - platform: state
+        entity_id: sensor.ferroamp_latest_version
+        from: 'off'
+        to: 'on'
+    condition:
+      # prevent unwanted triggers
+      - "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
+      - "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
+      - "{{ trigger.from_state.state != trigger.to_state.state}}"
+    action:
+      # replace service with your notification service here!
+      - service: notify.my_phone
+        data_template:
+          title: New Ferroamp version available
+          message: |
+            Version {{ states('sensor.ferroamp_latest_version') }} is now available.
+          data:
+            push:
+              thread-id: "ferroamp_notification"
+```
+
 ## Contributing
 Everybody is invited and welcome to contribute to the Ferroamp Sensors integration.
 
