@@ -143,11 +143,12 @@ utility_meter:
  ```
 
 ## Monitoring latest Ferroamp version
-If you are tired of manually verifying if there is any new version available from ferroamp you can configure this scraper and also using the provided automation to get notifications when ferroamp releases a new version.
+If you are tired of manually verifying if there is any new version available from ferroamp, then you can configure this scraper and also using the provided automation to get notifications when ferroamp releases a new version.
 ```
 scrape:
   - resource: https://support.ferroamp.com/sv-SE/support/solutions/47000522529
     timeout: 10
+    scan_interval: 86400 # only scan for new updates once a day
     sensor:
       - name: Ferroamp Latest Version
         select: '.file-card > .fw-no-bullet > li'
