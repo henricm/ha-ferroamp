@@ -166,8 +166,6 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.ferroamp_latest_version
-        from: 'off'
-        to: 'on'
     condition:
       # prevent unwanted triggers
       - "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
