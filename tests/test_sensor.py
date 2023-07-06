@@ -1401,6 +1401,48 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "wpv": {"val": "843516404273"},
                 "ts": {"val": "2021-03-08T08:22:42UTC"},
                 "udc": {"val": "769.872"},
+                "faultcode": {"val": "4"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "4"
+    assert state.attributes == {
+        'friendly_name': 'SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        3: 'Error, PV ground fault'
+    }
+
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "8"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "8"
+    assert state.attributes == {
+        'friendly_name': 'SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        4: 'Error, internal voltage unbalance'
+    }
+
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
                 "faultcode": {"val": "10"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
@@ -1413,7 +1455,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        5: 'UNDERVOLTAGE'
+        5: 'Warning, PV undervoltage, not possible to sustain MPPT operation'
     }
 
     async_fire_mqtt_message(hass, topic, """{
@@ -1434,7 +1476,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        6: 'OVERVOLTAGE'
+        6: 'Warning, DC grid voltage too high, SSO will not connect to DC grid'
     }
 
     async_fire_mqtt_message(hass, topic, """{
@@ -1455,7 +1497,70 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        7: 'OVERHEAT'
+        7: 'Warning, Limiting current due to internal temperature'
+    }
+
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "80"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "80"
+    assert state.attributes == {
+        'friendly_name': 'SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        8: 'Error, Internal power electronics fault'
+    }
+
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "100"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "100"
+    assert state.attributes == {
+        'friendly_name': 'SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        9: 'Error, Internal relay test circuit has detected a fault'
+    }
+
+    async_fire_mqtt_message(hass, topic, """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "200"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""")
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
+    assert state.state == "200"
+    assert state.attributes == {
+        'friendly_name': 'SSO 12345678 Faultcode',
+        'icon': 'mdi:traffic-light',
+        10: 'Error, Memory error, configuration parameters can not be read'
     }
 
     async_fire_mqtt_message(hass, topic, """{
@@ -1476,7 +1581,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         'friendly_name': 'SSO 12345678 Faultcode',
         'icon': 'mdi:traffic-light',
-        11: 'POWERLIMITING'
+        11: 'Warning, SSO is limiting power, either because of internal temperature or DC grid voltage level'
     }
 
     async_fire_mqtt_message(hass, topic, """{
