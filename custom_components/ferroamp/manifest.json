@@ -13,5 +13,5 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/henricm/ha-ferroamp/issues",
   "requirements": [],
-  "version": "1.12.3"
+  "version": "1.12.4"
 }
