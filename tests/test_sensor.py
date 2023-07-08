@@ -428,7 +428,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
     }
 
     state = hass.states.get("sensor.ferroamp_dc_link_voltage")
-    assert state.state == "0"
+    assert state.state == "768.27"
     assert state.attributes == {
         'device_class': 'voltage',
         'friendly_name': 'EnergyHub DC Link Voltage',
