@@ -756,7 +756,7 @@ class DcLinkFerroampSensor(KeyedFerroampSensor):
         if neg is None and pos is None:
             return False
         else:
-            self._attr_native_value = int(neg / count + pos / count)
+            self._attr_native_value = round(float(pos / count - neg / count), 2)
             self._attr_extra_state_attributes = dict(neg=round(float(neg / count), 2),
                                                      pos=round(float(pos / count), 2))
             return True
