@@ -160,6 +160,36 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         'unit_of_measurement': 'A'
     }
 
+    state = hass.states.get("sensor.ferroamp_inverter_rms_current_l1")
+    assert state.state == "10"
+    assert state.attributes == {
+        'device_class': 'current',
+        'friendly_name': 'EnergyHub Inverter RMS current L1',
+        'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_inverter_rms_current_l2")
+    assert state.state == "10"
+    assert state.attributes == {
+        'device_class': 'current',
+        'friendly_name': 'EnergyHub Inverter RMS current L2',
+        'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
+        'unit_of_measurement': 'A'
+    }
+
+    state = hass.states.get("sensor.ferroamp_inverter_rms_current_l3")
+    assert state.state == "10"
+    assert state.attributes == {
+        'device_class': 'current',
+        'friendly_name': 'EnergyHub Inverter RMS current L3',
+        'icon': 'mdi:current-dc',
+        'state_class': 'measurement',
+        'unit_of_measurement': 'A'
+    }
+
     state = hass.states.get("sensor.ferroamp_inverter_reactive_current")
     assert state.state == "8"
     assert state.attributes == {
