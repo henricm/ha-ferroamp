@@ -1331,7 +1331,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         ThreePhaseFerroampSensor(
-            "Inverter RMS current",
+            "Inverter RMS Current",
             slug,
             "il",
             ELECTRIC_CURRENT_AMPERE,
@@ -1343,7 +1343,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhaseFerroampSensor(
-            "Inverter RMS current L1",
+            "Inverter RMS Current L1",
             slug,
             "il",
             "L1",
@@ -1356,7 +1356,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhaseFerroampSensor(
-            "Inverter RMS current L2",
+            "Inverter RMS Current L2",
             slug,
             "il",
             "L2",
@@ -1369,7 +1369,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhaseFerroampSensor(
-            "Inverter RMS current L3",
+            "Inverter RMS Current L3",
             slug,
             "il",
             "L3",
@@ -1382,7 +1382,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         ThreePhaseFerroampSensor(
-            "Inverter reactive current",
+            "Inverter Reactive Current",
             slug,
             "ild",
             ELECTRIC_CURRENT_AMPERE,
@@ -1394,7 +1394,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhaseFerroampSensor(
-            "Inverter reactive current L1",
+            "Inverter Reactive Current L1",
             slug,
             "ild",
             "L1",
@@ -1407,7 +1407,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhaseFerroampSensor(
-            "Inverter reactive current L2",
+            "Inverter Reactive Current L2",
             slug,
             "ild",
             "L2",
@@ -1420,7 +1420,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhaseFerroampSensor(
-            "Inverter reactive current L3",
+            "Inverter Reactive Current L3",
             slug,
             "ild",
             "L3",
@@ -1723,7 +1723,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         ThreePhasePowerFerroampSensor(
-            "Inverter Power, active",
+            "Inverter Power, Active",
             slug,
             "pinv",
             "mdi:solar-power",
@@ -1733,7 +1733,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhasePowerFerroampSensor(
-            "Inverter Power, active L1",
+            "Inverter Power, Active L1",
             slug,
             "pinv",
             "L1",
@@ -1744,7 +1744,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhasePowerFerroampSensor(
-            "Inverter Power, active L2",
+            "Inverter Power, Active L2",
             slug,
             "pinv",
             "L2",
@@ -1755,7 +1755,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhasePowerFerroampSensor(
-            "Inverter Power, active L3",
+            "Inverter Power, Active L3",
             slug,
             "pinv",
             "L3",
@@ -1766,7 +1766,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         ThreePhasePowerFerroampSensor(
-            "Inverter Power, reactive",
+            "Inverter Power, Reactive",
             slug,
             "pinvreactive",
             "mdi:solar-power",
@@ -1776,7 +1776,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhasePowerFerroampSensor(
-            "Inverter Power, reactive L1",
+            "Inverter Power, Reactive L1",
             slug,
             "pinvreactive",
             "L1",
@@ -1787,7 +1787,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhasePowerFerroampSensor(
-            "Inverter Power, reactive L2",
+            "Inverter Power, Reactive L2",
             slug,
             "pinvreactive",
             "L2",
@@ -1798,7 +1798,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             config_id,
         ),
         SinglePhasePowerFerroampSensor(
-            "Inverter Power, reactive L3",
+            "Inverter Power, Reactive L3",
             slug,
             "pinvreactive",
             "L3",
@@ -2289,7 +2289,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             check_presence=True,
         ),
         IntValFerroampSensor(
-            "Total rated capacity of all batteries",
+            "Total Rated Capacity of All Batteries",
             slug,
             "ratedcap",
             UnitOfEnergy.WATT_HOUR,
@@ -2301,7 +2301,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             check_presence=True,
         ),
         FloatValFerroampSensor(
-            "Available three phase active current for load balancing",
+            "Available Three Phase Active Current For Load Balancing",
             slug,
             "iavblq_3p",
             ELECTRIC_CURRENT_AMPERE,
@@ -2315,7 +2315,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             check_presence=True,
         ),
         ThreePhaseMinFerroampSensor(
-            "Available active current for load balancing",
+            "Available Active Current For Load Balancing",
             slug,
             "iavblq",
             ELECTRIC_CURRENT_AMPERE,
@@ -2328,7 +2328,7 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             check_presence=True,
         ),
         ThreePhaseMinFerroampSensor(
-            "Available RMS current for load balancing",
+            "Available RMS Current For Load Balancing",
             slug,
             "iavbl",
             ELECTRIC_CURRENT_AMPERE,
