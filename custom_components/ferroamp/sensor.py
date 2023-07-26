@@ -976,6 +976,42 @@ class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
             return True
 
 
+class SinglePhaseFerroampSensor(KeyedFerroampSensor):
+    """Representation of a single phase Sensor"""
+
+    def __init__(self, name, entity_prefix, key, phase: str, unit: str | None, icon, device_id, device_name, interval, precision, config_id, **kwargs):
+        super().__init__(name, entity_prefix, key, unit, icon, device_id, device_name, interval, config_id, **kwargs)
+        if self._attr_state_class is None:
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._precision = precision
+        self._phase = phase
+        self._attr_unique_id = f"{self.device_id}-{self._state_key}-{self._phase}"
+
+    def update_state_from_events(self, events):
+        tmp = None
+        count = 0
+        for event in events:
+            phases = event.get(self._state_key, None)
+            if phases is not None and phases[self._phase] is not None:
+                tmp = (tmp or 0) + float(phases[self._phase])
+                count += 1
+        if tmp is None:
+            return False
+        else:
+            val = round(tmp / count, self._precision)
+            if self._attr_native_value is None \
+                    or (isinstance(self._attr_native_value, str) and not isfloat(self._attr_native_value)) \
+                    or self._attr_state_class != SensorStateClass.TOTAL_INCREASING \
+                    or val > float(self._attr_native_value) \
+                    or val * 1.1 < float(self._attr_native_value):
+                self._attr_native_value = val
+                if self._precision == 0:
+                    self._attr_native_value = int(self._attr_native_value)
+                return True
+            else:
+                return False
+
+
 class ThreePhaseFerroampSensor(KeyedFerroampSensor):
     """Representation of a Ferroamp ThreePhase Sensor."""
 
@@ -1042,6 +1078,64 @@ class ThreePhaseMinFerroampSensor(ThreePhaseFerroampSensor):
         self._precision = options.get(CONF_PRECISION_CURRENT)
 
 
+class SinglePhaseEnergyFerroampSensor(SinglePhaseFerroampSensor):
+    def __init__(self, name, entity_prefix, key, phase: str, icon, device_id, device_name, interval, precision, config_id, **kwargs):
+        """Initialize the sensor."""
+        super().__init__(
+            name,
+            entity_prefix,
+            key,
+            phase,
+            UnitOfEnergy.KILO_WATT_HOUR,
+            icon,
+            device_id,
+            device_name,
+            interval,
+            precision,
+            config_id,
+            state_class=SensorStateClass.TOTAL_INCREASING,
+            **kwargs
+        )
+
+    def get_value(self, event):
+        phases = event.get(self._state_key, None)
+        if phases is not None and phases[self._phase] is not None:
+            return round(float(phases[self._phase]) / 3600000000, 2)
+        return None
+
+    def add_event(self, event):
+        val = self.get_value(event)
+        if val and val > 0:
+            super().add_event(event)
+            return
+
+        _LOGGER.info("%s value %s for phase %s seems to be zero or None. Ignoring", self.entity_id, self.get_value(event), self._phase)
+
+    def update_state_from_events(self, events):
+        tmp = None
+        count = 0
+        for event in events:
+            val = self.get_value(event)
+            if val is not None :
+                tmp = (tmp or 0) + val
+                count += 1
+        if tmp is None:
+            return False
+        else:
+            val = round(tmp / count, self._precision)
+            if self._attr_native_value is None \
+                    or (isinstance(self._attr_native_value, str) and not isfloat(self._attr_native_value)) \
+                    or self._attr_state_class != SensorStateClass.TOTAL_INCREASING \
+                    or val > float(self._attr_native_value) \
+                    or val * 1.1 < float(self._attr_native_value):
+                self._attr_native_value = val
+                if self._precision == 0:
+                    self._attr_native_value = int(self._attr_native_value)
+                return True
+            else:
+                return False
+
+
 class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
     def __init__(self, name, entity_prefix, key, icon, device_id, device_name, interval, precision, config_id, **kwargs):
         """Initialize the sensor."""
@@ -1082,6 +1176,13 @@ class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
     def handle_options_update(self, options):
         super().handle_options_update(options)
         self._precision = options.get(CONF_PRECISION_ENERGY)
+
+
+class SinglePhasePowerFerroampSensor(SinglePhaseFerroampSensor):
+    def __init__(self, name, entity_prefix, key, phase: str, icon, device_id, device_name, interval, config_id):
+        """Initialize the sensor."""
+        super().__init__(name, entity_prefix, key, phase, UnitOfPower.WATT, icon, device_id, device_name, interval, 0, config_id)
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
 
 class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
@@ -1190,10 +1291,88 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             0,
             config_id,
         ),
+        SinglePhaseFerroampSensor(
+            "External Voltage L1",
+            slug,
+            "ul",
+            "L1",
+            ELECTRIC_POTENTIAL_VOLT,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "External Voltage L2",
+            slug,
+            "ul",
+            "L2",
+            ELECTRIC_POTENTIAL_VOLT,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "External Voltage L3",
+            slug,
+            "ul",
+            "L3",
+            ELECTRIC_POTENTIAL_VOLT,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
         ThreePhaseFerroampSensor(
             "Inverter RMS current",
             slug,
             "il",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-dc",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Inverter RMS current L1",
+            slug,
+            "il",
+            "L1",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-dc",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Inverter RMS current L2",
+            slug,
+            "il",
+            "L2",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-dc",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Inverter RMS current L3",
+            slug,
+            "il",
+            "L3",
             ELECTRIC_CURRENT_AMPERE,
             "mdi:current-dc",
             f"{slug}_{EHUB}",
@@ -1214,10 +1393,88 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             0,
             config_id,
         ),
+        SinglePhaseFerroampSensor(
+            "Inverter reactive current L1",
+            slug,
+            "ild",
+            "L1",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-dc",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Inverter reactive current L2",
+            slug,
+            "ild",
+            "L2",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-dc",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Inverter reactive current L3",
+            slug,
+            "ild",
+            "L3",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-dc",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
         ThreePhaseFerroampSensor(
             "Grid Current",
             slug,
             "iext",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Grid Current L1",
+            slug,
+            "iext",
+            "L1",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Grid Current L2",
+            slug,
+            "iext",
+            "L2",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Grid Current L3",
+            slug,
+            "iext",
+            "L3",
             ELECTRIC_CURRENT_AMPERE,
             "mdi:current-ac",
             f"{slug}_{EHUB}",
@@ -1238,10 +1495,88 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             0,
             config_id,
         ),
+        SinglePhaseFerroampSensor(
+            "Grid Reactive Current L1",
+            slug,
+            "iextd",
+            "L1",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Grid Reactive Current L2",
+            slug,
+            "iextd",
+            "L2",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Grid Reactive Current L3",
+            slug,
+            "iextd",
+            "L3",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
         ThreePhaseFerroampSensor(
             "External Active Current",
             slug,
             "iextq",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "External Active Current L1",
+            slug,
+            "iextq",
+            "L1",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "External Active Current L2",
+            slug,
+            "iextq",
+            "L2",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "External Active Current L3",
+            slug,
+            "iextq",
+            "L3",
             ELECTRIC_CURRENT_AMPERE,
             "mdi:current-ac",
             f"{slug}_{EHUB}",
@@ -1262,10 +1597,82 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             0,
             config_id,
         ),
+        SinglePhaseFerroampSensor(
+            "Adaptive Current Equalization L1",
+            slug,
+            "iace",
+            "L1",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Adaptive Current Equalization L2",
+            slug,
+            "iace",
+            "L2",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
+        SinglePhaseFerroampSensor(
+            "Adaptive Current Equalization L3",
+            slug,
+            "iace",
+            "L3",
+            ELECTRIC_CURRENT_AMPERE,
+            "mdi:current-ac",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            0,
+            config_id,
+        ),
         ThreePhasePowerFerroampSensor(
             "Grid Power",
             slug,
             "pext",
+            "mdi:transmission-tower",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Grid Power L1",
+            slug,
+            "pext",
+            "L1",
+            "mdi:transmission-tower",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Grid Power L2",
+            slug,
+            "pext",
+            "L2",
+            "mdi:transmission-tower",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Grid Power L3",
+            slug,
+            "pext",
+            "L3",
             "mdi:transmission-tower",
             f"{slug}_{EHUB}",
             EHUB_NAME,
@@ -1282,10 +1689,76 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             config_id,
         ),
+        SinglePhasePowerFerroampSensor(
+            "Grid Power Reactive L1",
+            slug,
+            "pextreactive",
+            "L1",
+            "mdi:transmission-tower",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Grid Power Reactive L2",
+            slug,
+            "pextreactive",
+            "L2",
+            "mdi:transmission-tower",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Grid Power Reactive L3",
+            slug,
+            "pextreactive",
+            "L3",
+            "mdi:transmission-tower",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
         ThreePhasePowerFerroampSensor(
             "Inverter Power, active",
             slug,
             "pinv",
+            "mdi:solar-power",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Inverter Power, active L1",
+            slug,
+            "pinv",
+            "L1",
+            "mdi:solar-power",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Inverter Power, active L2",
+            slug,
+            "pinv",
+            "L2",
+            "mdi:solar-power",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Inverter Power, active L3",
+            slug,
+            "pinv",
+            "L3",
             "mdi:solar-power",
             f"{slug}_{EHUB}",
             EHUB_NAME,
@@ -1302,10 +1775,76 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             config_id,
         ),
+        SinglePhasePowerFerroampSensor(
+            "Inverter Power, reactive L1",
+            slug,
+            "pinvreactive",
+            "L1",
+            "mdi:solar-power",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Inverter Power, reactive L2",
+            slug,
+            "pinvreactive",
+            "L2",
+            "mdi:solar-power",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Inverter Power, reactive L3",
+            slug,
+            "pinvreactive",
+            "L3",
+            "mdi:solar-power",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
         ThreePhasePowerFerroampSensor(
             "Consumption Power",
             slug,
             "pload",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Consumption Power L1",
+            slug,
+            "pload",
+            "L1",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Consumption Power L2",
+            slug,
+            "pload",
+            "L2",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Consumption Power L3",
+            slug,
+            "pload",
+            "L3",
             "mdi:power-plug",
             f"{slug}_{EHUB}",
             EHUB_NAME,
@@ -1322,10 +1861,79 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             interval,
             config_id,
         ),
+        SinglePhasePowerFerroampSensor(
+            "Consumption Power Reactive L1",
+            slug,
+            "ploadreactive",
+            "L1",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Consumption Power Reactive L2",
+            slug,
+            "ploadreactive",
+            "L2",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
+        SinglePhasePowerFerroampSensor(
+            "Consumption Power Reactive L3",
+            slug,
+            "ploadreactive",
+            "L3",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            config_id,
+        ),
         ThreePhaseEnergyFerroampSensor(
             "External Energy Produced",
             slug,
             "wextprodq",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "External Energy Produced L1",
+            slug,
+            "wextprodq",
+            "L1",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "External Energy Produced L2",
+            slug,
+            "wextprodq",
+            "L2",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "External Energy Produced L3",
+            slug,
+            "wextprodq",
+            "L3",
             "mdi:power-plug",
             f"{slug}_{EHUB}",
             EHUB_NAME,
@@ -1344,10 +1952,82 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             precision_energy,
             config_id,
         ),
+        SinglePhaseEnergyFerroampSensor(
+            "External Energy Consumed L1",
+            slug,
+            "wextconsq",
+            "L1",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "External Energy Consumed L2",
+            slug,
+            "wextconsq",
+            "L2",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "External Energy Consumed L3",
+            slug,
+            "wextconsq",
+            "L3",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
         ThreePhaseEnergyFerroampSensor(
             "Inverter Energy Produced",
             slug,
             "winvprodq",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Inverter Energy Produced L1",
+            slug,
+            "winvprodq",
+            "L1",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Inverter Energy Produced L2",
+            slug,
+            "winvprodq",
+            "L2",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Inverter Energy Produced L3",
+            slug,
+            "winvprodq",
+            "L3",
             "mdi:power-plug",
             f"{slug}_{EHUB}",
             EHUB_NAME,
@@ -1366,6 +2046,42 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             precision_energy,
             config_id,
         ),
+        SinglePhaseEnergyFerroampSensor(
+            "Inverter Energy Consumed L1",
+            slug,
+            "winvconsq",
+            "L1",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Inverter Energy Consumed L2",
+            slug,
+            "winvconsq",
+            "L2",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Inverter Energy Consumed L3",
+            slug,
+            "winvconsq",
+            "L3",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
         ThreePhaseEnergyFerroampSensor(
             "Load Energy Produced",
             slug,
@@ -1377,10 +2093,82 @@ def ehub_sensors(slug, interval, precision_battery, precision_current, precision
             precision_energy,
             config_id,
         ),
+        SinglePhaseEnergyFerroampSensor(
+            "Load Energy Produced L1",
+            slug,
+            "wloadprodq",
+            "L1",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Load Energy Produced L2",
+            slug,
+            "wloadprodq",
+            "L2",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Load Energy Produced L3",
+            slug,
+            "wloadprodq",
+            "L3",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
         ThreePhaseEnergyFerroampSensor(
             "Load Energy Consumed",
             slug,
             "wloadconsq",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Load Energy Consumed L1",
+            slug,
+            "wloadconsq",
+            "L1",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Load Energy Consumed L2",
+            slug,
+            "wloadconsq",
+            "L2",
+            "mdi:power-plug",
+            f"{slug}_{EHUB}",
+            EHUB_NAME,
+            interval,
+            precision_energy,
+            config_id,
+        ),
+        SinglePhaseEnergyFerroampSensor(
+            "Load Energy Consumed L3",
+            slug,
+            "wloadconsq",
+            "L3",
             "mdi:power-plug",
             f"{slug}_{EHUB}",
             EHUB_NAME,
