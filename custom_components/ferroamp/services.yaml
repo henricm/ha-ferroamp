@@ -1,4 +1,5 @@
 charge:
+  name: charge
   description: Make a charge request
   fields:
     target:
@@ -18,6 +19,7 @@ charge:
           unit_of_measurement: W
           mode: slider
 discharge:
+  name: discharge
   description: Make a discharge request
   fields:
     target:
@@ -37,6 +39,7 @@ discharge:
           unit_of_measurement: W
           mode: slider
 autocharge:
+  name: autocharge
   description: Sets the ESOs to autocharge-mode
   fields:
     target:
