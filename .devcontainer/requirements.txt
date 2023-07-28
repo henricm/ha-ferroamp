@@ -1,2 +1,0 @@
--r ../requirements.test.txt
-homeassistant==2022.12.0
