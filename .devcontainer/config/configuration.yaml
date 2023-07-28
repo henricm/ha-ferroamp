@@ -1,0 +1,11 @@
+# configuration for devcontainer home assistant instance
+default_config:
+
+logger:
+  default: info
+  # uncomment below to enable debug logging
+  # logs:
+    # custom_components.ferroamp: debug
+
+# If you need to debug uncomment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)
+debugpy:

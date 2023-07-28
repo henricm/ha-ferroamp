@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd "$(dirname "$0")/../../"
+
+# Create config dir if not present
+if [[ ! -d "${PWD}/.devcontainer/config" ]]; then
+    mkdir -p "${PWD}/.devcontainer/config"
+    hass --config "${PWD}/.devcontainer/config" --script ensure_config
+fi
+
+# Set the path to custom_components
+## This let's us have the structure we want <root>/custom_components/ferroamp
+## while at the same time have Home Assistant configuration inside <root>/.devcontainer/config
+## without resulting to symlinks.
+export PYTHONPATH="${PYTHONPATH}:${PWD}/custom_components"
+
+# Start Home Assistant
+hass --config "${PWD}/.devcontainer/config" --debug
