@@ -45,15 +45,15 @@ for trouble shooting the battery, or call Ferroamp Support.""",
 ]
 
 FAULT_CODES_SSO = [
-    'Unknown fault code',
-    'Unknown fault code',
-    'Error, PV ground fault',
-    'Error, internal voltage unbalance',
-    'Warning, PV undervoltage, not possible to sustain MPPT operation',
-    'Warning, DC grid voltage too high, SSO will not connect to DC grid',
-    'Warning, Limiting current due to internal temperature',
-    'Error, Internal power electronics fault',
-    'Error, Internal relay test circuit has detected a fault',
-    'Error, Memory error, configuration parameters can not be read',
-    'Warning, SSO is limiting power, either because of internal temperature or DC grid voltage level'
+    "Unknown fault code",
+    "Unknown fault code",
+    "Error, PV ground fault",
+    "Error, internal voltage unbalance",
+    "Warning, PV undervoltage, not possible to sustain MPPT operation",
+    "Warning, DC grid voltage too high, SSO will not connect to DC grid",
+    "Warning, Limiting current due to internal temperature",
+    "Error, Internal power electronics fault",
+    "Error, Internal relay test circuit has detected a fault",
+    "Error, Memory error, configuration parameters can not be read",
+    "Warning, SSO is limiting power, either because of internal temperature or DC grid voltage level",
 ]
