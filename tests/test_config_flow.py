@@ -1,7 +1,9 @@
 from unittest import mock
+
 from homeassistant import data_entry_flow
-from custom_components.ferroamp import config_flow, CONF_NAME, CONF_PREFIX
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.ferroamp import CONF_NAME, CONF_PREFIX, config_flow
 from custom_components.ferroamp.const import (
     CONF_INTERVAL,
     CONF_PRECISION_BATTERY,
@@ -9,7 +11,7 @@ from custom_components.ferroamp.const import (
     CONF_PRECISION_ENERGY,
     CONF_PRECISION_FREQUENCY,
     CONF_PRECISION_TEMPERATURE,
-    CONF_PRECISION_VOLTAGE
+    CONF_PRECISION_VOLTAGE,
 )
 
 
@@ -66,7 +68,7 @@ async def test_flow_user_creates_config_entry(hass, mqtt_mock):
         "result": mock.ANY,
     }
 
-    assert expected == {k: v for k,v in result.items() if k != "context"}
+    assert expected == {k: v for k, v in result.items() if k != "context"}
     await hass.async_block_till_done()
 
 
@@ -99,8 +101,8 @@ async def test_options_flow(hass, mqtt_mock):
             CONF_PRECISION_ENERGY: 3,
             CONF_PRECISION_FREQUENCY: 6,
             CONF_PRECISION_TEMPERATURE: 4,
-            CONF_PRECISION_VOLTAGE: 5
-        }
+            CONF_PRECISION_VOLTAGE: 5,
+        },
     )
     assert result["type"] == data_entry_flow.RESULT_TYPE_CREATE_ENTRY
     assert result["data"] == {
@@ -110,12 +112,9 @@ async def test_options_flow(hass, mqtt_mock):
         CONF_PRECISION_ENERGY: 3,
         CONF_PRECISION_FREQUENCY: 6,
         CONF_PRECISION_TEMPERATURE: 4,
-        CONF_PRECISION_VOLTAGE: 5
+        CONF_PRECISION_VOLTAGE: 5,
     }
-    assert config_entry.data == {
-        CONF_NAME: "Ferroamp",
-        CONF_PREFIX: "extapi"
-    }
+    assert config_entry.data == {CONF_NAME: "Ferroamp", CONF_PREFIX: "extapi"}
     assert config_entry.options == {
         CONF_INTERVAL: 20,
         CONF_PRECISION_BATTERY: 1,
@@ -123,5 +122,5 @@ async def test_options_flow(hass, mqtt_mock):
         CONF_PRECISION_ENERGY: 3,
         CONF_PRECISION_FREQUENCY: 6,
         CONF_PRECISION_TEMPERATURE: 4,
-        CONF_PRECISION_VOLTAGE: 5
+        CONF_PRECISION_VOLTAGE: 5,
     }

@@ -1,16 +1,22 @@
-import uuid
 from unittest.mock import call, patch
+import uuid
 
-import pytest
-from homeassistant.const import (
-    CONF_NAME,
-    CONF_PREFIX
-)
+from homeassistant.const import CONF_NAME, CONF_PREFIX
 from homeassistant.helpers import device_registry
-from pytest_homeassistant_custom_component.common import async_fire_mqtt_message, MockConfigEntry
+import pytest
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+    async_fire_mqtt_message,
+)
 
 from custom_components.ferroamp import ATTR_POWER, ATTR_TARGET, async_setup
-from custom_components.ferroamp.const import DOMAIN, CONF_INTERVAL, DATA_DEVICES, DATA_PREFIXES, DATA_LISTENERS
+from custom_components.ferroamp.const import (
+    CONF_INTERVAL,
+    DATA_DEVICES,
+    DATA_LISTENERS,
+    DATA_PREFIXES,
+    DOMAIN,
+)
 
 
 def mock_uuid():
@@ -20,10 +26,7 @@ def mock_uuid():
 def create_config(name="Ferroamp", prefix="extapi", unique_id="ferroamp"):
     return MockConfigEntry(
         domain=DOMAIN,
-        data={
-            CONF_NAME: name,
-            CONF_PREFIX: prefix
-        },
+        data={CONF_NAME: name, CONF_PREFIX: prefix},
         options={
             CONF_INTERVAL: 1,
         },
@@ -58,7 +61,7 @@ async def test_unload(hass, mqtt_mock):
     assert hass.data[DOMAIN].get(config_entry.unique_id) is None
 
 
-@patch('uuid.uuid1', mock_uuid)
+@patch("uuid.uuid1", mock_uuid)
 async def test_service_charge(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
@@ -66,7 +69,7 @@ async def test_service_charge(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     topic = "extapi/data/ehub"
-    msg = '{}'
+    msg = "{}"
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -80,16 +83,18 @@ async def test_service_charge(hass, mqtt_mock):
     )
 
     mqtt_mock.async_publish.assert_has_calls(
-        [call(
-            "extapi/control/request",
-            '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "charge", "arg": 2000}}',
-            0,
-            False
-        )]
+        [
+            call(
+                "extapi/control/request",
+                '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "charge", "arg": 2000}}',
+                0,
+                False,
+            )
+        ]
     )
 
 
-@patch('uuid.uuid1', mock_uuid)
+@patch("uuid.uuid1", mock_uuid)
 async def test_service_charge_default_power(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
@@ -97,7 +102,7 @@ async def test_service_charge_default_power(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     topic = "extapi/data/ehub"
-    msg = '{}'
+    msg = "{}"
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -109,16 +114,18 @@ async def test_service_charge_default_power(hass, mqtt_mock):
     )
 
     mqtt_mock.async_publish.assert_has_calls(
-        [call(
-            "extapi/control/request",
-            '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "charge", "arg": 1000}}',
-            0,
-            False
-        )]
+        [
+            call(
+                "extapi/control/request",
+                '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "charge", "arg": 1000}}',
+                0,
+                False,
+            )
+        ]
     )
 
 
-@patch('uuid.uuid1', mock_uuid)
+@patch("uuid.uuid1", mock_uuid)
 async def test_service_discharge(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
@@ -126,7 +133,7 @@ async def test_service_discharge(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     topic = "extapi/data/ehub"
-    msg = '{}'
+    msg = "{}"
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -140,16 +147,18 @@ async def test_service_discharge(hass, mqtt_mock):
     )
 
     mqtt_mock.async_publish.assert_has_calls(
-        [call(
-            "extapi/control/request",
-            '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "discharge", "arg": 2000}}',
-            0,
-            False
-        )]
+        [
+            call(
+                "extapi/control/request",
+                '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "discharge", "arg": 2000}}',
+                0,
+                False,
+            )
+        ]
     )
 
 
-@patch('uuid.uuid1', mock_uuid)
+@patch("uuid.uuid1", mock_uuid)
 async def test_service_discharge_default_power(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
@@ -157,7 +166,7 @@ async def test_service_discharge_default_power(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     topic = "extapi/data/ehub"
-    msg = '{}'
+    msg = "{}"
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -169,16 +178,18 @@ async def test_service_discharge_default_power(hass, mqtt_mock):
     )
 
     mqtt_mock.async_publish.assert_has_calls(
-        [call(
-            "extapi/control/request",
-            '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "discharge", "arg": 1000}}',
-            0,
-            False
-        )]
+        [
+            call(
+                "extapi/control/request",
+                '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "discharge", "arg": 1000}}',
+                0,
+                False,
+            )
+        ]
     )
 
 
-@patch('uuid.uuid1', mock_uuid)
+@patch("uuid.uuid1", mock_uuid)
 async def test_service_autocharge(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
@@ -186,7 +197,7 @@ async def test_service_autocharge(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     topic = "extapi/data/ehub"
-    msg = '{}'
+    msg = "{}"
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -198,16 +209,18 @@ async def test_service_autocharge(hass, mqtt_mock):
     )
 
     mqtt_mock.async_publish.assert_has_calls(
-        [call(
-            "extapi/control/request",
-            '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "auto"}}',
-            0,
-            False
-        )]
+        [
+            call(
+                "extapi/control/request",
+                '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "auto"}}',
+                0,
+                False,
+            )
+        ]
     )
 
 
-@patch('uuid.uuid1', mock_uuid)
+@patch("uuid.uuid1", mock_uuid)
 async def test_multiple_configs_no_target(hass, mqtt_mock):
     config_entry1 = create_config()
     config_entry1.add_to_hass(hass)
@@ -218,7 +231,7 @@ async def test_multiple_configs_no_target(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     topic = "extapi/data/ehub"
-    msg = '{}'
+    msg = "{}"
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -231,7 +244,7 @@ async def test_multiple_configs_no_target(hass, mqtt_mock):
         )
 
 
-@patch('uuid.uuid1', mock_uuid)
+@patch("uuid.uuid1", mock_uuid)
 async def test_multiple_configs_target_not_found(hass, mqtt_mock):
     config_entry1 = create_config()
     config_entry1.add_to_hass(hass)
@@ -242,7 +255,7 @@ async def test_multiple_configs_target_not_found(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     topic = "extapi/data/ehub"
-    msg = '{}'
+    msg = "{}"
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
@@ -250,14 +263,12 @@ async def test_multiple_configs_target_not_found(hass, mqtt_mock):
         await hass.services.async_call(
             DOMAIN,
             "autocharge",
-            {
-                ATTR_TARGET: "missing"
-            },
+            {ATTR_TARGET: "missing"},
             blocking=True,
         )
 
 
-@patch('uuid.uuid1', mock_uuid)
+@patch("uuid.uuid1", mock_uuid)
 async def test_multiple_configs_target_no_prefix_found(hass, mqtt_mock):
     config_entry1 = create_config()
     config_entry1.add_to_hass(hass)
@@ -267,9 +278,7 @@ async def test_multiple_configs_target_no_prefix_found(hass, mqtt_mock):
     await hass.config_entries.async_setup(config_entry2.entry_id)
     config_entry3 = MockConfigEntry(
         domain="light",
-        data={
-            CONF_PREFIX: None
-        },
+        data={CONF_PREFIX: None},
         version=1,
         entry_id="1234",
         unique_id="1234",
@@ -278,7 +287,7 @@ async def test_multiple_configs_target_no_prefix_found(hass, mqtt_mock):
     await hass.async_block_till_done()
 
     topic = "extapi/data/ehub"
-    msg = '{}'
+    msg = "{}"
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
     dr = device_registry.async_get(hass)
@@ -294,14 +303,12 @@ async def test_multiple_configs_target_no_prefix_found(hass, mqtt_mock):
         await hass.services.async_call(
             DOMAIN,
             "autocharge",
-            {
-                ATTR_TARGET: dev.id
-            },
+            {ATTR_TARGET: dev.id},
             blocking=True,
         )
 
 
-@patch('uuid.uuid1', mock_uuid)
+@patch("uuid.uuid1", mock_uuid)
 async def test_multiple_configs_correct_prefix_is_used(hass, mqtt_mock):
     config_entry1 = create_config()
     config_entry1.add_to_hass(hass)
@@ -311,7 +318,7 @@ async def test_multiple_configs_correct_prefix_is_used(hass, mqtt_mock):
     await hass.config_entries.async_setup(config_entry2.entry_id)
     await hass.async_block_till_done()
 
-    msg = '{}'
+    msg = "{}"
     async_fire_mqtt_message(hass, "extapi/data/ehub", msg)
     async_fire_mqtt_message(hass, "other/data/ehub", msg)
     await hass.async_block_till_done()
@@ -324,17 +331,17 @@ async def test_multiple_configs_correct_prefix_is_used(hass, mqtt_mock):
     await hass.services.async_call(
         DOMAIN,
         "autocharge",
-        {
-            ATTR_TARGET: dev.id
-        },
+        {ATTR_TARGET: dev.id},
         blocking=True,
     )
 
     mqtt_mock.async_publish.assert_has_calls(
-        [call(
-            "other/control/request",
-            '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "auto"}}',
-            0,
-            False
-        )]
+        [
+            call(
+                "other/control/request",
+                '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "auto"}}',
+                0,
+                False,
+            )
+        ]
     )

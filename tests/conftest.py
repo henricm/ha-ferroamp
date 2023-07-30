@@ -22,6 +22,6 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 def skip_notifications_fixture():
     """Skip notification calls."""
     with patch("homeassistant.components.persistent_notification.async_create"), patch(
-            "homeassistant.components.persistent_notification.async_dismiss"
+        "homeassistant.components.persistent_notification.async_dismiss"
     ):
         yield
