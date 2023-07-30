@@ -188,9 +188,31 @@ Everybody is invited and welcome to contribute to the Ferroamp Sensors integrati
 
 The process is straight-forward.
 
+### Clone the repository
 - Read [How to get faster PR reviews](https://github.com/kubernetes/community/blob/master/contributors/guide/pull-requests.md#best-practices-for-faster-reviews) by Kubernetes (but skip step 0 and 1)
 - Fork the Ferroamp Sensors [git repository](https://github.com/henricm/ha-ferroamp).
-- Make the changes.
+
+### Setup development environment
+
+#### Visual Studio Code
+  This repository includes devcontainer configuration for Visual Studio Code with everything you need to get started. See [instructions](.devcontainer/README.md) for more details.
+
+#### Other IDEs
+- Install python 3.9+
+- **Recommended**: create a python [virtual environment](https://docs.python.org/3/library/venv.html) for the project.
+
+- Install development dependencies:
+  ```shell
+    $ pip install -r requirements.dev.txt
+    ```
+- Install `pre-commit` GIT hooks
+  ```shell
+  $ pre-commit install
+  ```
+- Make your changes
+- Commit your changes and ensure `pre-commit` hooks execute sucessfully.
+
+### Creating a Pull Request
 - Ensure tests work.
 - Commit the code following the [Conventional Commits](https://www.conventionalcommits.org/) format.
 - Create a Pull Request against the [**master**](https://github.com/henricm/ha-ferroamp/tree/master) branch of Ferroamp Sensors.
