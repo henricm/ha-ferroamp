@@ -4,4 +4,8 @@ set -e
 
 cd "$(dirname "$0")/../"
 
+# install development dependencies
 python3 -m pip install -r ../requirements.dev.txt
+
+# install pre-commit git hooks
+pre-commit install
