@@ -7,17 +7,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.util import slugify
 import voluptuous as vol
 
-from .const import (
-    CONF_INTERVAL,
-    CONF_PRECISION_BATTERY,
-    CONF_PRECISION_CURRENT,
-    CONF_PRECISION_ENERGY,
-    CONF_PRECISION_FREQUENCY,
-    CONF_PRECISION_TEMPERATURE,
-    CONF_PRECISION_VOLTAGE,
-    DOMAIN,
-    MANUFACTURER,
-)
+from .const import CONF_INTERVAL, DOMAIN, MANUFACTURER
 
 TOPIC_SCHEMA = vol.Schema(
     {
@@ -68,32 +58,6 @@ class FerroampOptionsFlowHandler(config_entries.OptionsFlow):
         if interval is None or interval == 0:
             interval = 30
 
-        precision_battery = self.config_entry.options.get(CONF_PRECISION_BATTERY)
-        if precision_battery is None:
-            precision_battery = 1
-
-        precision_current = self.config_entry.options.get(CONF_PRECISION_CURRENT)
-        if precision_current is None:
-            precision_current = 0
-
-        precision_energy = self.config_entry.options.get(CONF_PRECISION_ENERGY)
-        if precision_energy is None:
-            precision_energy = 1
-
-        precision_frequency = self.config_entry.options.get(CONF_PRECISION_FREQUENCY)
-        if precision_frequency is None:
-            precision_frequency = 2
-
-        precision_temperature = self.config_entry.options.get(
-            CONF_PRECISION_TEMPERATURE
-        )
-        if precision_temperature is None:
-            precision_temperature = 0
-
-        precision_voltage = self.config_entry.options.get(CONF_PRECISION_VOLTAGE)
-        if precision_voltage is None:
-            precision_voltage = 0
-
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
@@ -101,30 +65,6 @@ class FerroampOptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(
                         CONF_INTERVAL,
                         default=interval,
-                    ): cv.positive_int,
-                    vol.Required(
-                        CONF_PRECISION_BATTERY,
-                        default=precision_battery,
-                    ): cv.positive_int,
-                    vol.Required(
-                        CONF_PRECISION_CURRENT,
-                        default=precision_current,
-                    ): cv.positive_int,
-                    vol.Required(
-                        CONF_PRECISION_ENERGY,
-                        default=precision_energy,
-                    ): cv.positive_int,
-                    vol.Required(
-                        CONF_PRECISION_FREQUENCY,
-                        default=precision_frequency,
-                    ): cv.positive_int,
-                    vol.Required(
-                        CONF_PRECISION_TEMPERATURE,
-                        default=precision_temperature,
-                    ): cv.positive_int,
-                    vol.Required(
-                        CONF_PRECISION_VOLTAGE,
-                        default=precision_voltage,
                     ): cv.positive_int,
                 }
             ),
