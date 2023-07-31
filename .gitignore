@@ -5,3 +5,9 @@ env
 .mypy_cache
 .coverage
 .secrets
+.direnv
+.devcontainer/config/.HA_VERSION
+.devcontainer/config/.storage
+.devcontainer/config/blueprints
+.devcontainer/config/home-assistant.log*
+.devcontainer/config/home-assistant_v2.db*

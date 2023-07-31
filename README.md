@@ -10,7 +10,7 @@ Ferroamp MQTT support sends updates to these topics:
  * extapi/data/esm (interval 60s)
 
 ## Prerequisites
-- Home assistant `2022.12.x`
+- Home assistant `2023.7.x`
 - Enable Ferroamp MQTT by contacting [Ferroamp Support](https://ferroamp.com/sv/kontakt/) to get the username and password for your Energy MQTT broker.
 - Enable MQTT in Home assistant and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp (or setup a bridge-connection if you already have an MQTT-server, see the `Configuring Bridges`-section in the [Mosquitto documentation](https://mosquitto.org/man/mosquitto-conf-5.html)).
 
@@ -198,7 +198,7 @@ The process is straight-forward.
   This repository includes devcontainer configuration for Visual Studio Code with everything you need to get started. See [instructions](.devcontainer/README.md) for more details.
 
 #### Other IDEs
-- Install python 3.9+
+- Install python 3.11+
 - **Recommended**: create a python [virtual environment](https://docs.python.org/3/library/venv.html) for the project.
 
 - Install development dependencies:
