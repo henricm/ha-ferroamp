@@ -23,13 +23,7 @@
       "init": {
         "title": "Ferroamp options",
         "data": {
-          "interval": "Update interval in seconds (defaults to 30 if left blank)",
-          "precision_battery": "Precision of battery sensors (number of decimals)",
-          "precision_current": "Precision of current sensors (number of decimals)",
-          "precision_energy": "Precision of energy sensors (number of decimals)",
-          "precision_frequency": "Precision of frequency sensors (number of decimals)",
-          "precision_temperature": "Precision of temperature sensors (number of decimals)",
-          "precision_voltage": "Precision of voltage sensors (number of decimals)"
+          "interval": "Update interval in seconds (defaults to 30 if left blank)"
         }
       }
     }
