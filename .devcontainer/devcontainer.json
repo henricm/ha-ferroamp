@@ -1,6 +1,6 @@
 {
 	"name": "henricm/ha-ferroamp",
-	"image": "mcr.microsoft.com/devcontainers/python:0-3.10-bullseye",
+	"image": "mcr.microsoft.com/devcontainers/python:0-3.11-bullseye",
 	"forwardPorts": [
 		8123,
 		5678
