@@ -3,12 +3,14 @@ charge:
   description: Make a charge request
   fields:
     target:
+      name: Target
       description: Sets the target EnergyHub device if more than one integration configured
       example: "Ferroamp EnergyHub"
       selector:
         device:
           integration: ferroamp
     power:
+      name: Power
       description: The amount of power to charge in watts
       example: "1000"
       selector:
@@ -23,12 +25,14 @@ discharge:
   description: Make a discharge request
   fields:
     target:
+      name: Target
       description: Sets the target EnergyHub device if more than one integration configured
       example: "Ferroamp EnergyHub"
       selector:
         device:
           integration: ferroamp
     power:
+      name: Power
       description: The amount of power to charge in watts
       example: "1000"
       selector:
@@ -43,6 +47,7 @@ autocharge:
   description: Sets the ESOs to autocharge-mode
   fields:
     target:
+      name: Target
       description: Sets the target EnergyHub device if more than one integration configured
       example: "Ferroamp EnergyHub"
       selector:
