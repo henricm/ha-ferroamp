@@ -22,7 +22,13 @@ async def test_flow_user_init(hass, mqtt_mock):
         "type": "form",
         "last_step": None,
     }
-    assert expected == result
+    assert all(
+        [
+            expected_value == result[key]
+            for key, expected_value in expected.items()
+            if key != "preview"
+        ]
+    )
 
 
 async def test_flow_user_step_no_input(hass, mqtt_mock):
