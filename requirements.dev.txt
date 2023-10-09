@@ -2,5 +2,5 @@
 black==23.9.1
 isort==5.12.0
 flake8==6.1.0
-homeassistant==2023.7.3
+homeassistant==2023.10.1
 pre-commit==3.4.0
