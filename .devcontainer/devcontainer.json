@@ -28,7 +28,8 @@
 				"ms-python.pylint",
 				"ms-python.vscode-pylance",
 				"ryanluker.vscode-coverage-gutters",
-				"ms-python.black-formatter"
+				"ms-python.black-formatter",
+				"redhat.vscode-yaml"
 			],
 			"settings": {
 				"python.testing.unittestArgs": [
