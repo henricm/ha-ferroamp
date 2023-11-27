@@ -8,6 +8,10 @@
 	"portsAttributes": {
 		"8123": {
 			"label": "Home Assistant",
+			"onAutoForward": "openBrowserOnce"
+		},
+		"5678" : {
+			"label": "Home Assistant (debugpy)",
 			"onAutoForward": "notify"
 		}
 	},
