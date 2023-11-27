@@ -12,7 +12,7 @@ Ferroamp MQTT support sends updates to these topics:
 ## Prerequisites
 - Home assistant `2023.7.x`
 - Enable Ferroamp MQTT by contacting [Ferroamp Support](https://ferroamp.com/sv/kontakt/) to get the username and password for your Energy MQTT broker.
-- Enable MQTT in Home assistant and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp (or setup a bridge-connection if you already have an MQTT-server, see the `Configuring Bridges`-section in the [Mosquitto documentation](https://mosquitto.org/man/mosquitto-conf-5.html)).
+-  Add Home assistant [MQTT integration](https://www.home-assistant.io/integrations/mqtt/) and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp (or setup a bridge-connection if you already have an MQTT-server, see the `Configuring Bridges`-section in the [Mosquitto documentation](https://mosquitto.org/man/mosquitto-conf-5.html)).
 
 ### Install using HACS (recommended)
 The repository is compatible with HACS (Home Assistant Community Store).
@@ -38,7 +38,7 @@ Install HACS and search for Ferroamp Sensors and install it directly from HACS. 
 
 This integration will add lots of sensors for the installed hardware with the prefix `<integration name>_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`.
 
-I'm also still figuring out what some of the sensors actually are, since the Ferroamp API documentaiton still seems to be incomplete in some areas.
+I'm also still figuring out what some of the sensors actually are, since the Ferroamp API documentation still seems to be incomplete in some areas.
 
 ## Upgrading from a version before config flow was implemented
 
