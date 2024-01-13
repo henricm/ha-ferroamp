@@ -19,8 +19,7 @@
 		"TZ": "Europe/Stockholm"
 	},
 	"postCreateCommand": [
-		".devcontainer/scripts/setup",
-		"git config --global --add safe.directory ${containerWorkspaceFolder}"
+		".devcontainer/scripts/setup"
 	],
 	"customizations": {
 		"vscode": {

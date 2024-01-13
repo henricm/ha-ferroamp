@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 
-set -e
-
-cd "$(dirname "$0")/../"
-
+set -ex
 # install development dependencies
-python3 -m pip install -r ../requirements.dev.txt
+python3 -m pip install -r requirements.dev.txt
 
 # install pre-commit git hooks
+git config --global --add safe.directory $(pwd)
 pre-commit install
