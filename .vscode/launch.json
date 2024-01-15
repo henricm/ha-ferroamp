@@ -21,14 +21,34 @@
             "name": "Python: Attach Remote",
             "type": "python",
             "request": "attach",
-            "port": 5678,
-            "host": "homeassistant.local",
+            "host": "${input:remoteDebugHost}",
+            "port": "${input:remoteDebugPort}",
             "pathMappings": [
                 {
                     "localRoot": "${workspaceFolder}",
-                    "remoteRoot": "/usr/src/homeassistant"
+                    "remoteRoot": "${input:remoteRootDirectory}",
                 }
-            ]
+            ],
         }
+    ],
+    "inputs": [
+        {
+            "id": "remoteDebugHost",
+            "description": "Remote Home assistant host",
+            "type": "promptString",
+            "default": "homeassistant.local",
+        },
+        {
+            "id": "remoteDebugPort",
+            "description": "Remote PDB port",
+            "type": "promptString",
+            "default": "5678",
+        },
+        {
+            "id": "remoteRootDirectory",
+            "description": "Remote Home assistant root path (path of directory containing custom_components directory)",
+            "type": "promptString",
+            "default": "/config",
+        },
     ]
 }
