@@ -1071,14 +1071,15 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
         )
 
     def add_event(self, event):
-        if self.get_float_value(event) > 0:
-            super().add_event(event)
-        else:
-            _LOGGER.info(
-                "%s value %s seems to be zero. Ignoring",
-                self.entity_id,
-                self.get_value(event),
-            )
+        if not self.check_presence or self.present(event):
+            if self.get_float_value(event) > 0:
+                super().add_event(event)
+            else:
+                _LOGGER.info(
+                    "%s value %s seems to be zero. Ignoring",
+                    self.entity_id,
+                    self.get_value(event),
+                )
 
     def update_state_from_events(self, events):
         temp = None
