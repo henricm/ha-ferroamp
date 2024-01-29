@@ -1,5 +1,5 @@
 -r requirements.test.txt
-black==23.12.1
+black==24.1.1
 flake8==7.0.0
 homeassistant==2023.7.3
 isort==5.13.2
