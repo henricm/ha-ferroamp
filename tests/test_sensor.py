@@ -1,10 +1,10 @@
-import uuid
 from unittest.mock import patch
+import uuid
 
-import pytest
 from homeassistant.const import CONF_NAME, CONF_PREFIX
 from homeassistant.core import CoreState, State
 from homeassistant.helpers import entity_registry
+import pytest
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
     async_fire_mqtt_message,
