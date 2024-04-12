@@ -1,4 +1,3 @@
-import unittest
 from unittest.mock import patch
 import uuid
 
@@ -44,7 +43,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         domain=DOMAIN,
         data={CONF_NAME: "Ferroamp", CONF_PREFIX: "extapi"},
         options={
-            CONF_INTERVAL: 1,
+            CONF_INTERVAL: 0,
         },
         version=1,
         unique_id="ferroamp",
@@ -1730,7 +1729,7 @@ async def test_restore_state(hass, mqtt_mock):
     assert state.attributes == {
         "device_class": "battery",
         "friendly_name": "ESM 1 State of Charge",
-        "icon": "mdi:battery-10",
+        "icon": "mdi:battery-low",
         "state_class": "measurement",
         "unit_of_measurement": "%",
     }
@@ -2214,7 +2213,7 @@ async def test_average_calculation(hass, mqtt_mock):
         domain=DOMAIN,
         data={CONF_NAME: "Ferroamp", CONF_PREFIX: "extapi"},
         options={
-            CONF_INTERVAL: 1,
+            CONF_INTERVAL: 0,
         },
         version=1,
         unique_id="ferroamp",
