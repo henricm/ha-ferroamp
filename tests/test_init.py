@@ -52,7 +52,7 @@ async def test_unload(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done()
 
-    await config_entry.async_unload(hass)
+    await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()
 
     assert hass.data[DOMAIN][DATA_DEVICES].get(config_entry.unique_id) is None
