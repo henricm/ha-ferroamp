@@ -69,7 +69,7 @@ async def test_flow_user_creates_config_entry(hass, mqtt_mock):
     assert expected == {
         k: v for k, v in result.items() if k != "context" and k != "minor_version"
     }
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
 
 async def test_options_flow(hass, mqtt_mock):
@@ -84,7 +84,7 @@ async def test_options_flow(hass, mqtt_mock):
     )
     config_entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     # show initial form
     result = await hass.config_entries.options.async_init(config_entry.entry_id)
