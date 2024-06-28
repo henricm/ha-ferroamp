@@ -87,7 +87,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
         suggested_object_id="ferroamp_external_energy_produced",
     )
 
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/ehub"
     msg = """{
@@ -130,7 +130,7 @@ async def test_setting_ehub_sensor_values_via_mqtt_message(hass, mqtt_mock):
                 "soh":{"val":"98.9"},
                 "ratedcap":{"val":"15300"}}"""
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_external_voltage")
     assert state.state == "693.8"
@@ -614,7 +614,7 @@ async def test_only_adding_load_balancing_sensors_if_present_in_message(
         suggested_object_id="ferroamp_external_energy_produced",
     )
 
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/ehub"
     msg = """{
@@ -654,7 +654,7 @@ async def test_only_adding_load_balancing_sensors_if_present_in_message(
                 "soh":{"val":"98.9"},
                 "ratedcap":{"val":"15300"}}"""
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get(
         "sensor.ferroamp_available_active_current_for_load_balancing"
@@ -685,7 +685,7 @@ async def test_only_adding_battery_specific_sensors_if_present_in_mqtt_message(
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     er = entity_registry.async_get(hass)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/ehub"
     msg = """{
@@ -723,7 +723,7 @@ async def test_only_adding_battery_specific_sensors_if_present_in_mqtt_message(
                 "il": {"L2": "9.85", "L3": "9.85", "L1": "9.89"}
             }"""
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_battery_energy_produced")
     assert state is None
@@ -748,7 +748,7 @@ async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/esm"
     msg = """{
@@ -760,7 +760,7 @@ async def test_setting_esm_sensor_values_via_mqtt_message(hass, mqtt_mock):
         "status":{"val":"0"}
     }"""
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_esm_1_state_of_health")
     assert state.state == "89.2"
@@ -811,12 +811,12 @@ async def test_battery_full(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/esm"
     msg = '{"id":{"val":"1"},"soh":{"val":"89.2"},"soc":{"val":"100.0"},"ratedCapacity":{"val":"15300"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
     assert state.state == "100.0"
@@ -841,7 +841,7 @@ async def test_trim_part_no_from_esm_id(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/esm"
     msg = """{
@@ -854,7 +854,7 @@ async def test_trim_part_no_from_esm_id(hass, mqtt_mock):
     }"""
 
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_esm_12345678_state_of_health")
     assert state.state == "89.2"
@@ -914,7 +914,7 @@ async def test_esm_trim_trailing_dash_from_model(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/esm"
     msg = """{
@@ -927,7 +927,7 @@ async def test_esm_trim_trailing_dash_from_model(hass, mqtt_mock):
     }"""
 
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_esm_21030023_state_of_health")
     assert state
@@ -946,7 +946,7 @@ async def test_migrate_old_esm_entities(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get_or_create(
@@ -967,7 +967,7 @@ async def test_migrate_old_esm_entities(hass, mqtt_mock):
     }"""
 
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get(entity.entity_id)
     assert state.state == "89.2"
@@ -983,7 +983,7 @@ async def test_migrate_only_esm_entities_that_needs_migrating(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get_or_create(
@@ -1001,7 +1001,7 @@ async def test_migrate_only_esm_entities_that_needs_migrating(hass, mqtt_mock):
     }"""
 
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get(entity.entity_id)
     assert state.state == "89.2"
@@ -1017,7 +1017,7 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/eso"
     msg = """{
@@ -1033,7 +1033,7 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
             "wbatprod": {"val": 2465106122063}
             }"""
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_eso_1_battery_voltage")
     assert state.state == "622.601"
@@ -1125,7 +1125,7 @@ async def test_relay_status_open(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/eso"
     msg = """{
@@ -1141,7 +1141,7 @@ async def test_relay_status_open(hass, mqtt_mock):
             "wbatprod": {"val": 2465106122063}
             }"""
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
     assert state.state == "open/disconnected"
@@ -1151,7 +1151,7 @@ async def test_relay_status_precharge(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/eso"
     msg = """{
@@ -1167,7 +1167,7 @@ async def test_relay_status_precharge(hass, mqtt_mock):
             "wbatprod": {"val": 2465106122063}
             }"""
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
     assert state.state == "precharge"
@@ -1177,7 +1177,7 @@ async def test_ignore_eso_message_without_id(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/eso"
     msg = """{
@@ -1193,7 +1193,7 @@ async def test_ignore_eso_message_without_id(hass, mqtt_mock):
                 "wbatprod": {"val": 0}
             }"""
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     assert er.async_is_registered("sensor.ferroamp_eso__battery_voltage") is False
@@ -1203,7 +1203,7 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/sso"
     msg = """{
@@ -1218,7 +1218,7 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }"""
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_voltage")
     assert state.state == "653.012"
@@ -1290,7 +1290,7 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/sso"
     msg = """{
@@ -1306,7 +1306,7 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
             }"""
 
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_pv_string_voltage")
     assert state.state == "653.012"
@@ -1387,7 +1387,7 @@ async def test_migrate_old_sso_entities(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get_or_create(
@@ -1411,7 +1411,7 @@ async def test_migrate_old_sso_entities(hass, mqtt_mock):
             }"""
 
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get(entity.entity_id)
     assert state.state == "653.012"
@@ -1428,7 +1428,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/sso"
     async_fire_mqtt_message(
@@ -1446,7 +1446,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "0"
@@ -1471,7 +1471,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "4"
@@ -1496,7 +1496,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "8"
@@ -1521,7 +1521,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "10"
@@ -1546,7 +1546,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "20"
@@ -1571,7 +1571,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "40"
@@ -1596,7 +1596,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "80"
@@ -1621,7 +1621,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "100"
@@ -1646,7 +1646,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "200"
@@ -1671,7 +1671,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "400"
@@ -1696,7 +1696,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "id": {"val": "12345678"}
             }""",
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
     assert state.state == "0"
@@ -1718,11 +1718,11 @@ async def test_restore_state(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/esm"
     msg = '{"id":{"val":"1"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
     assert state.state == "11"
@@ -1746,11 +1746,11 @@ async def test_restore_state_unknown(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/esm"
     msg = '{"id":{"val":"1"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_esm_1_state_of_charge")
     assert state.state == "unknown"
@@ -1767,14 +1767,14 @@ async def test_update_options(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     msg = '{"id":{"val":"1"},"wpv":{"val": "4422089590383"}}'
     async_fire_mqtt_message(hass, "extapi/data/ehub", msg)
     async_fire_mqtt_message(hass, "extapi/data/esm", msg)
     async_fire_mqtt_message(hass, "extapi/data/eso", msg)
     async_fire_mqtt_message(hass, "extapi/data/sso", msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     result = await hass.config_entries.options.async_init(config_entry.entry_id)
     await hass.config_entries.options.async_configure(
@@ -1783,7 +1783,7 @@ async def test_update_options(hass, mqtt_mock):
             CONF_INTERVAL: 20,
         },
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_esm_1_state_of_charge")
@@ -1822,7 +1822,7 @@ async def test_update_options(hass, mqtt_mock):
     async_fire_mqtt_message(hass, "extapi/data/esm", msg)
     async_fire_mqtt_message(hass, "extapi/data/eso", msg)
     async_fire_mqtt_message(hass, "extapi/data/sso", msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
     assert entity is not None
@@ -1842,14 +1842,14 @@ async def test_control_command(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     msg = """{
                 "transId": "abc-123",
                 "cmd": {"name": "charge", "arg": "5000"}
             }"""
     async_fire_mqtt_message(hass, "extapi/control/request", msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
@@ -1862,7 +1862,7 @@ async def test_control_command(hass, mqtt_mock):
     }
 
     async_fire_mqtt_message(hass, "extapi/control/request", msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     msg = """{
                 "transId": "xxx-123",
@@ -1870,7 +1870,7 @@ async def test_control_command(hass, mqtt_mock):
                 "msg": "some message"
             }"""
     async_fire_mqtt_message(hass, "extapi/control/response", msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
@@ -1888,7 +1888,7 @@ async def test_control_command(hass, mqtt_mock):
                 "msg": "some message"
             }"""
     async_fire_mqtt_message(hass, "extapi/control/response", msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
@@ -1906,7 +1906,7 @@ async def test_control_command(hass, mqtt_mock):
                 "msg": "other message"
             }"""
     async_fire_mqtt_message(hass, "extapi/control/result", msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
@@ -1930,14 +1930,14 @@ async def test_control_command_restore_state(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     msg = """{
                 "transId": "abc-123",
                 "cmd": {"name": "charge", "arg": "5000"}
             }"""
     async_fire_mqtt_message(hass, "extapi/control/request", msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_control_status")
     assert state.state == "charge (5000)"
@@ -1961,11 +1961,11 @@ async def test_always_increasing(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/ehub"
     msg = '{"id":{"val":"1"},"wpv":{"val": "4422089590383"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
@@ -1987,13 +1987,13 @@ async def test_always_increasing_zerovalues(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/ehub"
     async_fire_mqtt_message(
         hass, topic, '{"id":{"val":"1"},"wpv":{"val": "4422089590383"}}'
     )
     async_fire_mqtt_message(hass, topic, '{"id":{"val":"1"},"wpv":{"val": "0"}}')
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
@@ -2015,7 +2015,7 @@ async def test_always_increasing_zerovalues(hass, mqtt_mock):
     async_fire_mqtt_message(
         hass, topic, '{"id":{"val":"1"},"wpv":{"val": "4856400000000"}}'
     )
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
@@ -2037,11 +2037,11 @@ async def test_always_increasing_unknown_value(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/ehub"
     msg = '{"id":{"val":"1"},"wpv":{"val": "4422089590383"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
@@ -2063,12 +2063,12 @@ async def test_always_increasing_counter_reset(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/ehub"
     # 100 kWh
     msg = '{"id":{"val":"1"},"wpv":{"val": "360000000000"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_total_solar_energy")
@@ -2090,11 +2090,11 @@ async def test_3phase_always_increasing(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/ehub"
     msg = '{"id":{"val":"1"},"wextprodq": {"L2": "1118056851556", "L3": "604554554552", "L1": "662115344893"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_external_energy_produced")
@@ -2116,7 +2116,7 @@ async def test_3phase_always_increasing_zero_values(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/ehub"
     msg = '{"id":{"val":"1"},"wextprodq": {"L2": "1118056851556", "L3": "604554554552", "L1": "662115344893"}}'
     async_fire_mqtt_message(hass, topic, msg)
@@ -2124,7 +2124,7 @@ async def test_3phase_always_increasing_zero_values(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, msg)
     async_fire_mqtt_message(hass, topic, msg)
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_external_energy_produced")
@@ -2144,7 +2144,7 @@ async def test_3phase_always_increasing_zero_values(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, msg)
     msg = '{"id":{"val":"1"},"wextprodq": {"L2": "0", "L3": "0", "L1": "0"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_external_energy_produced")
@@ -2166,11 +2166,11 @@ async def test_3phase_always_increasing_unknown_value(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/ehub"
     msg = '{"id":{"val":"1"},"wextprodq": {"L2": "1118056851556", "L3": "604554554552", "L1": "662115344893"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_external_energy_produced")
@@ -2192,12 +2192,12 @@ async def test_3phase_always_increasing_counter_reset(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     topic = "extapi/data/ehub"
     # 10 kWh on each phase
     msg = '{"id":{"val":"1"},"wextprodq": {"L2": "36000000000", "L3": "36000000000", "L1": "36000000000"}}'
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     er = entity_registry.async_get(hass)
     entity = er.async_get("sensor.ferroamp_external_energy_produced")
@@ -2229,7 +2229,7 @@ async def test_average_calculation(hass, mqtt_mock):
         suggested_object_id="ferroamp_external_energy_produced",
     )
 
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/ehub"
 
@@ -2242,7 +2242,7 @@ async def test_average_calculation(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, "{}")
     async_fire_mqtt_message(hass, topic, "{}")
     async_fire_mqtt_message(hass, topic, msg(662115344893, 1118056851556, 604554554552))
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_external_energy_produced")
     assert state.state == "662.42"
@@ -2263,12 +2263,12 @@ async def test_extapi_version_request(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     topic = "extapi/data/ehub"
     msg = "{}"
     async_fire_mqtt_message(hass, topic, msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     mqtt_mock.async_publish.assert_called_once_with(
         "extapi/control/request",
@@ -2282,7 +2282,7 @@ async def test_extapi_version_response(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     msg = """{
                 "transId": "xxx-123",
@@ -2290,7 +2290,7 @@ async def test_extapi_version_response(hass, mqtt_mock):
                 "msg": "version: 1.2.3"
             }"""
     async_fire_mqtt_message(hass, "extapi/control/response", msg)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_extapi_version")
     assert state.state == "1.2.3"
