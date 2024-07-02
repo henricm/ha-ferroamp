@@ -1684,16 +1684,16 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
             self._attr_native_value = temp
             x = int(temp, 16)
             if x == 0:
-                self._attr_extra_state_attributes[0] = "No errors"
+                self._attr_extra_state_attributes["0"] = "No errors"
             else:
-                if 0 in self._attr_extra_state_attributes:
-                    del self._attr_extra_state_attributes[0]
+                if "0" in self._attr_extra_state_attributes:
+                    del self._attr_extra_state_attributes["0"]
             for i, code in enumerate(self._fault_codes):
                 v = 1 << i
                 if x & v == v:
-                    self._attr_extra_state_attributes[i + 1] = code
-                elif i + 1 in self._attr_extra_state_attributes:
-                    del self._attr_extra_state_attributes[i + 1]
+                    self._attr_extra_state_attributes[f"{i + 1}"] = code
+                elif f"{i + 1}" in self._attr_extra_state_attributes:
+                    del self._attr_extra_state_attributes[f"{i + 1}"]
             return True
 
 

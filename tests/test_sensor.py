@@ -1102,7 +1102,7 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "ESO 1 Faultcode",
         "icon": "mdi:traffic-light",
-        8: "Not a fault, just an indication that Battery Manufacturer is not Ferroamp",
+        "8": "Not a fault, just an indication that Battery Manufacturer is not Ferroamp",
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_relay_status")
@@ -1267,7 +1267,7 @@ async def test_setting_sso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        0: "No errors",
+        "0": "No errors",
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_relay_status")
@@ -1355,7 +1355,7 @@ async def test_trim_part_no_from_sso_id(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        0: "No errors",
+        "0": "No errors",
     }
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_relay_status")
@@ -1455,7 +1455,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        0: "No errors",
+        "0": "No errors",
     }
 
     async_fire_mqtt_message(
@@ -1480,7 +1480,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        3: "Error, PV ground fault",
+        "3": "Error, PV ground fault",
     }
 
     async_fire_mqtt_message(
@@ -1505,7 +1505,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        4: "Error, internal voltage unbalance",
+        "4": "Error, internal voltage unbalance",
     }
 
     async_fire_mqtt_message(
@@ -1530,7 +1530,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        5: "Warning, PV undervoltage, not possible to sustain MPPT operation",
+        "5": "Warning, PV undervoltage, not possible to sustain MPPT operation",
     }
 
     async_fire_mqtt_message(
@@ -1555,7 +1555,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        6: "Warning, DC grid voltage too high, SSO will not connect to DC grid",
+        "6": "Warning, DC grid voltage too high, SSO will not connect to DC grid",
     }
 
     async_fire_mqtt_message(
@@ -1580,7 +1580,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        7: "Warning, Limiting current due to internal temperature",
+        "7": "Warning, Limiting current due to internal temperature",
     }
 
     async_fire_mqtt_message(
@@ -1605,7 +1605,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        8: "Error, Internal power electronics fault",
+        "8": "Error, Internal power electronics fault",
     }
 
     async_fire_mqtt_message(
@@ -1630,7 +1630,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        9: "Error, Internal relay test circuit has detected a fault",
+        "9": "Error, Internal relay test circuit has detected a fault",
     }
 
     async_fire_mqtt_message(
@@ -1655,7 +1655,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        10: "Error, Memory error, configuration parameters can not be read",
+        "10": "Error, Memory error, configuration parameters can not be read",
     }
 
     async_fire_mqtt_message(
@@ -1680,7 +1680,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        11: "Warning, SSO is limiting power, either because of internal temperature or DC grid voltage level",
+        "11": "Warning, SSO is limiting power, either because of internal temperature or DC grid voltage level",
     }
 
     async_fire_mqtt_message(
@@ -1705,7 +1705,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        0: "No errors",
+        "0": "No errors",
     }
 
 
