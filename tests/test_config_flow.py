@@ -1,10 +1,13 @@
 from unittest import mock
 
 from homeassistant import data_entry_flow
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ferroamp import CONF_NAME, CONF_PREFIX, config_flow
 from custom_components.ferroamp.const import CONF_INTERVAL
+
+pytestmark = pytest.mark.parametrize("expected_lingering_timers", [True])
 
 
 async def test_flow_user_init(hass, mqtt_mock):
