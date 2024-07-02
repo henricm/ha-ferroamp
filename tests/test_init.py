@@ -18,6 +18,8 @@ from custom_components.ferroamp.const import (
     DOMAIN,
 )
 
+pytestmark = pytest.mark.parametrize("expected_lingering_timers", [True])
+
 
 def mock_uuid():
     return uuid.UUID(int=1)
@@ -52,6 +54,7 @@ async def test_unload(hass, mqtt_mock):
     async_fire_mqtt_message(hass, topic, msg)
     await hass.async_block_till_done(wait_background_tasks=True)
 
+    mqtt_mock.async_publish.reset_mock()
     await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done(wait_background_tasks=True)
 

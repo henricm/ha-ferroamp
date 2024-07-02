@@ -21,6 +21,8 @@ from custom_components.ferroamp.sensor import (
     VoltageFerroampSensor,
 )
 
+pytestmark = pytest.mark.parametrize("expected_lingering_timers", [True])
+
 
 def mock_uuid():
     return uuid.UUID(int=1)
