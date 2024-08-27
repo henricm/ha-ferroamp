@@ -3,4 +3,4 @@ aiohttp_cors==0.7.0
 janus==1.0.0
 paho-mqtt==1.6.1
 # Strictly for tests
-pytest-homeassistant-custom-component==0.13.132
+pytest-homeassistant-custom-component==0.13.155
