@@ -1,4 +1,5 @@
 """Constants for Ferroamp"""
+
 import re
 
 CONF_INTERVAL = "interval"
@@ -15,6 +16,8 @@ TOPIC_ESM = "data/esm"
 TOPIC_CONTROL_REQUEST = "control/request"
 TOPIC_CONTROL_RESPONSE = "control/response"
 TOPIC_CONTROL_RESULT = "control/result"
+
+PLATFORMS = ["sensor"]
 
 EHUB = "ehub"
 EHUB_NAME = "EnergyHub"
