@@ -10,7 +10,7 @@ from homeassistant.const import CONF_NAME, CONF_PREFIX
 from homeassistant.helpers import device_registry as dr
 from homeassistant.util import slugify
 
-from .const import DATA_DEVICES, DATA_LISTENERS, DATA_PREFIXES, DOMAIN
+from .const import DATA_DEVICES, DATA_LISTENERS, DATA_PREFIXES, DOMAIN, PLATFORMS
 
 CONTROL_REQUEST = "control/request"
 ATTR_POWER = "power"
@@ -23,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: core.HomeAssistant, entry: config_entries.ConfigEntry
 ) -> bool:
-    """Set up platform from a ConfigEntry."""
+    """Set up integration from ConfigEntry."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.unique_id] = entry.data
     hass.data[DOMAIN].setdefault(DATA_PREFIXES, {})
@@ -31,16 +31,19 @@ async def async_setup_entry(
         CONF_PREFIX
     ]
 
-    # Forward the setup to the sensor platform.
-    await hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(entry, "sensor")
-    )
+    # Forward setup to the platforms.
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
     return True
 
 
-async def async_unload_entry(hass, entry):
+async def async_unload_entry(
+    hass: core.HomeAssistant, entry: config_entries.ConfigEntry
+):
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
+
+    # Forward unload to the platforms.
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         for unsubscribe_listener in hass.data[DOMAIN][DATA_LISTENERS][entry.unique_id]:
             unsubscribe_listener()
