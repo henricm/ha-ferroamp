@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.15.0](https://github.com/henricm/ha-ferroamp/compare/v1.14.2...v1.15.0) (2024-10-25)
+
+
+### Features
+
+* **changelog:** add custom sections for changelog types ([35112a4](https://github.com/henricm/ha-ferroamp/commit/35112a4d613bb753c7abbbd830cc8b22d32e2e3f))
+
+
+### Bug Fixes
+
+* correct config filename ([aa99106](https://github.com/henricm/ha-ferroamp/commit/aa991061fb6642427e266d371d3dd9493ea8b77b))
+* revert version update from failed release ([37fe28a](https://github.com/henricm/ha-ferroamp/commit/37fe28ae192df0ec425ad95429de65dd99068450))
+* update branch from main to master in workflow ([3fe52b7](https://github.com/henricm/ha-ferroamp/commit/3fe52b71e8e9887ff838486d71c20359bda45a25))
+
+
+### Documentation
+
+* add changelog for releases up to 1.14.2 ([d6e4375](https://github.com/henricm/ha-ferroamp/commit/d6e43752f74d7e5aada026ebdb9a956a3edb6125))
+
+
+### Miscellaneous Chores
+
+* await hass.config_entries.async_forward_entry_setups ([3874c96](https://github.com/henricm/ha-ferroamp/commit/3874c9653ab4334396f28e146786f65a2d694b16))
+* **release:** vnull [skip ci] ([ca9a147](https://github.com/henricm/ha-ferroamp/commit/ca9a147efafbe87d77c30421e919452e17739216))
+
+
+### Build System
+
+* **deps-dev:** bump black from 24.4.2 to 24.8.0 ([8486f13](https://github.com/henricm/ha-ferroamp/commit/8486f1325c6d4f55f43ec0cbfae308955dc22c81))
+* **deps-dev:** bump black from 24.8.0 to 24.10.0 ([4a2f7dd](https://github.com/henricm/ha-ferroamp/commit/4a2f7ddf5c42f8f007e55304047530e2308f19e8))
+* **deps-dev:** bump flake8 from 7.1.0 to 7.1.1 ([152596b](https://github.com/henricm/ha-ferroamp/commit/152596b2139bb9b192a2a106c3de67aa968102a9))
+* **deps-dev:** bump pre-commit from 3.7.1 to 3.8.0 ([6adcf5a](https://github.com/henricm/ha-ferroamp/commit/6adcf5ad83e8ca6500ca9c60f073c55f3eb931b6))
+* **deps-dev:** bump pre-commit from 3.8.0 to 4.0.0 ([adae2e9](https://github.com/henricm/ha-ferroamp/commit/adae2e97a5a436a99128e6c90e5fdd573233eb16))
+* **deps-dev:** bump pre-commit from 4.0.0 to 4.0.1 ([45aef48](https://github.com/henricm/ha-ferroamp/commit/45aef4887434c47b671097a8d8a2cfd516e25285))
+
+
+### Continuous Integration
+
+* add conventional changelog configuration ([f1ef076](https://github.com/henricm/ha-ferroamp/commit/f1ef076e2a2e3355c58ac6c92677a3065d478045))
+* migrate to release-please flow ([7583cf1](https://github.com/henricm/ha-ferroamp/commit/7583cf15c76202a78f547e034ce73cf753c65fc4))
+* set Python version in pre-commit GitHub workflow ([ef63777](https://github.com/henricm/ha-ferroamp/commit/ef63777ff2e6aa7f5fcdc02c2e3418c5819ee87e))
+
 ## [1.14.2] - 2024-07-03
 
 ### Bug Fixes
