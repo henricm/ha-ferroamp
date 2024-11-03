@@ -5,6 +5,3 @@ logger:
   default: info
   logs:
     custom_components.ferroamp: info # set to debug to enable debug logging
-
-debugpy:
-  wait: False # set to True to allow breakpoints in async_setup or similar and debug the loading of the integration.

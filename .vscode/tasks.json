@@ -7,6 +7,13 @@
             "type": "shell",
             "command": ".devcontainer/scripts/develop",
             "problemMatcher": []
+        },
+        {
+            "label": "Debug Home Assistant on port 8123",
+            "detail": "Debug Home Assistant in devcontainer on port 8123",
+            "type": "shell",
+            "command": "DEBUG=1 .devcontainer/scripts/develop",
+            "problemMatcher": []
         }
     ]
 }

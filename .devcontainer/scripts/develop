@@ -4,10 +4,12 @@ set -e
 
 cd "$(dirname "$0")/../../"
 
+CONFIG_PATH="${PWD}/.devcontainer/config"
+
 # Create config dir if not present
-if [[ ! -d "${PWD}/.devcontainer/config" ]]; then
-    mkdir -p "${PWD}/.devcontainer/config"
-    hass --config "${PWD}/.devcontainer/config" --script ensure_config
+if [[ ! -d "$CONFIG_PATH" ]]; then
+    mkdir -p "$CONFIG_PATH"
+    hass --config "$CONFIG_PATH" --script ensure_config
 fi
 
 # Set the path to custom_components
@@ -16,5 +18,11 @@ fi
 ## without resulting to symlinks.
 export PYTHONPATH="${PYTHONPATH}:${PWD}/custom_components"
 
-# Start Home Assistant
-hass --config "${PWD}/.devcontainer/config" --debug
+if [[ ! -z "$DEBUG" ]]; then
+    echo "Debug mode"
+    # Start Home Assistant in debug mode see: https://github.com/home-assistant/core/issues/110623
+    python3 -Xfrozen_modules=off -m debugpy --listen 0.0.0.0:5678 -m homeassistant --config "$CONFIG_PATH"
+else
+    # Start Home Assistant
+    hass --config "$CONFIG_PATH"
+fi
