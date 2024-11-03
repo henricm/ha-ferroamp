@@ -1,6 +1,6 @@
 {
 	"name": "henricm/ha-ferroamp",
-	"image": "mcr.microsoft.com/devcontainers/python:0-3.11-bullseye",
+	"image": "mcr.microsoft.com/devcontainers/python:3.12",
 	"forwardPorts": [
 		8123,
 		5678
@@ -10,7 +10,7 @@
 			"label": "Home Assistant",
 			"onAutoForward": "openBrowserOnce"
 		},
-		"5678" : {
+		"5678": {
 			"label": "Home Assistant (debugpy)",
 			"onAutoForward": "notify"
 		}
@@ -54,7 +54,7 @@
 				"python.testing.pytestArgs": [
 					"."
 				],
-				"python.defaultInterpreterPath": "/usr/local/bin/python3",
+				"python.defaultInterpreterPath": "/usr/local/bin/python",
 				"python.analysis.autoSearchPaths": false,
 				"[python]": {
 					"editor.defaultFormatter": "ms-python.black-formatter",

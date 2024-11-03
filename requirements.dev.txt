@@ -1,5 +1,7 @@
 -r requirements.test.txt
 black==24.10.0
+colorlog==6.8.2
+debugpy
 flake8==7.1.1
 homeassistant==2024.6.0
 isort==5.13.2
