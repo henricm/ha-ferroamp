@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.15.1](https://github.com/henricm/ha-ferroamp/compare/v1.15.0...v1.15.1) (2024-11-04)
+
+
+### Miscellaneous Chores
+
+* upgrade devcontainer to support 2024.6 ([79e1853](https://github.com/henricm/ha-ferroamp/commit/79e1853c5b5e0afd34d5e9209c7a14c5d6380adb))
+
+
+### Build System
+
+* **deps-dev:** bump colorlog from 6.8.2 to 6.9.0 ([aa85f8b](https://github.com/henricm/ha-ferroamp/commit/aa85f8b205684961ad9fd2aa0445c41c0e5dd56b))
+* **deps:** bump janus from 1.0.0 to 1.1.0 ([bcdd5c5](https://github.com/henricm/ha-ferroamp/commit/bcdd5c5b5f985d21015d45c4d2324da4c02f86d8))
+
 ## [1.15.0](https://github.com/henricm/ha-ferroamp/compare/v1.14.2...v1.15.0) (2024-10-25)
 
 
