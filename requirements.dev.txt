@@ -3,6 +3,6 @@ black==24.10.0
 colorlog==6.9.0
 debugpy
 flake8==7.1.1
-homeassistant==2024.6.0
+homeassistant==2024.12.3
 isort==5.13.2
 pre-commit==4.0.1
