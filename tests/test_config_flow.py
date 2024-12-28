@@ -1,6 +1,7 @@
 from unittest import mock
 
 from homeassistant import data_entry_flow
+from homeassistant.data_entry_flow import FlowResultType
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -101,7 +102,7 @@ async def test_options_flow(hass, mqtt_mock):
             CONF_INTERVAL: 20,
         },
     )
-    assert result["type"] == data_entry_flow.RESULT_TYPE_CREATE_ENTRY
+    assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["data"] == {
         CONF_INTERVAL: 20,
     }
