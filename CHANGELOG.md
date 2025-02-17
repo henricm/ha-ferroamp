@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.16.0](https://github.com/henricm/ha-ferroamp/compare/v1.15.0...v1.16.0) (2025-02-17)
+
+
+### Features
+
+* **tests:** update result type in config flow tests ([51d70b5](https://github.com/henricm/ha-ferroamp/commit/51d70b5cd36742004ee18e6aa511222bface1fa7))
+
+
+### Miscellaneous Chores
+
+* **deps:** update Home Assistant and related dependencies ([ede5c02](https://github.com/henricm/ha-ferroamp/commit/ede5c02b873e5cbc24f58521dc40d2fccd95cfdd))
+* upgrade devcontainer to support 2024.6 ([79e1853](https://github.com/henricm/ha-ferroamp/commit/79e1853c5b5e0afd34d5e9209c7a14c5d6380adb))
+
+
+### Build System
+
+* **deps-dev:** bump black from 24.10.0 to 25.1.0 ([31bf429](https://github.com/henricm/ha-ferroamp/commit/31bf429cf5562139d5c29cac6d66f2752491d84f))
+* **deps-dev:** bump colorlog from 6.8.2 to 6.9.0 ([aa85f8b](https://github.com/henricm/ha-ferroamp/commit/aa85f8b205684961ad9fd2aa0445c41c0e5dd56b))
+* **deps-dev:** bump flake8 from 7.1.1 to 7.1.2 ([5c72edb](https://github.com/henricm/ha-ferroamp/commit/5c72edbbdbceeb83aadc18274f0ee4b8a420d7f6))
+* **deps-dev:** bump isort from 5.13.2 to 6.0.0 ([f05c9f3](https://github.com/henricm/ha-ferroamp/commit/f05c9f3355014419d16a5b1c769a87bf3257518f))
+* **deps-dev:** bump pre-commit from 4.0.1 to 4.1.0 ([98d8239](https://github.com/henricm/ha-ferroamp/commit/98d8239e7f3f63b160c784fd09e7dbda4e3ba3f7))
+* **deps:** bump janus from 1.0.0 to 1.1.0 ([bcdd5c5](https://github.com/henricm/ha-ferroamp/commit/bcdd5c5b5f985d21015d45c4d2324da4c02f86d8))
+* **deps:** bump janus from 1.1.0 to 1.2.0 ([20cebcf](https://github.com/henricm/ha-ferroamp/commit/20cebcfc5eef3f5d05d8387753f5af200382d55e))
+* **deps:** bump janus from 1.2.0 to 2.0.0 ([53c351f](https://github.com/henricm/ha-ferroamp/commit/53c351f515ea4815eb87122843e8bab4f310229e))
+
 ## [1.15.0](https://github.com/henricm/ha-ferroamp/compare/v1.14.2...v1.15.0) (2024-10-25)
 
 
