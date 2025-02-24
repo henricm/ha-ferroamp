@@ -32,9 +32,10 @@ Install HACS and search for Ferroamp Sensors and install it directly from HACS. 
 
 ## Setup
 
-1. Add the `Ferroamp MQTT Sensors`-integration (you might have to refresh your browser window since Home Assistant doesn't update the integration list after a reboot)
-2. Set a name for the integration as well as the MQTT-prefix where updates are sent (default values are probably fine for a standard-setup but if a bridge-connection is used the MQTT-topics can be re-mapped)
-3. Wait for all the devices to become present (EnergyHub, SSO's, ESOs and ESMs depending on your setup. Be patient since ESMs are only updated every 60 seconds.)
+1. Install using one of the above methods, it shows up as `Ferroamp Sensors` in hacs
+2. Add the `Ferroamp MQTT Sensors`-integration (you might have to refresh your browser window since Home Assistant doesn't update the integration list after a reboot)
+3. Set a name for the integration as well as the MQTT-prefix where updates are sent (default values are probably fine for a standard-setup but if a bridge-connection is used the MQTT-topics can be re-mapped)
+4. Wait for all the devices to become present (EnergyHub, SSO's, ESOs and ESMs depending on your setup. Be patient since ESMs are only updated every 60 seconds.)
 
 This integration will add lots of sensors for the installed hardware with the prefix `<integration name>_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`.
 
