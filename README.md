@@ -14,6 +14,8 @@ Ferroamp MQTT support sends updates to these topics:
 - Enable Ferroamp MQTT by contacting [Ferroamp Support](https://ferroamp.com/sv/kontakt/) to get the username and password for your Energy MQTT broker.
 -  Add Home assistant [MQTT integration](https://www.home-assistant.io/integrations/mqtt/) and set the broker to your Ferroamp Energy IP and configure it with your username and password received from Ferroamp (or setup a bridge-connection if you already have an MQTT-server, see the `Configuring Bridges`-section in the [Mosquitto documentation](https://mosquitto.org/man/mosquitto-conf-5.html)).
 
+## Installation
+
 ### Install using HACS (recommended)
 The repository is compatible with HACS (Home Assistant Community Store).
 
@@ -21,6 +23,8 @@ Install HACS and search for Ferroamp Sensors and install it directly from HACS. 
 
 * https://hacs.xyz/docs/installation/manual
    * https://hacs.xyz/docs/basic/getting_started
+ 
+It will show up as `Ferroamp Sensors` in HACS.
 
 ### Git installation
 
@@ -32,10 +36,9 @@ Install HACS and search for Ferroamp Sensors and install it directly from HACS. 
 
 ## Setup
 
-1. Install using one of the above methods, it shows up as `Ferroamp Sensors` in hacs
-2. Add the `Ferroamp MQTT Sensors`-integration (you might have to refresh your browser window since Home Assistant doesn't update the integration list after a reboot)
-3. Set a name for the integration as well as the MQTT-prefix where updates are sent (default values are probably fine for a standard-setup but if a bridge-connection is used the MQTT-topics can be re-mapped)
-4. Wait for all the devices to become present (EnergyHub, SSO's, ESOs and ESMs depending on your setup. Be patient since ESMs are only updated every 60 seconds.)
+1. Add the `Ferroamp MQTT Sensors`-integration (you might have to refresh your browser window since Home Assistant doesn't update the integration list after a reboot)
+2. Set a name for the integration as well as the MQTT-prefix where updates are sent (default values are probably fine for a standard-setup but if a bridge-connection is used the MQTT-topics can be re-mapped)
+3. Wait for all the devices to become present (EnergyHub, SSO's, ESOs and ESMs depending on your setup. Be patient since ESMs are only updated every 60 seconds.)
 
 This integration will add lots of sensors for the installed hardware with the prefix `<integration name>_`. For the SSO and ESO sensors, they will include the id of the SSO or ESO unit, eg `sensor.ferroamp_sso_123456_pv_string_power`.
 
