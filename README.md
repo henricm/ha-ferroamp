@@ -23,8 +23,6 @@ Install HACS and search for `Ferroamp Sensors` and install it directly from HACS
 
 * https://hacs.xyz/docs/installation/manual
    * https://hacs.xyz/docs/basic/getting_started
- 
-It will show up as `Ferroamp Sensors` in HACS.
 
 ### Git installation
 
