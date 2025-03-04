@@ -2,4 +2,4 @@
 aiohttp_cors==0.7.0
 janus==2.0.0
 # Strictly for tests
-pytest-homeassistant-custom-component==0.13.190
+pytest-homeassistant-custom-component==0.13.219
