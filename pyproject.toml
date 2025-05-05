@@ -1,3 +1,7 @@
+[project]
+name = "ha-ferroamp"
+requires-python = ">=3.13, <4.0"
+
 [tool.coverage.run]
 source = ["custom_components"]
 
