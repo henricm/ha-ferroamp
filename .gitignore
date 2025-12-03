@@ -6,5 +6,6 @@ env
 .coverage
 .secrets
 .direnv
+.claude
 .devcontainer/config
 !.devcontainer/config/configuration.yaml
