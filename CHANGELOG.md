@@ -1,5 +1,69 @@
 # Changelog
 
+## [1.16.0](https://github.com/henricm/ha-ferroamp/compare/v1.15.0...v1.16.0) (2025-12-03)
+
+
+### Features
+
+* **tests:** update result type in config flow tests ([fb7f67a](https://github.com/henricm/ha-ferroamp/commit/fb7f67a44eb108ae0f6db69e88e816a05f16732c))
+* **tests:** update result type in config flow tests ([51d70b5](https://github.com/henricm/ha-ferroamp/commit/51d70b5cd36742004ee18e6aa511222bface1fa7))
+
+
+### Bug Fixes
+
+* exclude 'subentries' from result in config entry test ([de28e05](https://github.com/henricm/ha-ferroamp/commit/de28e05138145575ff19dba243860f0a305a8fb6))
+* remove paho-mqtt dependency from test requirements ([05cbfe1](https://github.com/henricm/ha-ferroamp/commit/05cbfe186faa77baed150b3b44027876ed8fd109))
+* set asyncio default fixture loop scope to function ([ed460e2](https://github.com/henricm/ha-ferroamp/commit/ed460e207f312bd2c3214b4341930200b6a926e6))
+* simplify options flow handler initialization ([d79a7e7](https://github.com/henricm/ha-ferroamp/commit/d79a7e7178e4623525703201790188d44b467cd6)), closes [#824](https://github.com/henricm/ha-ferroamp/issues/824)
+* update readme ([#719](https://github.com/henricm/ha-ferroamp/issues/719)) ([0bbf1ea](https://github.com/henricm/ha-ferroamp/commit/0bbf1ea39c498bf2a0acb9ba562c78a96d3fe049))
+
+
+### Miscellaneous Chores
+
+* **deps:** update Home Assistant and related dependencies ([88fb1cb](https://github.com/henricm/ha-ferroamp/commit/88fb1cba60a8097ae8dc4202e71bbfb24c1789a0))
+* **deps:** update Home Assistant and related dependencies ([ede5c02](https://github.com/henricm/ha-ferroamp/commit/ede5c02b873e5cbc24f58521dc40d2fccd95cfdd))
+* remove aiohttp_cors from test requirements ([e5cb005](https://github.com/henricm/ha-ferroamp/commit/e5cb00520c480c794f57ffb9dfb9bfde7f542146))
+* update python version to 3.13.3 in .python-version file ([52fb8ed](https://github.com/henricm/ha-ferroamp/commit/52fb8ed72b64b500b3444a877c5920e432c59f6e))
+* upgrade devcontainer to support 2024.6 ([79e1853](https://github.com/henricm/ha-ferroamp/commit/79e1853c5b5e0afd34d5e9209c7a14c5d6380adb))
+
+
+### Build System
+
+* **deps-dev:** bump black from 24.10.0 to 25.1.0 ([31bf429](https://github.com/henricm/ha-ferroamp/commit/31bf429cf5562139d5c29cac6d66f2752491d84f))
+* **deps-dev:** bump black from 25.1.0 to 25.9.0 ([a47c31a](https://github.com/henricm/ha-ferroamp/commit/a47c31a0b8942c20613f58a200f6b2d3873694dd))
+* **deps-dev:** bump black from 25.9.0 to 25.11.0 ([6a4566a](https://github.com/henricm/ha-ferroamp/commit/6a4566acec7f17073cce1d575309ad22708bdd91))
+* **deps-dev:** bump colorlog from 6.8.2 to 6.9.0 ([55d6ec4](https://github.com/henricm/ha-ferroamp/commit/55d6ec482c63dfa7d14d3327071fe64d5342b0ba))
+* **deps-dev:** bump colorlog from 6.8.2 to 6.9.0 ([aa85f8b](https://github.com/henricm/ha-ferroamp/commit/aa85f8b205684961ad9fd2aa0445c41c0e5dd56b))
+* **deps-dev:** bump colorlog from 6.9.0 to 6.10.1 ([f6e5543](https://github.com/henricm/ha-ferroamp/commit/f6e5543b392b0237d1786624f53775b8cb22f406))
+* **deps-dev:** bump flake8 from 7.1.1 to 7.1.2 ([5c72edb](https://github.com/henricm/ha-ferroamp/commit/5c72edbbdbceeb83aadc18274f0ee4b8a420d7f6))
+* **deps-dev:** bump flake8 from 7.1.2 to 7.2.0 ([6c58970](https://github.com/henricm/ha-ferroamp/commit/6c589709979f102a9fc57044834efc21c1e6c701))
+* **deps-dev:** bump flake8 from 7.2.0 to 7.3.0 ([a60ec1f](https://github.com/henricm/ha-ferroamp/commit/a60ec1f704139666fa494dc9990add8aa29b33b3))
+* **deps-dev:** bump isort from 5.13.2 to 6.0.0 ([0812fbc](https://github.com/henricm/ha-ferroamp/commit/0812fbc8bcb049d1afa60117d37593c5e408c604))
+* **deps-dev:** bump isort from 5.13.2 to 6.0.0 ([f05c9f3](https://github.com/henricm/ha-ferroamp/commit/f05c9f3355014419d16a5b1c769a87bf3257518f))
+* **deps-dev:** bump isort from 6.0.0 to 6.0.1 ([ff4ef80](https://github.com/henricm/ha-ferroamp/commit/ff4ef80a064a9426cbe90e05be896e2f2c9a28ca))
+* **deps-dev:** bump isort from 6.0.1 to 6.1.0 ([cd6f632](https://github.com/henricm/ha-ferroamp/commit/cd6f6321e1c182bc93708ca29529eb6335fd44c7))
+* **deps-dev:** bump isort from 6.1.0 to 7.0.0 ([dd22417](https://github.com/henricm/ha-ferroamp/commit/dd22417a0346f6551dd7fea3b129afa6248c59a2))
+* **deps-dev:** bump pre-commit from 4.0.1 to 4.1.0 ([329ed9c](https://github.com/henricm/ha-ferroamp/commit/329ed9c03a8b4f13870a93bd02adc244b1cd67d4))
+* **deps-dev:** bump pre-commit from 4.0.1 to 4.1.0 ([98d8239](https://github.com/henricm/ha-ferroamp/commit/98d8239e7f3f63b160c784fd09e7dbda4e3ba3f7))
+* **deps-dev:** bump pre-commit from 4.1.0 to 4.2.0 ([541c9d3](https://github.com/henricm/ha-ferroamp/commit/541c9d368494f8d07a73bbce257565f068e7aa07))
+* **deps-dev:** bump pre-commit from 4.2.0 to 4.3.0 ([0e71b11](https://github.com/henricm/ha-ferroamp/commit/0e71b11a47803da97ac416cacf7ef98633ab5831))
+* **deps-dev:** bump pre-commit from 4.3.0 to 4.4.0 ([5d55285](https://github.com/henricm/ha-ferroamp/commit/5d5528518aa804a64f664a911703f20e6fd59867))
+* **deps-dev:** bump pre-commit from 4.4.0 to 4.5.0 ([8efade4](https://github.com/henricm/ha-ferroamp/commit/8efade4840f5f6bd50a14360ffc68c0df91f0127))
+* **deps:** bump actions/checkout from 4 to 5 ([f9d1fbf](https://github.com/henricm/ha-ferroamp/commit/f9d1fbf638e0031e6ce5fa299be054d16ad2976a))
+* **deps:** bump actions/checkout from 5 to 6 ([8cb50f7](https://github.com/henricm/ha-ferroamp/commit/8cb50f788fd4d9c8a4d694ab3a5f905d75847499))
+* **deps:** bump actions/setup-python from 5 to 6 ([49b2024](https://github.com/henricm/ha-ferroamp/commit/49b20244a10a2ce1bccd20ce5229cdf098603977))
+* **deps:** bump github/codeql-action from 3 to 4 ([b218bfe](https://github.com/henricm/ha-ferroamp/commit/b218bfec5deb378272198ec89e4d84311e15a7ae))
+* **deps:** bump janus from 1.0.0 to 1.1.0 ([9e4c642](https://github.com/henricm/ha-ferroamp/commit/9e4c64250c068dff2f8092f9ae51ccde0c11ba3a))
+* **deps:** bump janus from 1.0.0 to 1.1.0 ([bcdd5c5](https://github.com/henricm/ha-ferroamp/commit/bcdd5c5b5f985d21015d45c4d2324da4c02f86d8))
+* **deps:** bump janus from 1.1.0 to 1.2.0 ([fbe6e73](https://github.com/henricm/ha-ferroamp/commit/fbe6e73c4dcb18aff9179242cf7d8d5e8ec6f35d))
+* **deps:** bump janus from 1.1.0 to 1.2.0 ([20cebcf](https://github.com/henricm/ha-ferroamp/commit/20cebcfc5eef3f5d05d8387753f5af200382d55e))
+* **deps:** bump janus from 1.2.0 to 2.0.0 ([53c351f](https://github.com/henricm/ha-ferroamp/commit/53c351f515ea4815eb87122843e8bab4f310229e))
+
+
+### Continuous Integration
+
+* add project metadata and update python version requirement ([5340c64](https://github.com/henricm/ha-ferroamp/commit/5340c648bef6d47f051e590a7ba80c9111e85823))
+
 ## [1.15.0](https://github.com/henricm/ha-ferroamp/compare/v1.14.2...v1.15.0) (2024-10-25)
 
 
