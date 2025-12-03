@@ -1,9 +1,14 @@
 """Platform for Ferroamp sensors integration."""
+
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 import json
 import logging
+from typing import Any
 import uuid
 
 from homeassistant import config_entries, core
@@ -26,7 +31,11 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.entity_registry import async_get as async_get_entity_reg
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_registry import (
+    EntityRegistry,
+    async_get as async_get_entity_reg,
+)
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
@@ -51,25 +60,960 @@ from .const import (
     TOPIC_ESO,
     TOPIC_SSO,
 )
+from .mqtt_parser import (
+    CommandParser,
+    MqttEvent,
+    MqttMessageParser,
+    PhaseValues,
+    average_dc_link_values,
+    average_float_values,
+    average_int_values,
+    average_phase_values,
+    average_single_phase_values,
+    convert_to_kwh,
+    last_string_value,
+)
 
 _LOGGER = logging.getLogger(__name__)
+
+# Type alias for sensor storage
+SensorStore = dict[str, "FerroampSensor"]
+
+
+class SensorType(Enum):
+    """Enumeration of sensor types for data-driven sensor creation."""
+
+    FLOAT = "float"
+    INT = "int"
+    STRING = "string"
+    VOLTAGE = "voltage"
+    CURRENT = "current"
+    POWER = "power"
+    ENERGY = "energy"
+    TEMPERATURE = "temperature"
+    BATTERY = "battery"
+    PERCENTAGE = "percentage"
+    THREE_PHASE = "three_phase"
+    THREE_PHASE_POWER = "three_phase_power"
+    THREE_PHASE_ENERGY = "three_phase_energy"
+    THREE_PHASE_MIN = "three_phase_min"
+    SINGLE_PHASE = "single_phase"
+    SINGLE_PHASE_POWER = "single_phase_power"
+    SINGLE_PHASE_ENERGY = "single_phase_energy"
+    DC_LINK = "dc_link"
+
+
+@dataclass
+class EhubSensorConfig:
+    """Configuration for an EnergyHub sensor."""
+
+    name: str
+    key: str
+    sensor_type: SensorType
+    icon: str
+    unit: str | None = None
+    phase: str | None = None
+    state_class: SensorStateClass | None = None
+    check_presence: bool = False
+
+
+# EnergyHub sensor definitions - data-driven approach
+EHUB_SENSOR_CONFIGS: list[EhubSensorConfig] = [
+    # Frequency
+    EhubSensorConfig(
+        "Estimated Grid Frequency",
+        "gridfreq",
+        SensorType.FLOAT,
+        "mdi:sine-wave",
+        UnitOfFrequency.HERTZ,
+    ),
+    # External Voltage (3-phase + individual)
+    EhubSensorConfig(
+        "External Voltage",
+        "ul",
+        SensorType.THREE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricPotential.VOLT,
+    ),
+    EhubSensorConfig(
+        "External Voltage L1",
+        "ul",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricPotential.VOLT,
+        "L1",
+    ),
+    EhubSensorConfig(
+        "External Voltage L2",
+        "ul",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricPotential.VOLT,
+        "L2",
+    ),
+    EhubSensorConfig(
+        "External Voltage L3",
+        "ul",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricPotential.VOLT,
+        "L3",
+    ),
+    # Inverter RMS Current
+    EhubSensorConfig(
+        "Inverter RMS Current",
+        "il",
+        SensorType.THREE_PHASE,
+        "mdi:current-dc",
+        UnitOfElectricCurrent.AMPERE,
+    ),
+    EhubSensorConfig(
+        "Inverter RMS Current L1",
+        "il",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-dc",
+        UnitOfElectricCurrent.AMPERE,
+        "L1",
+    ),
+    EhubSensorConfig(
+        "Inverter RMS Current L2",
+        "il",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-dc",
+        UnitOfElectricCurrent.AMPERE,
+        "L2",
+    ),
+    EhubSensorConfig(
+        "Inverter RMS Current L3",
+        "il",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-dc",
+        UnitOfElectricCurrent.AMPERE,
+        "L3",
+    ),
+    # Inverter Reactive Current
+    EhubSensorConfig(
+        "Inverter Reactive Current",
+        "ild",
+        SensorType.THREE_PHASE,
+        "mdi:current-dc",
+        UnitOfElectricCurrent.AMPERE,
+    ),
+    EhubSensorConfig(
+        "Inverter Reactive Current L1",
+        "ild",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-dc",
+        UnitOfElectricCurrent.AMPERE,
+        "L1",
+    ),
+    EhubSensorConfig(
+        "Inverter Reactive Current L2",
+        "ild",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-dc",
+        UnitOfElectricCurrent.AMPERE,
+        "L2",
+    ),
+    EhubSensorConfig(
+        "Inverter Reactive Current L3",
+        "ild",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-dc",
+        UnitOfElectricCurrent.AMPERE,
+        "L3",
+    ),
+    # Grid Current
+    EhubSensorConfig(
+        "Grid Current",
+        "iext",
+        SensorType.THREE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+    ),
+    EhubSensorConfig(
+        "Grid Current L1",
+        "iext",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L1",
+    ),
+    EhubSensorConfig(
+        "Grid Current L2",
+        "iext",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L2",
+    ),
+    EhubSensorConfig(
+        "Grid Current L3",
+        "iext",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L3",
+    ),
+    # Grid Reactive Current
+    EhubSensorConfig(
+        "Grid Reactive Current",
+        "iextd",
+        SensorType.THREE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+    ),
+    EhubSensorConfig(
+        "Grid Reactive Current L1",
+        "iextd",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L1",
+    ),
+    EhubSensorConfig(
+        "Grid Reactive Current L2",
+        "iextd",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L2",
+    ),
+    EhubSensorConfig(
+        "Grid Reactive Current L3",
+        "iextd",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L3",
+    ),
+    # External Active Current
+    EhubSensorConfig(
+        "External Active Current",
+        "iextq",
+        SensorType.THREE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+    ),
+    EhubSensorConfig(
+        "External Active Current L1",
+        "iextq",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L1",
+    ),
+    EhubSensorConfig(
+        "External Active Current L2",
+        "iextq",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L2",
+    ),
+    EhubSensorConfig(
+        "External Active Current L3",
+        "iextq",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L3",
+    ),
+    # Adaptive Current Equalization
+    EhubSensorConfig(
+        "Adaptive Current Equalization",
+        "iace",
+        SensorType.THREE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+    ),
+    EhubSensorConfig(
+        "Adaptive Current Equalization L1",
+        "iace",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L1",
+    ),
+    EhubSensorConfig(
+        "Adaptive Current Equalization L2",
+        "iace",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L2",
+    ),
+    EhubSensorConfig(
+        "Adaptive Current Equalization L3",
+        "iace",
+        SensorType.SINGLE_PHASE,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        "L3",
+    ),
+    # Grid Power
+    EhubSensorConfig(
+        "Grid Power", "pext", SensorType.THREE_PHASE_POWER, "mdi:transmission-tower"
+    ),
+    EhubSensorConfig(
+        "Grid Power L1",
+        "pext",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:transmission-tower",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Grid Power L2",
+        "pext",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:transmission-tower",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Grid Power L3",
+        "pext",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:transmission-tower",
+        phase="L3",
+    ),
+    # Grid Power Reactive
+    EhubSensorConfig(
+        "Grid Power Reactive",
+        "pextreactive",
+        SensorType.THREE_PHASE_POWER,
+        "mdi:transmission-tower",
+    ),
+    EhubSensorConfig(
+        "Grid Power Reactive L1",
+        "pextreactive",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:transmission-tower",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Grid Power Reactive L2",
+        "pextreactive",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:transmission-tower",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Grid Power Reactive L3",
+        "pextreactive",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:transmission-tower",
+        phase="L3",
+    ),
+    # Inverter Power Active
+    EhubSensorConfig(
+        "Inverter Power, Active",
+        "pinv",
+        SensorType.THREE_PHASE_POWER,
+        "mdi:solar-power",
+    ),
+    EhubSensorConfig(
+        "Inverter Power, Active L1",
+        "pinv",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:solar-power",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Inverter Power, Active L2",
+        "pinv",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:solar-power",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Inverter Power, Active L3",
+        "pinv",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:solar-power",
+        phase="L3",
+    ),
+    # Inverter Power Reactive
+    EhubSensorConfig(
+        "Inverter Power, Reactive",
+        "pinvreactive",
+        SensorType.THREE_PHASE_POWER,
+        "mdi:solar-power",
+    ),
+    EhubSensorConfig(
+        "Inverter Power, Reactive L1",
+        "pinvreactive",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:solar-power",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Inverter Power, Reactive L2",
+        "pinvreactive",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:solar-power",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Inverter Power, Reactive L3",
+        "pinvreactive",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:solar-power",
+        phase="L3",
+    ),
+    # Consumption Power
+    EhubSensorConfig(
+        "Consumption Power", "pload", SensorType.THREE_PHASE_POWER, "mdi:power-plug"
+    ),
+    EhubSensorConfig(
+        "Consumption Power L1",
+        "pload",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:power-plug",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Consumption Power L2",
+        "pload",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:power-plug",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Consumption Power L3",
+        "pload",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:power-plug",
+        phase="L3",
+    ),
+    # Consumption Power Reactive
+    EhubSensorConfig(
+        "Consumption Power Reactive",
+        "ploadreactive",
+        SensorType.THREE_PHASE_POWER,
+        "mdi:power-plug",
+    ),
+    EhubSensorConfig(
+        "Consumption Power Reactive L1",
+        "ploadreactive",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:power-plug",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Consumption Power Reactive L2",
+        "ploadreactive",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:power-plug",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Consumption Power Reactive L3",
+        "ploadreactive",
+        SensorType.SINGLE_PHASE_POWER,
+        "mdi:power-plug",
+        phase="L3",
+    ),
+    # External Energy Produced
+    EhubSensorConfig(
+        "External Energy Produced",
+        "wextprodq",
+        SensorType.THREE_PHASE_ENERGY,
+        "mdi:power-plug",
+    ),
+    EhubSensorConfig(
+        "External Energy Produced L1",
+        "wextprodq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "External Energy Produced L2",
+        "wextprodq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "External Energy Produced L3",
+        "wextprodq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L3",
+    ),
+    # External Energy Consumed
+    EhubSensorConfig(
+        "External Energy Consumed",
+        "wextconsq",
+        SensorType.THREE_PHASE_ENERGY,
+        "mdi:power-plug",
+    ),
+    EhubSensorConfig(
+        "External Energy Consumed L1",
+        "wextconsq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "External Energy Consumed L2",
+        "wextconsq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "External Energy Consumed L3",
+        "wextconsq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L3",
+    ),
+    # Inverter Energy Produced
+    EhubSensorConfig(
+        "Inverter Energy Produced",
+        "winvprodq",
+        SensorType.THREE_PHASE_ENERGY,
+        "mdi:power-plug",
+    ),
+    EhubSensorConfig(
+        "Inverter Energy Produced L1",
+        "winvprodq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Inverter Energy Produced L2",
+        "winvprodq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Inverter Energy Produced L3",
+        "winvprodq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L3",
+    ),
+    # Inverter Energy Consumed
+    EhubSensorConfig(
+        "Inverter Energy Consumed",
+        "winvconsq",
+        SensorType.THREE_PHASE_ENERGY,
+        "mdi:power-plug",
+    ),
+    EhubSensorConfig(
+        "Inverter Energy Consumed L1",
+        "winvconsq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Inverter Energy Consumed L2",
+        "winvconsq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Inverter Energy Consumed L3",
+        "winvconsq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L3",
+    ),
+    # Load Energy Produced
+    EhubSensorConfig(
+        "Load Energy Produced",
+        "wloadprodq",
+        SensorType.THREE_PHASE_ENERGY,
+        "mdi:power-plug",
+    ),
+    EhubSensorConfig(
+        "Load Energy Produced L1",
+        "wloadprodq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Load Energy Produced L2",
+        "wloadprodq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Load Energy Produced L3",
+        "wloadprodq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L3",
+    ),
+    # Load Energy Consumed
+    EhubSensorConfig(
+        "Load Energy Consumed",
+        "wloadconsq",
+        SensorType.THREE_PHASE_ENERGY,
+        "mdi:power-plug",
+    ),
+    EhubSensorConfig(
+        "Load Energy Consumed L1",
+        "wloadconsq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L1",
+    ),
+    EhubSensorConfig(
+        "Load Energy Consumed L2",
+        "wloadconsq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L2",
+    ),
+    EhubSensorConfig(
+        "Load Energy Consumed L3",
+        "wloadconsq",
+        SensorType.SINGLE_PHASE_ENERGY,
+        "mdi:power-plug",
+        phase="L3",
+    ),
+    # Solar and Battery
+    EhubSensorConfig("Total Solar Energy", "wpv", SensorType.ENERGY, "mdi:solar-power"),
+    EhubSensorConfig(
+        "Battery Energy Produced",
+        "wbatprod",
+        SensorType.ENERGY,
+        "mdi:battery-plus",
+        check_presence=True,
+    ),
+    EhubSensorConfig(
+        "Battery Energy Consumed",
+        "wbatcons",
+        SensorType.ENERGY,
+        "mdi:battery-minus",
+        check_presence=True,
+    ),
+    # System state
+    EhubSensorConfig("System State", "state", SensorType.INT, "mdi:traffic-light", ""),
+    EhubSensorConfig("DC Link Voltage", "udc", SensorType.DC_LINK, "mdi:current-ac"),
+    EhubSensorConfig(
+        "System State of Charge",
+        "soc",
+        SensorType.BATTERY,
+        "mdi:battery",
+        check_presence=True,
+    ),
+    EhubSensorConfig(
+        "System State of Health",
+        "soh",
+        SensorType.PERCENTAGE,
+        "mdi:battery-low",
+        check_presence=True,
+    ),
+    EhubSensorConfig(
+        "Apparent power", "sext", SensorType.INT, "mdi:transmission-tower", "VA"
+    ),
+    EhubSensorConfig(
+        "Solar Power",
+        "ppv",
+        SensorType.POWER,
+        "mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    EhubSensorConfig(
+        "Battery Power",
+        "pbat",
+        SensorType.POWER,
+        "mdi:battery",
+        state_class=SensorStateClass.MEASUREMENT,
+        check_presence=True,
+    ),
+    EhubSensorConfig(
+        "Total Rated Capacity of All Batteries",
+        "ratedcap",
+        SensorType.INT,
+        "mdi:battery",
+        UnitOfEnergy.WATT_HOUR,
+        check_presence=True,
+    ),
+    # Load balancing
+    EhubSensorConfig(
+        "Available Three Phase Active Current For Load Balancing",
+        "iavblq_3p",
+        SensorType.FLOAT,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        check_presence=True,
+    ),
+    EhubSensorConfig(
+        "Available Active Current For Load Balancing",
+        "iavblq",
+        SensorType.THREE_PHASE_MIN,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        check_presence=True,
+    ),
+    EhubSensorConfig(
+        "Available RMS Current For Load Balancing",
+        "iavbl",
+        SensorType.THREE_PHASE_MIN,
+        "mdi:current-ac",
+        UnitOfElectricCurrent.AMPERE,
+        check_presence=True,
+    ),
+]
+
+
+def create_sensor_from_config(
+    config: EhubSensorConfig,
+    slug: str,
+    interval: int,
+    config_id: str | None,
+) -> FerroampSensor:
+    """Create a sensor instance from configuration."""
+    device_id = f"{slug}_{EHUB}"
+    device_name = EHUB_NAME
+
+    sensor_creators: dict[SensorType, Callable[[], FerroampSensor]] = {
+        SensorType.FLOAT: lambda: FloatValFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.unit,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+            state_class=config.state_class,
+            check_presence=config.check_presence,
+        ),
+        SensorType.INT: lambda: IntValFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.unit,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+            check_presence=config.check_presence,
+        ),
+        SensorType.STRING: lambda: StringValFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.unit,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.VOLTAGE: lambda: VoltageFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.CURRENT: lambda: CurrentFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.POWER: lambda: PowerFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+            state_class=config.state_class,
+            check_presence=config.check_presence,
+        ),
+        SensorType.ENERGY: lambda: EnergyFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+            check_presence=config.check_presence,
+        ),
+        SensorType.TEMPERATURE: lambda: TemperatureFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.BATTERY: lambda: BatteryFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+            check_presence=config.check_presence,
+        ),
+        SensorType.PERCENTAGE: lambda: PercentageFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+            check_presence=config.check_presence,
+        ),
+        SensorType.THREE_PHASE: lambda: ThreePhaseFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.unit,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.THREE_PHASE_POWER: lambda: ThreePhasePowerFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.THREE_PHASE_ENERGY: lambda: ThreePhaseEnergyFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.THREE_PHASE_MIN: lambda: ThreePhaseMinFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.unit,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+            check_presence=config.check_presence,
+        ),
+        SensorType.SINGLE_PHASE: lambda: SinglePhaseFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.phase,
+            config.unit,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.SINGLE_PHASE_POWER: lambda: SinglePhasePowerFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.phase,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.SINGLE_PHASE_ENERGY: lambda: SinglePhaseEnergyFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.phase,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+        SensorType.DC_LINK: lambda: DcLinkFerroampSensor(
+            config.name,
+            slug,
+            config.key,
+            config.icon,
+            device_id,
+            device_name,
+            interval,
+            config_id,
+        ),
+    }
+
+    creator = sensor_creators.get(config.sensor_type)
+    if creator is None:
+        raise ValueError(f"Unknown sensor type: {config.sensor_type}")
+    return creator()
+
+
+def ehub_sensors(
+    slug: str,
+    interval: int,
+    config_id: str | None,
+) -> list[FerroampSensor]:
+    """Create all EnergyHub sensors from configuration."""
+    return [
+        create_sensor_from_config(config, slug, interval, config_id)
+        for config in EHUB_SENSOR_CONFIGS
+    ]
 
 
 async def async_setup_entry(
     hass: core.HomeAssistant,
     config_entry: config_entries.ConfigEntry,
-    async_add_entities,
-):
-    """Setup sensors from a config entry created in the integrations UI."""
+    async_add_entities: AddEntitiesCallback,
+) -> bool:
+    """Set up sensors from a config entry created in the integrations UI."""
     hass.data[DOMAIN].setdefault(DATA_DEVICES, {})
     hass.data[DOMAIN].setdefault(DATA_LISTENERS, {})
     hass.data[DOMAIN][DATA_DEVICES].setdefault(config_entry.unique_id, {})
     hass.data[DOMAIN][DATA_LISTENERS].setdefault(config_entry.unique_id, [])
-    listeners = hass.data[DOMAIN][DATA_LISTENERS].get(config_entry.unique_id)
-    config = hass.data[DOMAIN][DATA_DEVICES][config_entry.unique_id]
+    listeners: list[Callable[[], None]] = hass.data[DOMAIN][DATA_LISTENERS].get(
+        config_entry.unique_id
+    )
+    config: dict[str, SensorStore] = hass.data[DOMAIN][DATA_DEVICES][
+        config_entry.unique_id
+    ]
     _LOGGER.debug(
         "Setting up ferroamp sensors for %(prefix)s",
-        dict(prefix=config_entry.data[CONF_PREFIX]),
+        {"prefix": config_entry.data[CONF_PREFIX]},
     )
     config_id = config_entry.unique_id
     name = config_entry.data[CONF_NAME]
@@ -81,17 +1025,13 @@ async def async_setup_entry(
 
     entity_registry = async_get_entity_reg(hass)
 
-    ehub = ehub_sensors(
-        slug,
-        interval,
-        config_id,
-    )
-    eso_sensors = {}
-    esm_sensors = {}
-    sso_sensors = {}
-    generic_sensors = {}
+    ehub = ehub_sensors(slug, interval, config_id)
+    eso_sensors: dict[str, list[FerroampSensor]] = {}
+    esm_sensors: dict[str, list[FerroampSensor]] = {}
+    sso_sensors: dict[str, list[FerroampSensor]] = {}
+    generic_sensors: dict[str, FerroampSensor] = {}
 
-    def get_store(store_name):
+    def get_store(store_name: str) -> tuple[SensorStore, bool]:
         store = config.get(store_name)
         new = False
         if store is None:
@@ -99,17 +1039,21 @@ async def async_setup_entry(
             new = True
         return store, new
 
-    def register_sensor(sensor, event, store):
+    def register_sensor(
+        sensor: FerroampSensor, event: MqttEvent | None, store: SensorStore
+    ) -> None:
         if sensor.unique_id not in store:
             if not sensor.check_presence or sensor.present(event):
                 store[sensor.unique_id] = sensor
                 _LOGGER.debug(
                     "Registering new sensor %(unique_id)s => %(event)s",
-                    dict(unique_id=sensor.unique_id, event=event),
+                    {"unique_id": sensor.unique_id, "event": event},
                 )
                 async_add_entities((sensor,), True)
 
-    def update_sensor_from_event(event, sensors, store):
+    def update_sensor_from_event(
+        event: MqttEvent, sensors: list[FerroampSensor], store: SensorStore
+    ) -> None:
         _LOGGER.debug("Event received %s", event)
         for sensor in sensors:
             register_sensor(sensor, event, store)
@@ -117,15 +1061,15 @@ async def async_setup_entry(
             sensor.add_event(event)
 
     @callback
-    def ehub_event_received(msg):
-        event = json.loads(msg.payload)
+    def ehub_event_received(msg: mqtt.ReceiveMessage) -> None:
+        event = MqttMessageParser.parse_message(msg)
         store, _ = get_store(f"{slug}_{EHUB}")
         update_sensor_from_event(event, ehub, store)
 
     @callback
-    def sso_event_received(msg):
-        event = json.loads(msg.payload)
-        sso_id = event["id"]["val"]
+    def sso_event_received(msg: mqtt.ReceiveMessage) -> None:
+        event = MqttMessageParser.parse_message(msg)
+        sso_id = MqttMessageParser.get_id(event)
         model = None
         match = REGEX_SSO_ID.match(sso_id)
         if match is not None and match.group(2) is not None:
@@ -223,13 +1167,14 @@ async def async_setup_entry(
                 ),
             ]
 
-        update_sensor_from_event(event, sensors, store)
+        if sensors is not None:
+            update_sensor_from_event(event, sensors, store)
 
     @callback
-    def eso_event_received(msg):
-        event = json.loads(msg.payload)
-        eso_id = event["id"]["val"]
-        if eso_id == "":
+    def eso_event_received(msg: mqtt.ReceiveMessage) -> None:
+        event = MqttMessageParser.parse_message(msg)
+        eso_id = MqttMessageParser.get_id(event)
+        if not eso_id:
             return
         device_id = f"{slug}_eso_{eso_id}"
         device_name = f"ESO {eso_id}"
@@ -327,12 +1272,13 @@ async def async_setup_entry(
                 ),
             ]
 
-        update_sensor_from_event(event, sensors, store)
+        if sensors is not None:
+            update_sensor_from_event(event, sensors, store)
 
     @callback
-    def esm_event_received(msg):
-        event = json.loads(msg.payload)
-        esm_id = event["id"]["val"]
+    def esm_event_received(msg: mqtt.ReceiveMessage) -> None:
+        event = MqttMessageParser.parse_message(msg)
+        esm_id = MqttMessageParser.get_id(event)
         model = None
         device_id = f"{slug}_esm_{esm_id}"
         device_name = f"ESM {esm_id}"
@@ -415,9 +1361,14 @@ async def async_setup_entry(
                 ),
             ]
 
-        update_sensor_from_event(event, sensors, store)
+        if sensors is not None:
+            update_sensor_from_event(event, sensors, store)
 
-    def get_generic_sensor(store, sensor_type, sensor_creator):
+    def get_generic_sensor(
+        store: SensorStore,
+        sensor_type: str,
+        sensor_creator: Callable[[], FerroampSensor],
+    ) -> FerroampSensor:
         sensor = generic_sensors.get(sensor_type)
         if sensor is None:
             sensor = sensor_creator()
@@ -426,7 +1377,7 @@ async def async_setup_entry(
             sensor.hass = hass
         return sensor
 
-    def get_cmd_sensor(store):
+    def get_cmd_sensor(store: SensorStore) -> CommandFerroampSensor:
         return get_generic_sensor(
             store,
             "cmd",
@@ -435,7 +1386,7 @@ async def async_setup_entry(
             ),
         )
 
-    def get_version_sensor(store):
+    def get_version_sensor(store: SensorStore) -> VersionFerroampSensor:
         return get_generic_sensor(
             store,
             "version",
@@ -445,26 +1396,21 @@ async def async_setup_entry(
         )
 
     @callback
-    def ehub_request_received(msg):
-        command = json.loads(msg.payload)
+    def ehub_request_received(msg: mqtt.ReceiveMessage) -> None:
+        command = MqttMessageParser.parse_message(msg)
         store, _ = get_store(f"{slug}_{EHUB}")
         sensor = get_cmd_sensor(store)
-        trans_id = command["transId"]
-        cmd = command["cmd"]
-        cmd_name = cmd["name"]
-        arg = cmd.get("arg")
+        trans_id, cmd_name, arg = CommandParser.parse_request(command)
         sensor.add_request(trans_id, cmd_name, arg)
 
     @callback
-    def ehub_response_received(msg):
-        response = json.loads(msg.payload)
-        trans_id = response["transId"]
-        status = response["status"]
-        message = response["msg"]
+    def ehub_response_received(msg: mqtt.ReceiveMessage) -> None:
+        response = MqttMessageParser.parse_message(msg)
+        trans_id, status, message = CommandParser.parse_response(response)
         store, _ = get_store(f"{slug}_{EHUB}")
-        if message.startswith("version: "):
+        if CommandParser.is_version_response(message):
             sensor = get_version_sensor(store)
-            sensor.set_version(message[9:])
+            sensor.set_version(CommandParser.extract_version(message))
         else:
             sensor = get_cmd_sensor(store)
             sensor.add_response(trans_id, status, message)
@@ -483,17 +1429,26 @@ async def async_setup_entry(
     )
     listeners.append(
         await mqtt.async_subscribe(
-            hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_SSO}", sso_event_received, 0
+            hass,
+            f"{config_entry.data[CONF_PREFIX]}/{TOPIC_SSO}",
+            sso_event_received,
+            0,
         )
     )
     listeners.append(
         await mqtt.async_subscribe(
-            hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_ESO}", eso_event_received, 0
+            hass,
+            f"{config_entry.data[CONF_PREFIX]}/{TOPIC_ESO}",
+            eso_event_received,
+            0,
         )
     )
     listeners.append(
         await mqtt.async_subscribe(
-            hass, f"{config_entry.data[CONF_PREFIX]}/{TOPIC_ESM}", esm_event_received, 0
+            hass,
+            f"{config_entry.data[CONF_PREFIX]}/{TOPIC_ESM}",
+            esm_event_received,
+            0,
         )
     )
     listeners.append(
@@ -531,22 +1486,33 @@ async def async_setup_entry(
     return True
 
 
-def get_option(config_entry, key, default):
+def get_option(config_entry: config_entries.ConfigEntry, key: str, default: int) -> int:
+    """Get option value from config entry with default fallback."""
     value = config_entry.options.get(key)
     if value is None:
         value = default
     return value
 
 
-def build_sso_device_id(slug, sso_id):
+def build_sso_device_id(slug: str, sso_id: str) -> str:
+    """Build device ID for SSO device."""
     return f"{slug}_sso_{sso_id}"
 
 
-def build_esm_device_id(slug, eso_id):
-    return f"{slug}_esm_{eso_id}"
+def build_esm_device_id(slug: str, esm_id: str) -> str:
+    """Build device ID for ESM device."""
+    return f"{slug}_esm_{esm_id}"
 
 
-def migrate_entities(old_id, new_id, keys, slug, entity_registry, build_device_id):
+def migrate_entities(
+    old_id: str,
+    new_id: str,
+    keys: list[str],
+    slug: str,
+    entity_registry: EntityRegistry,
+    build_device_id: Callable[[str, str], str],
+) -> None:
+    """Migrate entities from old ID to new ID."""
     for key in keys:
         old_entity_id = entity_registry.async_get_entity_id(
             "sensor", DOMAIN, f"{build_device_id(slug, old_id)}-{key}"
@@ -557,12 +1523,23 @@ def migrate_entities(old_id, new_id, keys, slug, entity_registry, build_device_i
             )
 
 
-async def options_update_listener(hass, entry):
+async def options_update_listener(
+    hass: core.HomeAssistant, entry: config_entries.ConfigEntry
+) -> None:
     """Handle options update."""
-    config = hass.data[DOMAIN][DATA_DEVICES][entry.unique_id]
+    config: dict[str, SensorStore] = hass.data[DOMAIN][DATA_DEVICES][entry.unique_id]
     for device in config.values():
         for sensor in device.values():
             sensor.handle_options_update(entry.options)
+
+
+def isfloat(value: Any) -> bool:
+    """Check if value can be converted to float."""
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
 
 
 class FerroampSensor(SensorEntity, RestoreEntity):
@@ -570,16 +1547,16 @@ class FerroampSensor(SensorEntity, RestoreEntity):
 
     def __init__(
         self,
-        name,
-        entity_prefix,
+        name: str,
+        entity_prefix: str,
         unit: str | None,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the sensor."""
         self._attr_name = name
         self._attr_has_entity_name = True
@@ -610,10 +1587,15 @@ class FerroampSensor(SensorEntity, RestoreEntity):
         self.config_id = config_id
         self._attr_state_class = kwargs.get("state_class")
         self._added = False
-        self.check_presence = False
+        self.check_presence: bool = kwargs.get("check_presence", False)
 
-    def present(self, event) -> bool:
+    def present(self, event: MqttEvent | None) -> bool:
+        """Check if sensor data is present in event."""
         return True
+
+    def add_event(self, event: MqttEvent) -> None:
+        """Add MQTT event data - override in subclasses."""
+        pass
 
     async def async_added_to_hass(self) -> None:
         """Handle entity which will be added."""
@@ -626,26 +1608,27 @@ class FerroampSensor(SensorEntity, RestoreEntity):
         ] = self
         self._added = True
 
-    def handle_options_update(self, options):
-        self._interval = options.get(CONF_INTERVAL)
+    def handle_options_update(self, options: dict[str, Any]) -> None:
+        """Handle options update."""
+        self._interval = options.get(CONF_INTERVAL, self._interval)
 
 
 class KeyedFerroampSensor(FerroampSensor):
-    """Representation of a Ferroamp Sensor using a single key to extract state from MQTT-messages."""
+    """Ferroamp Sensor using a single key to extract state from MQTT messages."""
 
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
+        name: str,
+        entity_prefix: str,
+        key: str,
         unit: str | None,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(
             name,
@@ -661,22 +1644,28 @@ class KeyedFerroampSensor(FerroampSensor):
         self._state_key = key
         self._attr_unique_id = f"{self.device_id}-{self._state_key}"
         self.updated = datetime.min
-        self.events = []
-        self.check_presence = kwargs.get("check_presence") or False
+        self.events: list[MqttEvent] = []
+        self.check_presence = kwargs.get("check_presence", False)
 
-    def present(self, event) -> bool:
-        return event.get(self._state_key, None) is not None
+    def present(self, event: MqttEvent | None) -> bool:
+        """Check if sensor data is present in event."""
+        if event is None:
+            return False
+        return MqttMessageParser.key_present(event, self._state_key)
 
-    def get_value(self, event):
-        return event.get(self._state_key, None)
+    def get_value(self, event: MqttEvent) -> dict[str, Any] | None:
+        """Get raw value from event."""
+        return MqttMessageParser.get_value(event, self._state_key)
 
-    def get_float_value(self, event) -> float:
-        val = event.get(self._state_key, None)
+    def get_float_value(self, event: MqttEvent) -> float:
+        """Get float value from event."""
+        val = MqttMessageParser.get_float(event, self._state_key)
         if val is None:
             return 0
-        return float(val["val"])
+        return val
 
-    def add_event(self, event):
+    def add_event(self, event: MqttEvent) -> None:
+        """Add MQTT event to processing queue."""
         if not self.check_presence or self.present(event):
             self.events.append(event)
         now = datetime.now()
@@ -684,7 +1673,8 @@ class KeyedFerroampSensor(FerroampSensor):
         if delta > self._interval and self._added:
             self.process_events(now)
 
-    def process_events(self, now):
+    def process_events(self, now: datetime) -> None:
+        """Process accumulated events and update state."""
         temp = self.events
         self.events = []
         self.updated = now
@@ -692,8 +1682,9 @@ class KeyedFerroampSensor(FerroampSensor):
             if self.update_state_from_events(temp):
                 self.async_write_ha_state()
 
-    def update_state_from_events(self, events) -> bool:
-        raise Exception("No implementation in base class")
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events - must be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement update_state_from_events")
 
     async def async_added_to_hass(self) -> None:
         """Handle entity which will be added."""
@@ -702,152 +1693,55 @@ class KeyedFerroampSensor(FerroampSensor):
 
 
 class IntValFerroampSensor(KeyedFerroampSensor):
-    """Representation of a Ferroamp integer value Sensor."""
+    """Ferroamp integer value Sensor."""
 
-    def __init__(
-        self,
-        name,
-        entity_prefix,
-        key,
-        unit: str | None,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
-        """Initialize the sensor."""
-        super().__init__(
-            name,
-            entity_prefix,
-            key,
-            unit,
-            icon,
-            device_id,
-            device_name,
-            interval,
-            config_id,
-            **kwargs,
-        )
-
-    def update_state_from_events(self, events) -> bool:
-        temp = None
-        count = 0
-        for event in events:
-            v = event.get(self._state_key, None)
-            if v is not None:
-                count += 1
-                temp = (temp or 0) + float(v["val"])
-        if temp is None:
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        avg = average_int_values(events, self._state_key)
+        if avg is None:
             return False
-        else:
-            self._attr_native_value = int(temp / count)
-            return True
+        self._attr_native_value = avg
+        return True
 
 
 class StringValFerroampSensor(KeyedFerroampSensor):
-    """Representation of a Ferroamp string value Sensor."""
+    """Ferroamp string value Sensor."""
 
-    def __init__(
-        self,
-        name,
-        entity_prefix,
-        key,
-        unit: str | None,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
-        """Initialize the sensor."""
-        super().__init__(
-            name,
-            entity_prefix,
-            key,
-            unit,
-            icon,
-            device_id,
-            device_name,
-            interval,
-            config_id,
-            **kwargs,
-        )
-
-    def update_state_from_events(self, events) -> bool:
-        temp = None
-        for event in events:
-            v = event.get(self._state_key, None)
-            if v is not None:
-                temp = v["val"]
-        if temp is None:
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        val = last_string_value(events, self._state_key)
+        if val is None:
             return False
-        else:
-            self._attr_native_value = temp
-            return True
+        self._attr_native_value = val
+        return True
 
 
 class FloatValFerroampSensor(KeyedFerroampSensor):
-    """Representation of a Ferroamp float value Sensor."""
+    """Ferroamp float value Sensor."""
 
-    def __init__(
-        self,
-        name,
-        entity_prefix,
-        key,
-        unit: str | None,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
-        """Initialize the sensor."""
-        super().__init__(
-            name,
-            entity_prefix,
-            key,
-            unit,
-            icon,
-            device_id,
-            device_name,
-            interval,
-            config_id,
-            **kwargs,
-        )
-
-    def update_state_from_events(self, events) -> bool:
-        temp = None
-        count = 0
-        for event in events:
-            v = self.get_value(event)
-            if v is not None:
-                count += 1
-                temp = (temp or 0) + self.get_float_value(event)
-        if temp is None:
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        avg = average_float_values(events, self._state_key)
+        if avg is None:
             return False
-        else:
-            self._attr_native_value = temp / count
-            return True
+        self._attr_native_value = avg
+        return True
 
 
 class DcLinkFerroampSensor(KeyedFerroampSensor):
-    """Representation of a Ferroamp DC Voltage value Sensor."""
+    """Ferroamp DC Voltage value Sensor."""
 
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(
             name,
@@ -862,43 +1756,34 @@ class DcLinkFerroampSensor(KeyedFerroampSensor):
         )
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
-    def get_voltage(self, event):
-        voltage = self.get_value(event)
-        if voltage is not None:
-            voltage = dict(neg=float(voltage["neg"]), pos=float(voltage["pos"]))
-        return voltage
-
-    def update_state_from_events(self, events):
-        neg = pos = None
-        count = 0
-        for event in events:
-            voltage = self.get_voltage(event)
-            if voltage is not None:
-                neg = (neg or 0) + voltage["neg"]
-                pos = (pos or 0) + voltage["pos"]
-                count += 1
-        if neg is None and pos is None:
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        dc_link = average_dc_link_values(events, self._state_key)
+        if dc_link is None:
             return False
-        else:
-            self._attr_native_value = round(float(pos / count - neg / count), 2)
-            self._attr_extra_state_attributes = dict(
-                neg=round(float(neg / count), 2), pos=round(float(pos / count), 2)
-            )
-            return True
+        self._attr_native_value = round(dc_link.total, 2)
+        self._attr_extra_state_attributes = {
+            "neg": round(dc_link.neg, 2),
+            "pos": round(dc_link.pos, 2),
+        }
+        return True
 
 
 class PercentageFerroampSensor(FloatValFerroampSensor):
+    """Ferroamp percentage Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -913,7 +1798,8 @@ class PercentageFerroampSensor(FloatValFerroampSensor):
         )
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
-    def update_state_from_events(self, events):
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
         res = super().update_state_from_events(events)
         if self.state is not None and self.state != "unknown":
             pct = int(float(self.state) / 10) * 10
@@ -925,17 +1811,20 @@ class PercentageFerroampSensor(FloatValFerroampSensor):
 
 
 class BatteryFerroampSensor(PercentageFerroampSensor):
+    """Ferroamp battery Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -950,17 +1839,20 @@ class BatteryFerroampSensor(PercentageFerroampSensor):
 
 
 class TemperatureFerroampSensor(FloatValFerroampSensor):
+    """Ferroamp temperature Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -977,18 +1869,21 @@ class TemperatureFerroampSensor(FloatValFerroampSensor):
 
 
 class CurrentFerroampSensor(FloatValFerroampSensor):
+    """Ferroamp current Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -1005,18 +1900,21 @@ class CurrentFerroampSensor(FloatValFerroampSensor):
 
 
 class VoltageFerroampSensor(FloatValFerroampSensor):
+    """Ferroamp voltage Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -1032,30 +1930,22 @@ class VoltageFerroampSensor(FloatValFerroampSensor):
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
 
-def isfloat(value):
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
-
-
 class EnergyFerroampSensor(FloatValFerroampSensor):
-    """Representation of a Ferroamp energy in kWh value Sensor."""
+    """Ferroamp energy in kWh Sensor."""
 
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
-        """Initialize the sensor"""
+        name: str,
+        entity_prefix: str,
+        key: str,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -1070,7 +1960,8 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
             **kwargs,
         )
 
-    def add_event(self, event):
+    def add_event(self, event: MqttEvent) -> None:
+        """Add event, filtering out zero values."""
         if not self.check_presence or self.present(event):
             if self.get_float_value(event) > 0:
                 super().add_event(event)
@@ -1081,47 +1972,42 @@ class EnergyFerroampSensor(FloatValFerroampSensor):
                     self.get_value(event),
                 )
 
-    def update_state_from_events(self, events):
-        temp = None
-        count = 0
-        for event in events:
-            v = event.get(self._state_key, None)
-            if v is not None:
-                temp = (temp or 0) + float(v["val"])
-                count += 1
-        if temp is None:
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        avg = average_float_values(events, self._state_key)
+        if avg is None:
             return False
-        else:
-            val = temp / count / 3600000000
-            if (
-                self._attr_native_value is None
-                or (
-                    isinstance(self._attr_native_value, str)
-                    and not isfloat(self._attr_native_value)
-                )
-                or self._attr_state_class != SensorStateClass.TOTAL_INCREASING
-                or val > float(self._attr_native_value)
-                or val * 1.1 < float(self._attr_native_value)
-            ):
-                self._attr_native_value = val
-                return True
-            else:
-                return False
+        val = convert_to_kwh(avg)
+        if (
+            self._attr_native_value is None
+            or (
+                isinstance(self._attr_native_value, str)
+                and not isfloat(self._attr_native_value)
+            )
+            or self._attr_state_class != SensorStateClass.TOTAL_INCREASING
+            or val > float(self._attr_native_value)
+            or val * 1.1 < float(self._attr_native_value)
+        ):
+            self._attr_native_value = val
+            return True
+        return False
 
 
 class RelayStatusFerroampSensor(KeyedFerroampSensor):
+    """Ferroamp relay status Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
-        """Initialize the sensor"""
+        name: str,
+        entity_prefix: str,
+        key: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -1135,12 +2021,12 @@ class RelayStatusFerroampSensor(KeyedFerroampSensor):
             **kwargs,
         )
 
-    def update_state_from_events(self, events):
-        temp = None
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        temp: str | None = None
         for event in events:
-            v = event.get(self._state_key, None)
-            if v is not None:
-                val = int(v["val"])
+            val = MqttMessageParser.get_int(event, self._state_key)
+            if val is not None:
                 if val == 0:
                     temp = "closed"
                 elif val == 1:
@@ -1149,26 +2035,26 @@ class RelayStatusFerroampSensor(KeyedFerroampSensor):
                     temp = "precharge"
         if temp is None:
             return False
-        else:
-            self._attr_native_value = temp
-            return True
+        self._attr_native_value = temp
+        return True
 
 
 class PowerFerroampSensor(FloatValFerroampSensor):
-    """Representation of a Ferroamp Power Sensor."""
+    """Ferroamp Power Sensor."""
 
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -1184,21 +2070,21 @@ class PowerFerroampSensor(FloatValFerroampSensor):
 
 
 class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
-    """Representation of a Ferroamp Power Sensor based on V and A."""
+    """Ferroamp Power Sensor based on V and A."""
 
     def __init__(
         self,
-        name,
-        entity_prefix,
-        voltage_key,
-        current_key,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        voltage_key: str,
+        current_key: str,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(
             name,
@@ -1219,43 +2105,35 @@ class CalculatedPowerFerroampSensor(KeyedFerroampSensor):
         )
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
-    def update_state_from_events(self, events):
-        temp_voltage = temp_current = None
-        count = 0
-        for event in events:
-            voltage = event.get(self._voltage_key, None)
-            current = event.get(self._current_key, None)
-            if current is not None and voltage is not None:
-                temp_voltage = (temp_voltage or 0) + float(voltage["val"])
-                temp_current = (temp_current or 0) + float(current["val"])
-                count += 1
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        avg_voltage = average_float_values(events, self._voltage_key)
+        avg_current = average_float_values(events, self._current_key)
 
-        if temp_voltage is None and temp_current is None:
+        if avg_voltage is None or avg_current is None:
             return False
-        else:
-            self._attr_native_value = int(
-                round(temp_voltage / count * temp_current / count, 0)
-            )
-            return True
+        self._attr_native_value = int(round(avg_voltage * avg_current, 0))
+        return True
 
 
 class SinglePhaseFerroampSensor(KeyedFerroampSensor):
-    """Representation of a single phase Sensor"""
+    """Single phase Sensor."""
 
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        phase: str,
+        name: str,
+        entity_prefix: str,
+        key: str,
+        phase: str | None,
         unit: str | None,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -1273,50 +2151,42 @@ class SinglePhaseFerroampSensor(KeyedFerroampSensor):
         self._phase = phase
         self._attr_unique_id = f"{self.device_id}-{self._state_key}-{self._phase}"
 
-    def update_state_from_events(self, events):
-        tmp = None
-        count = 0
-        for event in events:
-            phases = event.get(self._state_key, None)
-            if phases is not None and phases[self._phase] is not None:
-                tmp = (tmp or 0) + float(phases[self._phase])
-                count += 1
-        if tmp is None:
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        avg = average_single_phase_values(events, self._state_key, self._phase)
+        if avg is None:
             return False
-        else:
-            val = tmp / count
-            if (
-                self._attr_native_value is None
-                or (
-                    isinstance(self._attr_native_value, str)
-                    and not isfloat(self._attr_native_value)
-                )
-                or self._attr_state_class != SensorStateClass.TOTAL_INCREASING
-                or val > float(self._attr_native_value)
-                or val * 1.1 < float(self._attr_native_value)
-            ):
-                self._attr_native_value = val
-                return True
-            else:
-                return False
+        if (
+            self._attr_native_value is None
+            or (
+                isinstance(self._attr_native_value, str)
+                and not isfloat(self._attr_native_value)
+            )
+            or self._attr_state_class != SensorStateClass.TOTAL_INCREASING
+            or avg > float(self._attr_native_value)
+            or avg * 1.1 < float(self._attr_native_value)
+        ):
+            self._attr_native_value = avg
+            return True
+        return False
 
 
 class ThreePhaseFerroampSensor(KeyedFerroampSensor):
-    """Representation of a Ferroamp ThreePhase Sensor."""
+    """Ferroamp ThreePhase Sensor."""
 
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
+        name: str,
+        entity_prefix: str,
+        key: str,
         unit: str | None,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(
             name,
@@ -1333,79 +2203,64 @@ class ThreePhaseFerroampSensor(KeyedFerroampSensor):
         if self._attr_state_class is None:
             self._attr_state_class = SensorStateClass.MEASUREMENT
 
-    def get_phases(self, event):
-        phases = event.get(self._state_key, None)
-        if phases is not None and (
-            phases["L1"] is not None
-            or phases["L2"] is not None
-            or phases["L3"] is not None
-        ):
-            phases = dict(
-                L1=float(phases["L1"]), L2=float(phases["L2"]), L3=float(phases["L3"])
-            )
-            return phases
-        return None
+    def get_phases(self, event: MqttEvent) -> PhaseValues | None:
+        """Get phase values from event."""
+        return MqttMessageParser.get_phases(event, self._state_key)
 
-    def calculate_value(self, l1, l2, l3, count):
-        return l1 / count + l2 / count + l3 / count
+    def calculate_value(self, phases: PhaseValues) -> float:
+        """Calculate aggregated value from phases."""
+        return phases.total
 
-    def update_state_from_events(self, events):
-        l1 = l2 = l3 = None
-        count = 0
-        for event in events:
-            phases = self.get_phases(event)
-            if phases is not None:
-                l1 = (l1 or 0) + phases["L1"]
-                l2 = (l2 or 0) + phases["L2"]
-                l3 = (l3 or 0) + phases["L3"]
-                count += 1
-        if l1 is None and l2 is None and l3 is None:
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        avg_phases = average_phase_values(events, self._state_key)
+        if avg_phases is None:
             return False
-        else:
-            val = self.calculate_value(l1, l2, l3, count)
-            if (
-                self._attr_native_value is None
-                or (
-                    isinstance(self._attr_native_value, str)
-                    and not isfloat(self._attr_native_value)
-                )
-                or self._attr_state_class != SensorStateClass.TOTAL_INCREASING
-                or val > float(self._attr_native_value)
-                or val * 1.1 < float(self._attr_native_value)
-            ):
-                self._attr_native_value = val
-                self._attr_extra_state_attributes = dict(
-                    L1=round(float(l1 / count), 2),
-                    L2=round(float(l2 / count), 2),
-                    L3=round(float(l3 / count), 2),
-                )
-                return True
-            else:
-                return False
+        val = self.calculate_value(avg_phases)
+        if (
+            self._attr_native_value is None
+            or (
+                isinstance(self._attr_native_value, str)
+                and not isfloat(self._attr_native_value)
+            )
+            or self._attr_state_class != SensorStateClass.TOTAL_INCREASING
+            or val > float(self._attr_native_value)
+            or val * 1.1 < float(self._attr_native_value)
+        ):
+            self._attr_native_value = val
+            self._attr_extra_state_attributes = {
+                "L1": round(avg_phases.l1, 2),
+                "L2": round(avg_phases.l2, 2),
+                "L3": round(avg_phases.l3, 2),
+            }
+            return True
+        return False
 
 
 class ThreePhaseMinFerroampSensor(ThreePhaseFerroampSensor):
-    """Representation of a Ferroamp ThreePhase Sensor returning the minimum phase value as state value.
-    Used in load balancing applications."""
+    """ThreePhase Sensor returning minimum phase value (for load balancing)."""
 
-    def calculate_value(self, l1, l2, l3, count):
-        return min([l1 / count, l2 / count, l3 / count])
+    def calculate_value(self, phases: PhaseValues) -> float:
+        """Calculate minimum value across phases."""
+        return phases.minimum
 
 
 class SinglePhaseEnergyFerroampSensor(SinglePhaseFerroampSensor):
+    """Single phase energy Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        phase: str,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        phase: str | None,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(
             name,
@@ -1422,66 +2277,69 @@ class SinglePhaseEnergyFerroampSensor(SinglePhaseFerroampSensor):
             **kwargs,
         )
 
-    def get_value(self, event):
-        phases = event.get(self._state_key, None)
-        if phases is not None and phases[self._phase] is not None:
-            return round(float(phases[self._phase]) / 3600000000, 2)
+    def get_energy_value(self, event: MqttEvent) -> float | None:
+        """Get energy value from event in kWh."""
+        val = MqttMessageParser.get_single_phase(event, self._state_key, self._phase)
+        if val is not None:
+            return round(convert_to_kwh(val), 2)
         return None
 
-    def add_event(self, event):
-        val = self.get_value(event)
+    def add_event(self, event: MqttEvent) -> None:
+        """Add event, filtering out zero values."""
+        val = self.get_energy_value(event)
         if val and val > 0:
-            super().add_event(event)
+            KeyedFerroampSensor.add_event(self, event)
             return
 
         _LOGGER.info(
             "%s value %s for phase %s seems to be zero or None. Ignoring",
             self.entity_id,
-            self.get_value(event),
+            self.get_energy_value(event),
             self._phase,
         )
 
-    def update_state_from_events(self, events):
-        tmp = None
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        tmp: float | None = None
         count = 0
         for event in events:
-            val = self.get_value(event)
+            val = self.get_energy_value(event)
             if val is not None:
                 tmp = (tmp or 0) + val
                 count += 1
         if tmp is None:
             return False
-        else:
-            val = tmp / count
-            if (
-                self._attr_native_value is None
-                or (
-                    isinstance(self._attr_native_value, str)
-                    and not isfloat(self._attr_native_value)
-                )
-                or self._attr_state_class != SensorStateClass.TOTAL_INCREASING
-                or val > float(self._attr_native_value)
-                or val * 1.1 < float(self._attr_native_value)
-            ):
-                self._attr_native_value = val
-                return True
-            else:
-                return False
+        avg = tmp / count
+        if (
+            self._attr_native_value is None
+            or (
+                isinstance(self._attr_native_value, str)
+                and not isfloat(self._attr_native_value)
+            )
+            or self._attr_state_class != SensorStateClass.TOTAL_INCREASING
+            or avg > float(self._attr_native_value)
+            or avg * 1.1 < float(self._attr_native_value)
+        ):
+            self._attr_native_value = avg
+            return True
+        return False
 
 
 class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
+    """Three phase energy Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(
             name,
@@ -1497,16 +2355,12 @@ class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
             **kwargs,
         )
 
-    def add_event(self, event):
+    def add_event(self, event: MqttEvent) -> None:
+        """Add event, filtering out zero values."""
         phases = self.get_phases(event)
-        if phases is not None and (
-            phases["L1"] is not None
-            or phases["L2"] is not None
-            or phases["L3"] is not None
-        ):
-            if (phases["L1"] + phases["L2"] + phases["L3"]) > 0:
-                super().add_event(event)
-                return
+        if phases is not None and phases.total > 0:
+            KeyedFerroampSensor.add_event(self, event)
+            return
 
         _LOGGER.info(
             "%s value %s seems to be zero or None. Ignoring",
@@ -1514,35 +2368,73 @@ class ThreePhaseEnergyFerroampSensor(ThreePhaseFerroampSensor):
             self.get_value(event),
         )
 
-    def get_phases(self, event):
+    def get_phases(self, event: MqttEvent) -> PhaseValues | None:
+        """Get phase values from event, converted to kWh."""
         phases = super().get_phases(event)
-        if phases is not None and (
-            phases["L1"] is not None
-            or phases["L2"] is not None
-            or phases["L3"] is not None
-        ):
-            phases = dict(
-                L1=round(phases["L1"] / 3600000000, 2),
-                L2=round(phases["L2"] / 3600000000, 2),
-                L3=round(phases["L3"] / 3600000000, 2),
+        if phases is not None:
+            return PhaseValues(
+                l1=round(convert_to_kwh(phases.l1), 2),
+                l2=round(convert_to_kwh(phases.l2), 2),
+                l3=round(convert_to_kwh(phases.l3), 2),
             )
-            return phases
         return None
+
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events with kWh conversion."""
+        l1: float | None = None
+        l2: float | None = None
+        l3: float | None = None
+        count = 0
+        for event in events:
+            phases = self.get_phases(event)
+            if phases is not None:
+                l1 = (l1 or 0) + phases.l1
+                l2 = (l2 or 0) + phases.l2
+                l3 = (l3 or 0) + phases.l3
+                count += 1
+        if l1 is None and l2 is None and l3 is None:
+            return False
+        avg_phases = PhaseValues(
+            l1=l1 / count if l1 is not None else 0.0,
+            l2=l2 / count if l2 is not None else 0.0,
+            l3=l3 / count if l3 is not None else 0.0,
+        )
+        val = self.calculate_value(avg_phases)
+        if (
+            self._attr_native_value is None
+            or (
+                isinstance(self._attr_native_value, str)
+                and not isfloat(self._attr_native_value)
+            )
+            or self._attr_state_class != SensorStateClass.TOTAL_INCREASING
+            or val > float(self._attr_native_value)
+            or val * 1.1 < float(self._attr_native_value)
+        ):
+            self._attr_native_value = val
+            self._attr_extra_state_attributes = {
+                "L1": round(avg_phases.l1, 2),
+                "L2": round(avg_phases.l2, 2),
+                "L3": round(avg_phases.l3, 2),
+            }
+            return True
+        return False
 
 
 class SinglePhasePowerFerroampSensor(SinglePhaseFerroampSensor):
+    """Single phase power Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        phase: str,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        phase: str | None,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(
             name,
@@ -1560,17 +2452,19 @@ class SinglePhasePowerFerroampSensor(SinglePhaseFerroampSensor):
 
 
 class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
+    """Three phase power Sensor."""
+
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        icon,
-        device_id,
-        device_name,
-        interval,
-        config_id,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        icon: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        config_id: str | None,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(
             name,
@@ -1587,7 +2481,17 @@ class ThreePhasePowerFerroampSensor(ThreePhaseFerroampSensor):
 
 
 class CommandFerroampSensor(FerroampSensor):
-    def __init__(self, name, entity_prefix, device_id, device_name, config_id):
+    """Ferroamp command status Sensor."""
+
+    def __init__(
+        self,
+        name: str,
+        entity_prefix: str,
+        device_id: str,
+        device_name: str,
+        config_id: str | None,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -1599,9 +2503,10 @@ class CommandFerroampSensor(FerroampSensor):
             config_id,
         )
         self._attr_unique_id = f"{self.device_id}_last_cmd"
-        self._attr_extra_state_attributes = {}
+        self._attr_extra_state_attributes: dict[str, Any] = {}
 
-    def add_request(self, trans_id, cmd, arg):
+    def add_request(self, trans_id: str, cmd: str, arg: Any | None) -> None:
+        """Add command request."""
         if arg is not None:
             self._attr_native_value = f"{cmd} ({arg})"
         else:
@@ -1612,7 +2517,8 @@ class CommandFerroampSensor(FerroampSensor):
         if self._added:
             self.async_write_ha_state()
 
-    def add_response(self, trans_id, status, message):
+    def add_response(self, trans_id: str, status: str, message: str) -> None:
+        """Add command response."""
         if self._attr_extra_state_attributes["transId"] == trans_id:
             self._attr_extra_state_attributes["status"] = status
             self._attr_extra_state_attributes["message"] = message
@@ -1621,7 +2527,17 @@ class CommandFerroampSensor(FerroampSensor):
 
 
 class VersionFerroampSensor(FerroampSensor):
-    def __init__(self, name, entity_prefix, device_id, device_name, config_id):
+    """Ferroamp version Sensor."""
+
+    def __init__(
+        self,
+        name: str,
+        entity_prefix: str,
+        device_id: str,
+        device_name: str,
+        config_id: str | None,
+    ) -> None:
+        """Initialize the sensor."""
         super().__init__(
             name,
             entity_prefix,
@@ -1633,29 +2549,30 @@ class VersionFerroampSensor(FerroampSensor):
             config_id,
         )
         self._attr_unique_id = f"{self.device_id}_extapi-version"
-        self._attr_extra_state_attributes = {}
+        self._attr_extra_state_attributes: dict[str, Any] = {}
 
-    def set_version(self, version):
+    def set_version(self, version: str) -> None:
+        """Set version value."""
         self._attr_native_value = version
         if self._added:
             self.async_write_ha_state()
 
 
 class FaultcodeFerroampSensor(KeyedFerroampSensor):
-    """Representation of a Ferroamp Faultcode Sensor."""
+    """Ferroamp Faultcode Sensor."""
 
     def __init__(
         self,
-        name,
-        entity_prefix,
-        key,
-        device_id,
-        device_name,
-        interval,
-        fault_codes,
-        config_id,
-        **kwargs,
-    ):
+        name: str,
+        entity_prefix: str,
+        key: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        fault_codes: list[str],
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(
             name,
@@ -1670,1049 +2587,24 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
             **kwargs,
         )
         self._fault_codes = fault_codes
-        self._attr_extra_state_attributes = {}
+        self._attr_extra_state_attributes: dict[str, str] = {}
 
-    def update_state_from_events(self, events):
-        temp = None
-        for event in events:
-            v = event.get(self._state_key, None)
-            if v is not None:
-                temp = v["val"]
-        if temp is None:
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        val = last_string_value(events, self._state_key)
+        if val is None:
             return False
+        self._attr_native_value = val
+        x = int(val, 16)
+        if x == 0:
+            self._attr_extra_state_attributes["0"] = "No errors"
         else:
-            self._attr_native_value = temp
-            x = int(temp, 16)
-            if x == 0:
-                self._attr_extra_state_attributes["0"] = "No errors"
-            else:
-                if "0" in self._attr_extra_state_attributes:
-                    del self._attr_extra_state_attributes["0"]
-            for i, code in enumerate(self._fault_codes):
-                v = 1 << i
-                if x & v == v:
-                    self._attr_extra_state_attributes[f"{i + 1}"] = code
-                elif f"{i + 1}" in self._attr_extra_state_attributes:
-                    del self._attr_extra_state_attributes[f"{i + 1}"]
-            return True
-
-
-def ehub_sensors(
-    slug,
-    interval,
-    config_id,
-):
-    return [
-        FloatValFerroampSensor(
-            "Estimated Grid Frequency",
-            slug,
-            "gridfreq",
-            UnitOfFrequency.HERTZ,
-            "mdi:sine-wave",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseFerroampSensor(
-            "External Voltage",
-            slug,
-            "ul",
-            UnitOfElectricPotential.VOLT,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "External Voltage L1",
-            slug,
-            "ul",
-            "L1",
-            UnitOfElectricPotential.VOLT,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "External Voltage L2",
-            slug,
-            "ul",
-            "L2",
-            UnitOfElectricPotential.VOLT,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "External Voltage L3",
-            slug,
-            "ul",
-            "L3",
-            UnitOfElectricPotential.VOLT,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseFerroampSensor(
-            "Inverter RMS Current",
-            slug,
-            "il",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-dc",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Inverter RMS Current L1",
-            slug,
-            "il",
-            "L1",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-dc",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Inverter RMS Current L2",
-            slug,
-            "il",
-            "L2",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-dc",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Inverter RMS Current L3",
-            slug,
-            "il",
-            "L3",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-dc",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseFerroampSensor(
-            "Inverter Reactive Current",
-            slug,
-            "ild",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-dc",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Inverter Reactive Current L1",
-            slug,
-            "ild",
-            "L1",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-dc",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Inverter Reactive Current L2",
-            slug,
-            "ild",
-            "L2",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-dc",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Inverter Reactive Current L3",
-            slug,
-            "ild",
-            "L3",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-dc",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseFerroampSensor(
-            "Grid Current",
-            slug,
-            "iext",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Grid Current L1",
-            slug,
-            "iext",
-            "L1",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Grid Current L2",
-            slug,
-            "iext",
-            "L2",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Grid Current L3",
-            slug,
-            "iext",
-            "L3",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseFerroampSensor(
-            "Grid Reactive Current",
-            slug,
-            "iextd",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Grid Reactive Current L1",
-            slug,
-            "iextd",
-            "L1",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Grid Reactive Current L2",
-            slug,
-            "iextd",
-            "L2",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Grid Reactive Current L3",
-            slug,
-            "iextd",
-            "L3",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseFerroampSensor(
-            "External Active Current",
-            slug,
-            "iextq",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "External Active Current L1",
-            slug,
-            "iextq",
-            "L1",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "External Active Current L2",
-            slug,
-            "iextq",
-            "L2",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "External Active Current L3",
-            slug,
-            "iextq",
-            "L3",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseFerroampSensor(
-            "Adaptive Current Equalization",
-            slug,
-            "iace",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Adaptive Current Equalization L1",
-            slug,
-            "iace",
-            "L1",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Adaptive Current Equalization L2",
-            slug,
-            "iace",
-            "L2",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseFerroampSensor(
-            "Adaptive Current Equalization L3",
-            slug,
-            "iace",
-            "L3",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhasePowerFerroampSensor(
-            "Grid Power",
-            slug,
-            "pext",
-            "mdi:transmission-tower",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Grid Power L1",
-            slug,
-            "pext",
-            "L1",
-            "mdi:transmission-tower",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Grid Power L2",
-            slug,
-            "pext",
-            "L2",
-            "mdi:transmission-tower",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Grid Power L3",
-            slug,
-            "pext",
-            "L3",
-            "mdi:transmission-tower",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhasePowerFerroampSensor(
-            "Grid Power Reactive",
-            slug,
-            "pextreactive",
-            "mdi:transmission-tower",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Grid Power Reactive L1",
-            slug,
-            "pextreactive",
-            "L1",
-            "mdi:transmission-tower",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Grid Power Reactive L2",
-            slug,
-            "pextreactive",
-            "L2",
-            "mdi:transmission-tower",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Grid Power Reactive L3",
-            slug,
-            "pextreactive",
-            "L3",
-            "mdi:transmission-tower",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhasePowerFerroampSensor(
-            "Inverter Power, Active",
-            slug,
-            "pinv",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Inverter Power, Active L1",
-            slug,
-            "pinv",
-            "L1",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Inverter Power, Active L2",
-            slug,
-            "pinv",
-            "L2",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Inverter Power, Active L3",
-            slug,
-            "pinv",
-            "L3",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhasePowerFerroampSensor(
-            "Inverter Power, Reactive",
-            slug,
-            "pinvreactive",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Inverter Power, Reactive L1",
-            slug,
-            "pinvreactive",
-            "L1",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Inverter Power, Reactive L2",
-            slug,
-            "pinvreactive",
-            "L2",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Inverter Power, Reactive L3",
-            slug,
-            "pinvreactive",
-            "L3",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhasePowerFerroampSensor(
-            "Consumption Power",
-            slug,
-            "pload",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Consumption Power L1",
-            slug,
-            "pload",
-            "L1",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Consumption Power L2",
-            slug,
-            "pload",
-            "L2",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Consumption Power L3",
-            slug,
-            "pload",
-            "L3",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhasePowerFerroampSensor(
-            "Consumption Power Reactive",
-            slug,
-            "ploadreactive",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Consumption Power Reactive L1",
-            slug,
-            "ploadreactive",
-            "L1",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Consumption Power Reactive L2",
-            slug,
-            "ploadreactive",
-            "L2",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhasePowerFerroampSensor(
-            "Consumption Power Reactive L3",
-            slug,
-            "ploadreactive",
-            "L3",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseEnergyFerroampSensor(
-            "External Energy Produced",
-            slug,
-            "wextprodq",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "External Energy Produced L1",
-            slug,
-            "wextprodq",
-            "L1",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "External Energy Produced L2",
-            slug,
-            "wextprodq",
-            "L2",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "External Energy Produced L3",
-            slug,
-            "wextprodq",
-            "L3",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseEnergyFerroampSensor(
-            "External Energy Consumed",
-            slug,
-            "wextconsq",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "External Energy Consumed L1",
-            slug,
-            "wextconsq",
-            "L1",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "External Energy Consumed L2",
-            slug,
-            "wextconsq",
-            "L2",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "External Energy Consumed L3",
-            slug,
-            "wextconsq",
-            "L3",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseEnergyFerroampSensor(
-            "Inverter Energy Produced",
-            slug,
-            "winvprodq",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Inverter Energy Produced L1",
-            slug,
-            "winvprodq",
-            "L1",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Inverter Energy Produced L2",
-            slug,
-            "winvprodq",
-            "L2",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Inverter Energy Produced L3",
-            slug,
-            "winvprodq",
-            "L3",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseEnergyFerroampSensor(
-            "Inverter Energy Consumed",
-            slug,
-            "winvconsq",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Inverter Energy Consumed L1",
-            slug,
-            "winvconsq",
-            "L1",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Inverter Energy Consumed L2",
-            slug,
-            "winvconsq",
-            "L2",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Inverter Energy Consumed L3",
-            slug,
-            "winvconsq",
-            "L3",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseEnergyFerroampSensor(
-            "Load Energy Produced",
-            slug,
-            "wloadprodq",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Load Energy Produced L1",
-            slug,
-            "wloadprodq",
-            "L1",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Load Energy Produced L2",
-            slug,
-            "wloadprodq",
-            "L2",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Load Energy Produced L3",
-            slug,
-            "wloadprodq",
-            "L3",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        ThreePhaseEnergyFerroampSensor(
-            "Load Energy Consumed",
-            slug,
-            "wloadconsq",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Load Energy Consumed L1",
-            slug,
-            "wloadconsq",
-            "L1",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Load Energy Consumed L2",
-            slug,
-            "wloadconsq",
-            "L2",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        SinglePhaseEnergyFerroampSensor(
-            "Load Energy Consumed L3",
-            slug,
-            "wloadconsq",
-            "L3",
-            "mdi:power-plug",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        EnergyFerroampSensor(
-            "Total Solar Energy",
-            slug,
-            "wpv",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        EnergyFerroampSensor(
-            "Battery Energy Produced",
-            slug,
-            "wbatprod",
-            "mdi:battery-plus",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            check_presence=True,
-        ),
-        EnergyFerroampSensor(
-            "Battery Energy Consumed",
-            slug,
-            "wbatcons",
-            "mdi:battery-minus",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            check_presence=True,
-        ),
-        IntValFerroampSensor(
-            "System State",
-            slug,
-            "state",
-            "",
-            "mdi:traffic-light",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        DcLinkFerroampSensor(
-            "DC Link Voltage",
-            slug,
-            "udc",
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        BatteryFerroampSensor(
-            "System State of Charge",
-            slug,
-            "soc",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            check_presence=True,
-        ),
-        PercentageFerroampSensor(
-            "System State of Health",
-            slug,
-            "soh",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            check_presence=True,
-        ),
-        IntValFerroampSensor(
-            "Apparent power",
-            slug,
-            "sext",
-            "VA",
-            "mdi:transmission-tower",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-        ),
-        PowerFerroampSensor(
-            "Solar Power",
-            slug,
-            "ppv",
-            "mdi:solar-power",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            state_class=SensorStateClass.MEASUREMENT,
-        ),
-        PowerFerroampSensor(
-            "Battery Power",
-            slug,
-            "pbat",
-            "mdi:battery",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            state_class=SensorStateClass.MEASUREMENT,
-            check_presence=True,
-        ),
-        IntValFerroampSensor(
-            "Total Rated Capacity of All Batteries",
-            slug,
-            "ratedcap",
-            UnitOfEnergy.WATT_HOUR,
-            "mdi:battery",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            check_presence=True,
-        ),
-        FloatValFerroampSensor(
-            "Available Three Phase Active Current For Load Balancing",
-            slug,
-            "iavblq_3p",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            state_class=SensorStateClass.MEASUREMENT,
-            check_presence=True,
-        ),
-        ThreePhaseMinFerroampSensor(
-            "Available Active Current For Load Balancing",
-            slug,
-            "iavblq",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            check_presence=True,
-        ),
-        ThreePhaseMinFerroampSensor(
-            "Available RMS Current For Load Balancing",
-            slug,
-            "iavbl",
-            UnitOfElectricCurrent.AMPERE,
-            "mdi:current-ac",
-            f"{slug}_{EHUB}",
-            EHUB_NAME,
-            interval,
-            config_id,
-            check_presence=True,
-        ),
-    ]
+            if "0" in self._attr_extra_state_attributes:
+                del self._attr_extra_state_attributes["0"]
+        for i, code in enumerate(self._fault_codes):
+            v = 1 << i
+            if x & v == v:
+                self._attr_extra_state_attributes[f"{i + 1}"] = code
+            elif f"{i + 1}" in self._attr_extra_state_attributes:
+                del self._attr_extra_state_attributes[f"{i + 1}"]
+        return True
