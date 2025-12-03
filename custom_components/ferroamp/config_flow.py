@@ -41,13 +41,10 @@ class FerroampConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return FerroampOptionsFlowHandler(config_entry)
+        return FerroampOptionsFlowHandler()
 
 
 class FerroampOptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry):
-        self.config_entry = config_entry
-
     async def async_step_init(self, user_input=None):
         errors: Dict[str, str] = {}
         if user_input is not None:
