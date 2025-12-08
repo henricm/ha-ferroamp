@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.16.1](https://github.com/henricm/ha-ferroamp/compare/v1.16.0...v1.16.1) (2025-12-08)
+
+
+### Documentation
+
+* add CLAUDE.md for project documentation and guide ([7930be3](https://github.com/henricm/ha-ferroamp/commit/7930be33a454dd5cefdb6d271cd908ac676d2eed))
+
+
+### Code Refactoring
+
+* **mqtt_parser:** add MQTT message parsing functions and classes ([88f0834](https://github.com/henricm/ha-ferroamp/commit/88f0834e8f3b117364c49754fc3147aff6167dcf))
+
+
+### Build System
+
+* **deps-dev:** bump black from 25.11.0 to 25.12.0 ([157893d](https://github.com/henricm/ha-ferroamp/commit/157893d614b514e8ebc54aaf62137c199a84344a))
+
 ## [1.16.0](https://github.com/henricm/ha-ferroamp/compare/v1.15.0...v1.16.0) (2025-12-03)
 
 
