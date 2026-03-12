@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.16.1](https://github.com/henricm/ha-ferroamp/compare/v1.16.0...v1.16.1) (2026-03-12)
+
+
+### Documentation
+
+* add CLAUDE.md for project documentation and guide ([7930be3](https://github.com/henricm/ha-ferroamp/commit/7930be33a454dd5cefdb6d271cd908ac676d2eed))
+
+
+### Code Refactoring
+
+* **mqtt_parser:** add MQTT message parsing functions and classes ([88f0834](https://github.com/henricm/ha-ferroamp/commit/88f0834e8f3b117364c49754fc3147aff6167dcf))
+
+
+### Build System
+
+* **deps-dev:** bump black from 25.11.0 to 25.12.0 ([157893d](https://github.com/henricm/ha-ferroamp/commit/157893d614b514e8ebc54aaf62137c199a84344a))
+* **deps-dev:** bump black from 25.12.0 to 26.1.0 ([76cab6c](https://github.com/henricm/ha-ferroamp/commit/76cab6c3c74438bc3088907ac4733357e7870277))
+* **deps-dev:** bump black from 26.1.0 to 26.3.0 ([04bc763](https://github.com/henricm/ha-ferroamp/commit/04bc763c03042026d4f532dbe7dc1eb7ec68cf7d))
+* **deps-dev:** bump black from 26.3.0 to 26.3.1 ([8113f27](https://github.com/henricm/ha-ferroamp/commit/8113f27b46080bb78d2f40ed1438b62e553b2e96))
+* **deps-dev:** bump isort from 7.0.0 to 8.0.0 ([09c8fc0](https://github.com/henricm/ha-ferroamp/commit/09c8fc072f40ff46af89fe8e5762c6eb7e6fe76a))
+* **deps-dev:** bump isort from 8.0.0 to 8.0.1 ([6d265d3](https://github.com/henricm/ha-ferroamp/commit/6d265d3e7b58562a7938f2e18599b71fe9054371))
+* **deps-dev:** bump pre-commit from 4.5.0 to 4.5.1 ([f1bb407](https://github.com/henricm/ha-ferroamp/commit/f1bb407ed443d5cc9a7dbc74068fbcb4abc14a76))
+
 ## [1.16.0](https://github.com/henricm/ha-ferroamp/compare/v1.15.0...v1.16.0) (2025-12-03)
 
 
