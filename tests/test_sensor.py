@@ -1840,6 +1840,20 @@ async def test_base_class_update_state_from_events():
         sensor.update_state_from_events([{}])
 
 
+async def test_disabled_sensor_does_not_accumulate_events():
+    """Regression for issue #888: disabled sensors must not buffer MQTT events.
+
+    Disabled entities never receive ``async_added_to_hass``, so ``_added``
+    stays False. ``add_event`` previously appended to ``self.events`` before
+    checking ``_added``, causing unbounded growth.
+    """
+    sensor = KeyedFerroampSensor("test", "prefix", "key", "", "", "", "", 20, "a")
+    assert sensor._added is False
+    for _ in range(1000):
+        sensor.add_event({"key": 1})
+    assert sensor.events == []
+
+
 async def test_control_command(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)

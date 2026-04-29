@@ -1666,11 +1666,16 @@ class KeyedFerroampSensor(FerroampSensor):
 
     def add_event(self, event: MqttEvent) -> None:
         """Add MQTT event to processing queue."""
+        # Disabled entities never receive `async_added_to_hass`, so `_added`
+        # stays False forever. Skipping here prevents `self.events` from
+        # accumulating MQTT payloads indefinitely (issue #888).
+        if not self._added:
+            return
         if not self.check_presence or self.present(event):
             self.events.append(event)
         now = datetime.now()
         delta = (now - self.updated).total_seconds()
-        if delta > self._interval and self._added:
+        if delta > self._interval:
             self.process_events(now)
 
     def process_events(self, now: datetime) -> None:
