@@ -1029,7 +1029,7 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
             "ubat": {"val": 622.601},
             "ibat": {"val": 1.5700000000000001},
             "relaystatus": {"val": "0"},
-            "faultcode": {"val": "80"},
+            "faultcode": {"val": "128"},
             "ts": {"val": "2021-03-07T19:21:04UTC"},
             "id": {"val": "1"},
             "wbatprod": {"val": 2465106122063}
@@ -1098,7 +1098,7 @@ async def test_setting_eso_sensor_values_via_mqtt_message(hass, mqtt_mock):
     }
 
     state = hass.states.get("sensor.ferroamp_eso_1_faultcode")
-    assert state.state == "80"
+    assert state.state == "128"
     assert state.attributes == {
         "friendly_name": "ESO 1 Faultcode",
         "icon": "mdi:traffic-light",
@@ -1137,7 +1137,7 @@ async def test_relay_status_open(hass, mqtt_mock):
             "ubat": {"val": 622.601},
             "ibat": {"val": 1.5700000000000001},
             "relaystatus": {"val": "1"},
-            "faultcode": {"val": "80"},
+            "faultcode": {"val": "128"},
             "ts": {"val": "2021-03-07T19:21:04UTC"},
             "id": {"val": "1"},
             "wbatprod": {"val": 2465106122063}
@@ -1163,7 +1163,7 @@ async def test_relay_status_precharge(hass, mqtt_mock):
             "ubat": {"val": 622.601},
             "ibat": {"val": 1.5700000000000001},
             "relaystatus": {"val": "2"},
-            "faultcode": {"val": "80"},
+            "faultcode": {"val": "128"},
             "ts": {"val": "2021-03-07T19:21:04UTC"},
             "id": {"val": "1"},
             "wbatprod": {"val": 2465106122063}
@@ -1426,6 +1426,96 @@ async def test_migrate_old_sso_entities(hass, mqtt_mock):
     }
 
 
+async def test_decoded_eso_fault_state_uses_decimal_bitmask(hass, mqtt_mock):
+    config_entry = create_config()
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    topic = "extapi/data/eso"
+    async_fire_mqtt_message(
+        hass,
+        topic,
+        """{
+                "soc": {"val": 48.100003999999998},
+                "temp": {"val": 20.379000000000001},
+                "wbatcons": {"val": 2213535479518},
+                "ubat": {"val": 622.601},
+                "ibat": {"val": 1.5700000000000001},
+                "relaystatus": {"val": "0"},
+                "faultcode": {"val": "544"},
+                "ts": {"val": "2021-03-07T19:21:04UTC"},
+                "id": {"val": "1"},
+                "wbatprod": {"val": 2465106122063}
+            }""",
+    )
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    state = hass.states.get("sensor.ferroamp_eso_1_fault_state")
+    assert state.state == "DcLinkVoltageTooHigh|Unknown0x0200"
+    assert state.attributes["friendly_name"] == "ESO 1 Fault State"
+    assert state.attributes["icon"] == "mdi:traffic-light"
+    assert state.attributes["raw_value"] == "544"
+    assert state.attributes["value_hex"] == "0x0220"
+    assert state.attributes["active_messages"] == [
+        "The DC-link voltage in ESO is so high that it prevents operation."
+    ]
+    assert state.attributes["unknown_bits"] == ["0x0200"]
+
+
+async def test_decoded_sso_fault_state_uses_decimal_bitmask(hass, mqtt_mock):
+    config_entry = create_config()
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    topic = "extapi/data/sso"
+    async_fire_mqtt_message(
+        hass,
+        topic,
+        """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:42UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "1088"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""",
+    )
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_fault_state")
+    assert state.state == "InternalTemperatureLimit|PowerLimiting"
+    assert state.attributes["friendly_name"] == "SSO 12345678 Fault State"
+    assert state.attributes["raw_value"] == "1088"
+    assert state.attributes["value_hex"] == "0x0440"
+    assert state.attributes["unknown_bits"] == []
+
+    async_fire_mqtt_message(
+        hass,
+        topic,
+        """{
+                "relaystatus": {"val": "0"},
+                "temp": {"val": "6.482"},
+                "wpv": {"val": "843516404273"},
+                "ts": {"val": "2021-03-08T08:22:47UTC"},
+                "udc": {"val": "769.872"},
+                "faultcode": {"val": "1"},
+                "ipv": {"val": "4.826"},
+                "upv": {"val": "653.012"},
+                "id": {"val": "12345678"}
+            }""",
+    )
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    state = hass.states.get("sensor.ferroamp_sso_12345678_fault_state")
+    assert state.state == "PvGroundFault"
+    assert state.attributes["active_messages"] == ["Error, PV ground fault"]
+
+
 async def test_sso_fault_codes(hass, mqtt_mock):
     config_entry = create_config()
     config_entry.add_to_hass(hass)
@@ -1467,7 +1557,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "wpv": {"val": "843516404273"},
                 "ts": {"val": "2021-03-08T08:22:42UTC"},
                 "udc": {"val": "769.872"},
-                "faultcode": {"val": "4"},
+                "faultcode": {"val": "1"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
                 "id": {"val": "12345678"}
@@ -1476,11 +1566,11 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
-    assert state.state == "4"
+    assert state.state == "1"
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
-        "3": "Error, PV ground fault",
+        "1": "Error, PV ground fault",
     }
 
     async_fire_mqtt_message(
@@ -1517,7 +1607,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "wpv": {"val": "843516404273"},
                 "ts": {"val": "2021-03-08T08:22:42UTC"},
                 "udc": {"val": "769.872"},
-                "faultcode": {"val": "10"},
+                "faultcode": {"val": "16"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
                 "id": {"val": "12345678"}
@@ -1526,7 +1616,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
-    assert state.state == "10"
+    assert state.state == "16"
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
@@ -1542,7 +1632,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "wpv": {"val": "843516404273"},
                 "ts": {"val": "2021-03-08T08:22:42UTC"},
                 "udc": {"val": "769.872"},
-                "faultcode": {"val": "20"},
+                "faultcode": {"val": "32"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
                 "id": {"val": "12345678"}
@@ -1551,7 +1641,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
-    assert state.state == "20"
+    assert state.state == "32"
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
@@ -1567,7 +1657,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "wpv": {"val": "843516404273"},
                 "ts": {"val": "2021-03-08T08:22:42UTC"},
                 "udc": {"val": "769.872"},
-                "faultcode": {"val": "40"},
+                "faultcode": {"val": "64"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
                 "id": {"val": "12345678"}
@@ -1576,7 +1666,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
-    assert state.state == "40"
+    assert state.state == "64"
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
@@ -1592,7 +1682,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "wpv": {"val": "843516404273"},
                 "ts": {"val": "2021-03-08T08:22:42UTC"},
                 "udc": {"val": "769.872"},
-                "faultcode": {"val": "80"},
+                "faultcode": {"val": "128"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
                 "id": {"val": "12345678"}
@@ -1601,7 +1691,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
-    assert state.state == "80"
+    assert state.state == "128"
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
@@ -1617,7 +1707,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "wpv": {"val": "843516404273"},
                 "ts": {"val": "2021-03-08T08:22:42UTC"},
                 "udc": {"val": "769.872"},
-                "faultcode": {"val": "100"},
+                "faultcode": {"val": "256"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
                 "id": {"val": "12345678"}
@@ -1626,7 +1716,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
-    assert state.state == "100"
+    assert state.state == "256"
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
@@ -1642,7 +1732,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "wpv": {"val": "843516404273"},
                 "ts": {"val": "2021-03-08T08:22:42UTC"},
                 "udc": {"val": "769.872"},
-                "faultcode": {"val": "200"},
+                "faultcode": {"val": "512"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
                 "id": {"val": "12345678"}
@@ -1651,7 +1741,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
-    assert state.state == "200"
+    assert state.state == "512"
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",
@@ -1667,7 +1757,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
                 "wpv": {"val": "843516404273"},
                 "ts": {"val": "2021-03-08T08:22:42UTC"},
                 "udc": {"val": "769.872"},
-                "faultcode": {"val": "400"},
+                "faultcode": {"val": "1024"},
                 "ipv": {"val": "4.826"},
                 "upv": {"val": "653.012"},
                 "id": {"val": "12345678"}
@@ -1676,7 +1766,7 @@ async def test_sso_fault_codes(hass, mqtt_mock):
     await hass.async_block_till_done(wait_background_tasks=True)
 
     state = hass.states.get("sensor.ferroamp_sso_12345678_faultcode")
-    assert state.state == "400"
+    assert state.state == "1024"
     assert state.attributes == {
         "friendly_name": "SSO 12345678 Faultcode",
         "icon": "mdi:traffic-light",

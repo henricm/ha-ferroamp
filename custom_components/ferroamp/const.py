@@ -42,9 +42,9 @@ for trouble shooting the battery, or call Ferroamp Support.""",
 ]
 
 FAULT_CODES_SSO = [
-    "Unknown fault code",
-    "Unknown fault code",
     "Error, PV ground fault",
+    "Unknown fault code",
+    "Unknown fault code",
     "Error, internal voltage unbalance",
     "Warning, PV undervoltage, not possible to sustain MPPT operation",
     "Warning, DC grid voltage too high, SSO will not connect to DC grid",
