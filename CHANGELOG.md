@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.17.0](https://github.com/henricm/ha-ferroamp/compare/v1.16.1...v1.17.0) (2026-05-29)
+
+
+### Features
+
+* **sensor:** add decoded fault state sensors ([4024de3](https://github.com/henricm/ha-ferroamp/commit/4024de3dfc91e3914f202d67882307f10f68b052))
+* **sensor:** add decoded fault state sensors ([0a369c9](https://github.com/henricm/ha-ferroamp/commit/0a369c9217af10e03e163666968fd836c26727db))
+
+
+### Build System
+
+* **deps-dev:** bump black from 26.3.1 to 26.5.0 ([8838e2e](https://github.com/henricm/ha-ferroamp/commit/8838e2e61890897ab49aa545c4de0807b8d17343))
+* **deps-dev:** bump black from 26.5.0 to 26.5.1 ([d2dc81d](https://github.com/henricm/ha-ferroamp/commit/d2dc81d7503072f4074754cfd90ca6983ea54a53))
+
 ## [1.16.1](https://github.com/henricm/ha-ferroamp/compare/v1.16.0...v1.16.1) (2026-04-29)
 
 
