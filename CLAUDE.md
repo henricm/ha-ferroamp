@@ -31,8 +31,9 @@ pre-commit run --all-files
 
 - `custom_components/ferroamp/__init__.py` - Entry point; sets up MQTT subscriptions for battery control services (`charge`, `discharge`, `autocharge`)
 - `custom_components/ferroamp/sensor.py` - Main sensor platform; subscribes to MQTT topics and creates sensors dynamically
+- `custom_components/ferroamp/fault_codes.py` - Internal `IntFlag` models and helpers for decoded ESO/SSO fault state sensors
 - `custom_components/ferroamp/config_flow.py` - UI-based configuration for the integration
-- `custom_components/ferroamp/const.py` - Constants including MQTT topics, fault codes, and regex patterns
+- `custom_components/ferroamp/const.py` - Constants including MQTT topics, legacy fault code messages, and regex patterns
 
 ### Sensor Hierarchy
 
@@ -43,7 +44,7 @@ The `sensor.py` contains a hierarchy of sensor classes:
   - `ThreePhaseFerroampSensor` - Aggregates L1/L2/L3 phases
   - `SinglePhaseFerroampSensor` - Individual phase values
   - `EnergyFerroampSensor` - Energy accumulation with kWh conversion
-  - Specialized: `BatteryFerroampSensor`, `TemperatureFerroampSensor`, `FaultcodeFerroampSensor`
+  - Specialized: `BatteryFerroampSensor`, `TemperatureFerroampSensor`, `FaultcodeFerroampSensor`, `DecodedFaultcodeFerroampSensor`
 
 ### MQTT Topic Structure
 
@@ -53,6 +54,14 @@ Sensors subscribe to topics under a configurable prefix (default: `extapi`):
 - `extapi/data/eso` - Battery system data (5s interval)
 - `extapi/data/esm` - Battery module data (60s interval)
 - `extapi/control/*` - Battery control request/response
+
+### Fault Codes
+
+ESO and SSO devices expose the original `Faultcode` sensor for backwards compatibility. This legacy sensor parses the MQTT value as a decimal `uint16` bitmask and exposes mapped messages as attributes.
+
+New `Fault State` sensors are added beside the legacy sensors for ESO and SSO devices. They parse `faultcode.val` as a decimal `uint16` bitmask, model known bits with `IntFlag` classes in `fault_codes.py`, and expose a human-readable PascalCase state that is visible in Home Assistant history, for example `DcLinkVoltageTooHigh`, `InternalTemperatureLimit|PowerLimiting`, or `Unknown0x0200` for undocumented bits. Supporting attributes include `raw_value`, `value_hex`, `active_messages`, and `unknown_bits`.
+
+SSO `PvGroundFault` is mapped to bit `0x0001` based on Ferroamp support feedback. Keep the SSO mapping in `const.py` and `fault_codes.py` aligned for this bit so the legacy `Faultcode` and decoded `Fault State` sensors report the same PV ground fault.
 
 ### Event Processing
 

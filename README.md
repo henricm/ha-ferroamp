@@ -42,6 +42,24 @@ This integration will add lots of sensors for the installed hardware with the pr
 
 I'm also still figuring out what some of the sensors actually are, since the Ferroamp API documentation still seems to be incomplete in some areas.
 
+## Fault codes
+
+ESO and SSO devices have two fault-related sensors:
+
+- `Faultcode` - the original/raw faultcode sensor, kept for backwards compatibility.
+- `Fault State` - a decoded diagnostic sensor intended to be easier to read in Home Assistant history.
+
+The `Fault State` sensor parses the API value as a decimal `uint16` bitmask and exposes joined PascalCase fault names as the sensor state. Examples:
+
+| Device | Raw value | Fault State |
+|--------|-----------|-------------|
+| ESO | `32` | `DcLinkVoltageTooHigh` |
+| ESO | `544` | `DcLinkVoltageTooHigh\|Unknown0x0200` |
+| SSO | `1` | `PvGroundFault` |
+| SSO | `1088` | `InternalTemperatureLimit\|PowerLimiting` |
+
+Unknown or undocumented bits are shown as `Unknown0xNNNN`. The sensor also includes attributes with the raw value, hexadecimal value, active messages and unknown bits.
+
 ## Upgrading from a version before config flow was implemented
 
 1. Remove the integration configuration. i.e this

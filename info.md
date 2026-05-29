@@ -10,6 +10,10 @@ This integration adds sensors for the [Ferroamp](https://ferroamp.com) EnergyHub
 2. Set a name for the integration as well as the MQTT-prefix where updates are sent (default values are probably fine for a standard-setup but if a bridge-connection is used the MQTT-topics can be re-mapped)
 3. Wait for all the devices to become present (EnergyHub, SSO's, ESOs and ESMs depending on your setup. Be patient since ESMs are only updated every 60 seconds.)
 
+## Fault codes
+
+ESO and SSO devices expose both the original raw `Faultcode` sensor and a decoded `Fault State` diagnostic sensor. `Fault State` parses the API value as a decimal bitmask and shows readable states such as `DcLinkVoltageTooHigh`, `PvGroundFault` or `InternalTemperatureLimit|PowerLimiting`. Unknown bits are shown as `Unknown0xNNNN`.
+
 ## Update interval
 
 To avoid too much data into home assistant, we only update sensors with new values every 30 second (average values are calculated where appropriate). This interval can be configured in the options of the integration.

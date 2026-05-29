@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
+from enum import Enum, IntFlag
 import json
 import logging
 from typing import Any
@@ -30,7 +30,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import callback
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity_registry import (
     EntityRegistry,
@@ -59,6 +59,16 @@ from .const import (
     TOPIC_ESM,
     TOPIC_ESO,
     TOPIC_SSO,
+)
+from .fault_codes import (
+    ESO_FAULT_DESCRIPTIONS,
+    SSO_FAULT_DESCRIPTIONS,
+    EsoFault,
+    SsoFault,
+    active_fault_descriptions,
+    format_fault_state,
+    parse_faultcode,
+    unknown_fault_bits,
 )
 from .mqtt_parser import (
     CommandParser,
@@ -1145,6 +1155,18 @@ async def async_setup_entry(
                     config_id,
                     model=model,
                 ),
+                DecodedFaultcodeFerroampSensor(
+                    "Fault State",
+                    device_id,
+                    "faultcode",
+                    device_id,
+                    device_name,
+                    interval,
+                    SsoFault,
+                    SSO_FAULT_DESCRIPTIONS,
+                    config_id,
+                    model=model,
+                ),
                 RelayStatusFerroampSensor(
                     "Relay Status",
                     device_id,
@@ -1250,6 +1272,17 @@ async def async_setup_entry(
                     device_name,
                     interval,
                     FAULT_CODES_ESO,
+                    config_id,
+                ),
+                DecodedFaultcodeFerroampSensor(
+                    "Fault State",
+                    device_id,
+                    "faultcode",
+                    device_id,
+                    device_name,
+                    interval,
+                    EsoFault,
+                    ESO_FAULT_DESCRIPTIONS,
                     config_id,
                 ),
                 RelayStatusFerroampSensor(
@@ -2600,7 +2633,7 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
         if val is None:
             return False
         self._attr_native_value = val
-        x = int(val, 16)
+        x = parse_faultcode(val)
         if x == 0:
             self._attr_extra_state_attributes["0"] = "No errors"
         else:
@@ -2612,4 +2645,65 @@ class FaultcodeFerroampSensor(KeyedFerroampSensor):
                 self._attr_extra_state_attributes[f"{i + 1}"] = code
             elif f"{i + 1}" in self._attr_extra_state_attributes:
                 del self._attr_extra_state_attributes[f"{i + 1}"]
+        return True
+
+
+class DecodedFaultcodeFerroampSensor(KeyedFerroampSensor):
+    """Ferroamp decoded faultcode sensor using decimal bitmask parsing."""
+
+    def __init__(
+        self,
+        name: str,
+        entity_prefix: str,
+        key: str,
+        device_id: str,
+        device_name: str,
+        interval: int,
+        fault_type: type[IntFlag],
+        fault_descriptions: Mapping[IntFlag, str],
+        config_id: str | None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(
+            name,
+            entity_prefix,
+            key,
+            None,
+            "mdi:traffic-light",
+            device_id,
+            device_name,
+            interval,
+            config_id,
+            **kwargs,
+        )
+        self._attr_unique_id = f"{self.device_id}-fault_state"
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._fault_type = fault_type
+        self._fault_descriptions = fault_descriptions
+
+    def update_state_from_events(self, events: list[MqttEvent]) -> bool:
+        """Update state from events."""
+        val = last_string_value(events, self._state_key)
+        if val is None:
+            return False
+
+        try:
+            value = parse_faultcode(val)
+        except ValueError:
+            self._attr_native_value = "Invalid"
+            self._attr_extra_state_attributes = {"raw_value": val}
+            return True
+
+        self._attr_native_value = format_fault_state(value, self._fault_type)
+        self._attr_extra_state_attributes = {
+            "raw_value": val,
+            "value_hex": f"0x{value:04X}",
+            "active_messages": active_fault_descriptions(
+                value,
+                self._fault_type,
+                self._fault_descriptions,
+            ),
+            "unknown_bits": unknown_fault_bits(value, self._fault_type),
+        }
         return True
