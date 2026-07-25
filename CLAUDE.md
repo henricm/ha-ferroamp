@@ -75,4 +75,4 @@ The project uses commitlint with conventional commits format. Commits must follo
 
 Tests use `pytest-homeassistant-custom-component` which provides Home Assistant test fixtures. The `conftest.py` enables custom integration loading and mocks persistent notifications.
 
-Required Python version: 3.13+
+Required Python version: 3.14+

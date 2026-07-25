@@ -2381,6 +2381,7 @@ async def test_extapi_version_request(hass, mqtt_mock):
         '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "extapiversion"}}',
         0,
         False,
+        message_expiry_interval=None,
     )
 
 
