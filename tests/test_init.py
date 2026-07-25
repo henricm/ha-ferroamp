@@ -92,6 +92,7 @@ async def test_service_charge(hass, mqtt_mock):
                 '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "charge", "arg": 2000}}',
                 0,
                 False,
+                message_expiry_interval=None,
             )
         ]
     )
@@ -123,6 +124,7 @@ async def test_service_charge_default_power(hass, mqtt_mock):
                 '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "charge", "arg": 1000}}',
                 0,
                 False,
+                message_expiry_interval=None,
             )
         ]
     )
@@ -156,6 +158,7 @@ async def test_service_discharge(hass, mqtt_mock):
                 '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "discharge", "arg": 2000}}',
                 0,
                 False,
+                message_expiry_interval=None,
             )
         ]
     )
@@ -187,6 +190,7 @@ async def test_service_discharge_default_power(hass, mqtt_mock):
                 '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "discharge", "arg": 1000}}',
                 0,
                 False,
+                message_expiry_interval=None,
             )
         ]
     )
@@ -218,6 +222,7 @@ async def test_service_autocharge(hass, mqtt_mock):
                 '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "auto"}}',
                 0,
                 False,
+                message_expiry_interval=None,
             )
         ]
     )
@@ -345,6 +350,7 @@ async def test_multiple_configs_correct_prefix_is_used(hass, mqtt_mock):
                 '{"transId": "00000000-0000-0000-0000-000000000001", "cmd": {"name": "auto"}}',
                 0,
                 False,
+                message_expiry_interval=None,
             )
         ]
     )
