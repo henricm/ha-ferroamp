@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.17.1](https://github.com/henricm/ha-ferroamp/compare/v1.17.0...v1.17.1) (2026-08-31)
+
+
+### Miscellaneous Chores
+
+* **deps:** move to Python 3.14 and unblock Dependabot ([b10c71e](https://github.com/henricm/ha-ferroamp/commit/b10c71e96e08e4f68ffeff057ffb25f9f576a034))
+
+
+### Build System
+
+* **deps-dev:** bump colorlog from 6.10.1 to 6.11.0 ([5626626](https://github.com/henricm/ha-ferroamp/commit/56266265eac1804149d598dece88984c4f4ed178))
+* **deps-dev:** bump colorlog from 6.11.0 to 6.12.0 ([29d0806](https://github.com/henricm/ha-ferroamp/commit/29d0806045fbb2409708f173ff12f4601ad5e524))
+* **deps-dev:** bump isort from 8.0.1 to 9.0.1 ([65f3550](https://github.com/henricm/ha-ferroamp/commit/65f35507c36d189b076423057307ece910630501))
+* **deps-dev:** bump pre-commit from 4.6.0 to 4.6.1 ([9d76444](https://github.com/henricm/ha-ferroamp/commit/9d764445c57f2c17deec0b035d83bdd32a7525e6))
+* **deps-dev:** bump pre-commit from 4.6.1 to 4.6.2 ([f0ebf20](https://github.com/henricm/ha-ferroamp/commit/f0ebf20a1728fa2247b4677a91f9418e1628dbd2))
+* **deps:** bump actions/checkout from 6 to 7 ([482f21d](https://github.com/henricm/ha-ferroamp/commit/482f21d9ec343649097039e4d97f80c6b5765e56))
+* **deps:** bump actions/setup-python from 6 to 7 ([e2c897a](https://github.com/henricm/ha-ferroamp/commit/e2c897adc2e62215c8de3fb8d0423cc1d826725d))
+* **deps:** bump github/codeql-action from 4 to 4.37.3 ([ef4f914](https://github.com/henricm/ha-ferroamp/commit/ef4f91428e94c66efedade175677db5d553affc1))
+* **deps:** bump github/codeql-action from 4.37.3 to 4.37.4 ([350218b](https://github.com/henricm/ha-ferroamp/commit/350218b8f19c0bca86b60570f04f6d9cacbbce53))
+* **deps:** bump github/codeql-action from 4.37.4 to 4.37.5 ([b206e96](https://github.com/henricm/ha-ferroamp/commit/b206e963fcf829bee1947a30a168cc13435aefad))
+* **deps:** bump github/codeql-action from 4.37.5 to 4.37.6 ([8c2b9e2](https://github.com/henricm/ha-ferroamp/commit/8c2b9e28c02c6956091ccb2deb2cd93c47b36829))
+* **deps:** bump github/codeql-action from 4.37.6 to 4.37.7 ([0e4e453](https://github.com/henricm/ha-ferroamp/commit/0e4e4534589fd4ad5bcf2d29b1b19d2401c8c59f))
+* **deps:** bump github/codeql-action from 4.37.7 to 4.37.8 ([ad8adf6](https://github.com/henricm/ha-ferroamp/commit/ad8adf60eef92d0e9961c4f1f42984b96f0deb0e))
+* **deps:** bump github/codeql-action from 4.37.8 to 4.37.9 ([2fdd852](https://github.com/henricm/ha-ferroamp/commit/2fdd852b09e502e5323db50fdfc34b77d473f154))
+
 ## [1.17.0](https://github.com/henricm/ha-ferroamp/compare/v1.16.1...v1.17.0) (2026-05-29)
 
 
