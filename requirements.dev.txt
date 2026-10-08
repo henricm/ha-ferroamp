@@ -1,5 +1,5 @@
 -r requirements.test.txt
-black==26.5.1
+black==26.10.0
 colorlog==6.12.0
 debugpy
 flake8==7.4.1
