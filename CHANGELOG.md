@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.1](https://github.com/henricm/ha-ferroamp/compare/v1.18.0...v1.18.1) (2026-10-26)
+
+
+### Build System
+
+* **deps:** bump github/codeql-action from 4.39.0 to 4.39.1 ([aad7f8f](https://github.com/henricm/ha-ferroamp/commit/aad7f8f3d67665b25ad68a4e6fc2922d14967da2))
+
 ## [1.18.0](https://github.com/henricm/ha-ferroamp/compare/v1.17.0...v1.18.0) (2026-10-20)
 
 
