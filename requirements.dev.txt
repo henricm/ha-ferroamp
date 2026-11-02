@@ -2,6 +2,6 @@
 black==26.10.1
 colorlog==6.12.0
 debugpy
-flake8==7.4.1
+flake8==7.5.0
 isort==9.0.2
 pre-commit==4.7.0
