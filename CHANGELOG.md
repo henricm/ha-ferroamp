@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.18.1](https://github.com/henricm/ha-ferroamp/compare/v1.18.0...v1.18.1) (2026-11-24)
+
+
+### Build System
+
+* **deps-dev:** bump flake8 from 7.4.1 to 7.5.0 ([f465c39](https://github.com/henricm/ha-ferroamp/commit/f465c396a3dec0bbc08a794fa83a55487f6d216e))
+* **deps:** bump github/codeql-action from 4.39.0 to 4.39.1 ([aad7f8f](https://github.com/henricm/ha-ferroamp/commit/aad7f8f3d67665b25ad68a4e6fc2922d14967da2))
+* **deps:** bump github/codeql-action from 4.39.1 to 4.39.2 ([4e59b2e](https://github.com/henricm/ha-ferroamp/commit/4e59b2ef8723e59fe7f8e1fd8fb542d8028e2f0e))
+* **deps:** bump github/codeql-action from 4.39.2 to 4.39.3 ([b18097f](https://github.com/henricm/ha-ferroamp/commit/b18097f914abdc30d33beef0da1bdfd79674130f))
+* **deps:** bump github/codeql-action from 4.39.3 to 4.39.4 ([2dfba29](https://github.com/henricm/ha-ferroamp/commit/2dfba29593625f75b7d91cad15618efa143a5c65))
+* **deps:** bump janus from 2.0.0 to 2.1.1 ([0714af6](https://github.com/henricm/ha-ferroamp/commit/0714af694204e9beec329842f2a1a9a697fce70f))
+
 ## [1.18.0](https://github.com/henricm/ha-ferroamp/compare/v1.17.0...v1.18.0) (2026-10-20)
 
 
